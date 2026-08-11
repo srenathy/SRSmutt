@@ -179,6 +179,7 @@ model Expense {
   payee            String?
   paymentMode      String    @default("CASH")
   description      String?
+  attachment       String?
   status           String    @default("APPROVED")
   createdByUserId  String
   createdByUser    User      @relation("ExpenseCreatedBy", fields: [createdByUserId], references: [id])

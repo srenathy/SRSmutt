@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.js';
 import { Role } from '@temple/shared';
-import { Plus, CheckCircle, XCircle, AlertTriangle, Receipt, FileText, Check, X, Trash2, Wallet, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, AlertTriangle, Receipt, FileText, Check, X, Trash2, Wallet, TrendingUp, TrendingDown, Paperclip, Download } from 'lucide-react';
 
 export const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
@@ -12,6 +12,12 @@ export const ExpensesPage: React.FC = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Attachment states
+  const [attachment, setAttachment] = useState<string | null>(null);
+  const [compressing, setCompressing] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     category: 'Puja Materials',
@@ -57,16 +63,84 @@ export const ExpensesPage: React.FC = () => {
       paymentMode: 'CASH',
       description: ''
     });
+    setAttachment(null);
     setModalOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setCompressing(true);
+    
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 800;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+          setAttachment(compressedBase64);
+          setCompressing(false);
+        };
+        img.onerror = () => {
+          setAttachment(event.target?.result as string);
+          setCompressing(false);
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAttachment(event.target?.result as string);
+        setCompressing(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePreviewAttachment = (item: any) => {
+    setSelectedExpense(item);
+    setPreviewOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (compressing) {
+      alert('Please wait for file compression to finish.');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await apiClient.post('/expenses', {
         ...formData,
-        amount: Number(formData.amount)
+        amount: Number(formData.amount),
+        attachment: attachment || undefined
       });
       alert(
         res.data.data.status === 'PENDING'
@@ -249,7 +323,18 @@ export const ExpensesPage: React.FC = () => {
               <tbody className="divide-y divide-turmeric/10 font-medium text-textInk">
                 {expenses.map((item) => (
                   <tr key={item.id} className="hover:bg-ivory/40 transition-colors">
-                    <td className="p-4 font-mono font-bold text-kumkum">{item.voucherNumber}</td>
+                    <td className="p-4 font-mono font-bold text-kumkum flex items-center gap-2">
+                      {item.voucherNumber}
+                      {item.attachment && (
+                        <button
+                          onClick={() => handlePreviewAttachment(item)}
+                          className="p-1 rounded bg-kumkum/10 text-kumkum hover:bg-kumkum hover:text-white transition-colors flex items-center justify-center shrink-0"
+                          title="View Receipt Attachment"
+                        >
+                          <Paperclip className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </td>
                     <td className="p-4">{new Date(item.createdAt).toLocaleDateString('en-IN')}</td>
                     <td className="p-4 font-semibold">{item.category}</td>
                     <td className="p-4 max-w-xs truncate">{item.title}</td>
@@ -393,6 +478,48 @@ export const ExpensesPage: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-textInk mb-1">
+                  Upload Receipt / Invoice (Optional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="expense-attachment-upload"
+                  />
+                  <label
+                    htmlFor="expense-attachment-upload"
+                    className="px-4 py-2 bg-ivory border border-turmeric/30 rounded-xl font-semibold text-xs text-kumkum cursor-pointer hover:bg-turmeric/10 hover:border-turmeric transition-all flex items-center gap-1.5"
+                  >
+                    <Paperclip className="w-4 h-4" />
+                    {attachment ? 'Change Attachment' : 'Upload Receipt File'}
+                  </label>
+                  {compressing && (
+                    <span className="text-[10px] text-textInk/50 animate-pulse">Compressing file...</span>
+                  )}
+                  {attachment && !compressing && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        File Attached
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setAttachment(null)}
+                        className="text-red-600 hover:text-red-700 font-bold text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[9px] text-textInk/50 mt-1">
+                  Supports images (JPG, PNG) and PDFs. Images will be automatically compressed before saving.
+                </p>
+              </div>
+
               <div className="flex items-center justify-end gap-3 pt-3">
                 <button
                   type="button"
@@ -410,6 +537,78 @@ export const ExpensesPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Attachment Preview Modal */}
+      {previewOpen && selectedExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm no-print">
+          <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-4 bg-ivory border-b border-ivory-dark flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="font-display font-bold text-kumkum text-sm">
+                  Receipt Attachment: {selectedExpense.voucherNumber}
+                </h3>
+                <p className="text-[9px] text-textInk/60">{selectedExpense.title}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setPreviewOpen(false);
+                  setSelectedExpense(null);
+                }}
+                className="p-1.5 rounded-lg text-textInk/60 hover:bg-ivory-dark transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 flex flex-col items-center justify-center bg-ivory-light/20 overflow-y-auto max-h-[60vh] flex-grow">
+              {selectedExpense.attachment?.startsWith('data:image/') ? (
+                <img
+                  src={selectedExpense.attachment}
+                  alt="Receipt Preview"
+                  className="max-w-full max-h-[50vh] object-contain rounded-lg border border-turmeric/10 shadow-sm"
+                />
+              ) : (
+                <div className="py-12 flex flex-col items-center gap-4 text-center">
+                  <div className="p-4 rounded-full bg-kumkum/10 text-kumkum">
+                    <FileText className="w-12 h-12" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-textInk">PDF Document Receipt</h4>
+                    <p className="text-xs text-textInk/60 mt-0.5">Click the button below to download and view the document.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Controls */}
+            <div className="p-4 bg-ivory border-t border-ivory-dark flex items-center justify-end gap-2 flex-shrink-0">
+              <a
+                href={selectedExpense.attachment}
+                download={
+                  selectedExpense.attachment?.startsWith('data:image/')
+                    ? `${selectedExpense.voucherNumber}.jpg`
+                    : `${selectedExpense.voucherNumber}.pdf`
+                }
+                className="flex items-center gap-1.5 bg-kumkum hover:bg-kumkum-light text-ivory px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all"
+              >
+                <Download className="w-4 h-4" />
+                Download Attachment
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewOpen(false);
+                  setSelectedExpense(null);
+                }}
+                className="px-4 py-2 border border-turmeric/30 rounded-xl font-semibold text-xs text-textInk/70 hover:bg-ivory"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

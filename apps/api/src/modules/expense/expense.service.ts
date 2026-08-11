@@ -43,6 +43,7 @@ export class ExpenseService {
       payee: input.payee || null,
       paymentMode: input.paymentMode || 'CASH',
       description: input.description || null,
+      attachment: input.attachment || null,
       status,
       createdByUserId: userId,
       approvedByUserId: requiresApproval ? null : userId,

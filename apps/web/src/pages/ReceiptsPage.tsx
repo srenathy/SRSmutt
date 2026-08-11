@@ -137,13 +137,12 @@ export const ReceiptsPage: React.FC = () => {
                 <th className="p-4">Kind</th>
                 <th className="p-4">Payment</th>
                 <th className="p-4 text-right">Total (₹)</th>
-                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ivory-dark/60">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-textInk/50">
+                  <td colSpan={6} className="p-8 text-center text-textInk/50">
                     <div className="flex justify-center items-center gap-2">
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />
                       Loading receipts...
@@ -152,7 +151,7 @@ export const ReceiptsPage: React.FC = () => {
                 </tr>
               ) : data?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-textInk/50">
+                  <td colSpan={6} className="p-8 text-center text-textInk/50">
                     No receipts found matching the filter criteria.
                   </td>
                 </tr>
@@ -177,26 +176,6 @@ export const ReceiptsPage: React.FC = () => {
                     </td>
                     <td className="p-4 text-right font-mono font-bold text-kumkum">
                       ₹{Number(r.totalAmount).toFixed(2)}
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-1.5">
-                        <button
-                          onClick={() => handleReprintThermal(r.id)}
-                          className="px-2.5 py-1 bg-ivory hover:bg-turmeric/20 border border-turmeric/30 rounded-lg font-semibold flex items-center gap-1 text-[11px] text-textInk transition-colors"
-                          title="Reprint 80mm Thermal Receipt"
-                        >
-                          <Printer className="w-3.5 h-3.5 text-kumkum" />
-                          Receipt
-                        </button>
-                        <button
-                          onClick={() => handleReprintSankalpa(r.id)}
-                          className="px-2.5 py-1 bg-ivory hover:bg-turmeric/20 border border-turmeric/30 rounded-lg font-semibold flex items-center gap-1 text-[11px] text-textInk transition-colors"
-                          title="Reprint Priest Sankalpa Sheet"
-                        >
-                          <Scroll className="w-3.5 h-3.5 text-turmeric-dark" />
-                          Sankalpa
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))
