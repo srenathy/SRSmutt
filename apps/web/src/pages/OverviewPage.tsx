@@ -135,49 +135,51 @@ export const OverviewPage: React.FC = () => {
       )}
 
       {/* 2. FINANCIAL CALCULATION SUMMARY (EARNINGS VS EXPENDITURES) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Total Income Card */}
-        <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-textInk/60">Total Seva Income (This Month)</p>
-            <h3 className="font-mono text-2xl font-bold text-emerald-700 mt-2">
-              ₹{monthTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </h3>
-            <p className="text-[10px] font-semibold text-textInk/50 mt-1">From all issued receipts</p>
+      {user?.role === 'ADMIN' && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* Total Income Card */}
+          <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-textInk/60">Total Seva Income (This Month)</p>
+              <h3 className="font-mono text-2xl font-bold text-emerald-700 mt-2">
+                ₹{monthTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </h3>
+              <p className="text-[10px] font-semibold text-textInk/50 mt-1">From all issued receipts</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-6 h-6" />
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </div>
 
-        {/* Total Expenditure Card */}
-        <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-textInk/60">Total Expenditures (Approved)</p>
-            <h3 className="font-mono text-2xl font-bold text-red-600 mt-2">
-              ₹{monthExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </h3>
-            <p className="text-[10px] font-semibold text-textInk/50 mt-1">Puja, Utilities, Salary, Maintenance</p>
+          {/* Total Expenditure Card */}
+          <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-textInk/60">Total Expenditures (Approved)</p>
+              <h3 className="font-mono text-2xl font-bold text-red-600 mt-2">
+                ₹{monthExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </h3>
+              <p className="text-[10px] font-semibold text-textInk/50 mt-1">Puja, Utilities, Salary, Maintenance</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+              <TrendingDown className="w-6 h-6" />
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-            <TrendingDown className="w-6 h-6" />
-          </div>
-        </div>
 
-        {/* Net Earnings / Balance Card */}
-        <div className="bg-gradient-to-br from-kumkum to-kumkum-dark text-white p-6 rounded-2xl shadow-md flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-ivory/80">Net Temple Earnings (Balance)</p>
-            <h3 className="font-mono text-2xl font-bold text-ivory mt-2">
-              ₹{netEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </h3>
-            <p className="text-[10px] font-semibold text-turmeric mt-1">Income minus Approved Expenses</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-ivory/20 text-ivory flex items-center justify-center shrink-0">
-            <Wallet className="w-6 h-6" />
+          {/* Net Earnings / Balance Card */}
+          <div className="bg-gradient-to-br from-kumkum to-kumkum-dark text-white p-6 rounded-2xl shadow-md flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-ivory/80">Net Temple Earnings (Balance)</p>
+              <h3 className="font-mono text-2xl font-bold text-ivory mt-2">
+                ₹{netEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </h3>
+              <p className="text-[10px] font-semibold text-turmeric mt-1">Income minus Approved Expenses</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-ivory/20 text-ivory flex items-center justify-center shrink-0">
+              <Wallet className="w-6 h-6" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 3. TODAY'S COLLECTION & PAYMENT MODE BREAKDOWN */}
       <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-4">
