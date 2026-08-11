@@ -1,0 +1,24 @@
+{
+  "name": "temple-seva-billing-system",
+  "private": true,
+  "version": "2.0.0",
+  "workspaces": ["apps/api", "apps/web", "packages/shared"],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --workspace apps/api run dev",
+    "dev:web": "npm --workspace apps/web run dev",
+    "build": "npm run build:shared && npm run build:api && npm run build:web",
+    "build:shared": "npm --workspace packages/shared run build",
+    "build:api": "npm --workspace apps/api run build",
+    "build:web": "npm --workspace apps/web run build",
+    "db:generate": "npm --workspace apps/api run prisma:generate",
+    "db:migrate": "npm --workspace apps/api run prisma:migrate",
+    "db:seed": "npm --workspace apps/api run prisma:seed",
+    "lint": "npm run lint:api && npm run lint:web",
+    "lint:api": "npm --workspace apps/api run lint",
+    "lint:web": "npm --workspace apps/web run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
