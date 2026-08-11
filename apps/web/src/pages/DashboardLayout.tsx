@@ -42,66 +42,80 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Database Backup', path: '/dashboard/backup', icon: Database, show: isAdmin }
   ].filter(item => item.show);
 
+  const getSelectedLanguage = () => {
+    const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
+    return match ? match[1] : 'en';
+  };
+
+  const changeLanguage = (lang: string) => {
+    document.cookie = `googtrans=/en/${lang}; path=/`;
+    document.cookie = `googtrans=/en/${lang}; path=/; domain=${window.location.hostname}`;
+    const hostParts = window.location.hostname.split('.');
+    if (hostParts.length > 1) {
+      document.cookie = `googtrans=/en/${lang}; path=/; domain=.${hostParts.slice(-2).join('.')}`;
+    }
+    window.location.reload();
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-ivory-light">
       {/* Sidebar */}
       <aside className="w-64 bg-ink text-ivory flex flex-col border-r border-turmeric/20 shrink-0 no-print">
         {/* Brand Header */}
         <div className="p-6 border-b border-turmeric/20 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-kumkum to-turmeric flex items-center justify-center font-display font-bold text-lg text-ivory shadow-md">
-            🛕
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-turmeric to-turmeric-dark flex items-center justify-center shadow-md">
+            <ShieldCheck className="w-5 h-5 text-ink" />
           </div>
           <div>
-            <h2 className="font-display font-bold text-sm leading-tight text-ivory">SRSmutt</h2>
-            <p className="text-[10px] text-turmeric font-semibold uppercase tracking-wider mt-0.5">Seva Billing System</p>
+            <h1 className="font-display font-extrabold text-xs tracking-wider uppercase text-ivory">
+              SRSmutt Billing
+            </h1>
+            <p className="text-[9px] font-semibold text-turmeric uppercase tracking-widest mt-0.5">
+              Secure Core v2.0
+            </p>
           </div>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {/* Navigation Menu */}
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.exact}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${
+                `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all shadow-sm ${
                   isActive
-                    ? 'bg-kumkum text-ivory shadow-md border-l-4 border-turmeric'
-                    : 'text-ivory/70 hover:bg-ink-light hover:text-ivory'
+                    ? 'bg-kumkum text-ivory font-extrabold'
+                    : 'text-ivory/70 hover:bg-ivory/10 hover:text-ivory'
                 }`
               }
             >
-              <item.icon className="w-4 h-4 text-turmeric shrink-0" />
+              <item.icon className="w-4 h-4 shrink-0" />
               <span>{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* Footer User Card */}
-        <div className="p-4 border-t border-turmeric/20 bg-ink-dark/60">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-turmeric/20 text-turmeric flex items-center justify-center font-bold text-xs shrink-0">
-                <User className="w-4 h-4" />
-              </div>
-              <div className="truncate">
-                <p className="text-xs font-bold text-ivory truncate">{user?.fullName || user?.username}</p>
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-turmeric">
-                  <ShieldCheck className="w-3 h-3" />
-                  {user?.role}
-                </span>
-              </div>
+        {/* User Footer Panel */}
+        <div className="p-4 border-t border-turmeric/20 bg-ink-dark/50 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-ivory/10 flex items-center justify-center shrink-0 border border-turmeric/20">
+              <User className="w-4 h-4 text-turmeric" />
             </div>
-
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-xl text-ivory/60 hover:bg-kumkum/30 hover:text-ivory transition-colors"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="min-w-0">
+              <p className="text-xs font-bold truncate text-ivory">{user?.fullName || 'Staff Account'}</p>
+              <p className="text-[9px] font-semibold text-turmeric uppercase tracking-wider">{user?.role || 'Guest'}</p>
+            </div>
           </div>
+
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-xl text-ivory/60 hover:bg-kumkum/30 hover:text-ivory transition-colors"
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </aside>
 
@@ -121,14 +135,8 @@ export const DashboardLayout: React.FC = () => {
             <div className="flex items-center gap-1.5 bg-ivory px-2.5 py-1.5 rounded-lg border border-turmeric/30">
               <span className="text-[10px] uppercase font-bold text-textInk/50">Language:</span>
               <select
-                onChange={(e) => {
-                  const lang = e.target.value;
-                  const selectEl = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-                  if (selectEl) {
-                    selectEl.value = lang;
-                    selectEl.dispatchEvent(new Event('change'));
-                  }
-                }}
+                value={getSelectedLanguage()}
+                onChange={(e) => changeLanguage(e.target.value)}
                 className="bg-transparent border-none font-bold text-kumkum focus:outline-none cursor-pointer"
               >
                 <option value="en">English</option>
