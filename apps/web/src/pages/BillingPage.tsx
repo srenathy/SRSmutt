@@ -55,7 +55,19 @@ export const BillingPage: React.FC = () => {
     queryKey: ['devotee-search', devoteeSearch],
     queryFn: async () => {
       const res = await apiClient.get(`/devotees?search=${encodeURIComponent(devoteeSearch)}`);
-      return res.data.data || [];
+      const rawList: any[] = res.data.data || [];
+
+      // Defensive client-side deduplication by phone or name+gotra+city
+      const seen = new Set<string>();
+      return rawList.filter((d: any) => {
+        const cleanPhone = (d.phone || '').replace(/\D/g, '').slice(-10);
+        const cleanName = (d.name || '').trim().toLowerCase();
+        const cleanGotra = (d.gotra || '').trim().toLowerCase();
+        const key = cleanPhone.length >= 7 ? `phone:${cleanPhone}` : `name:${cleanName}|${cleanGotra}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     }
   });
 

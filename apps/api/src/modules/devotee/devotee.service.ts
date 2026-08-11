@@ -21,8 +21,35 @@ export class DevoteeService extends BaseService<Devotee> implements IDevoteeServ
     super(devoteeRepo, 'Devotee');
   }
 
+  private deduplicateDevotees(list: Devotee[]): Devotee[] {
+    const seen = new Set<string>();
+    const result: Devotee[] = [];
+
+    for (const d of list) {
+      const cleanPhone = (d.phone || '').replace(/\D/g, '');
+      const cleanName = (d.name || '').trim().toLowerCase();
+      const cleanGotra = (d.gotra || '').trim().toLowerCase();
+      const cleanCity = (d.city || '').trim().toLowerCase();
+
+      let key: string;
+      if (cleanPhone.length >= 7) {
+        // Last 10 digits or exact phone
+        key = `phone:${cleanPhone.slice(-10)}`;
+      } else {
+        key = `identity:${cleanName}|${cleanGotra}|${cleanCity}`;
+      }
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(d);
+      }
+    }
+    return result;
+  }
+
   async getAllDevotees(): Promise<Devotee[]> {
-    return this.devoteeRepo.findAll();
+    const list = await this.devoteeRepo.findAll();
+    return this.deduplicateDevotees(list);
   }
 
   async getDevoteeById(id: string): Promise<Devotee> {
@@ -36,21 +63,20 @@ export class DevoteeService extends BaseService<Devotee> implements IDevoteeServ
     } else {
       list = await this.devoteeRepo.searchByNameOrPhone(query.trim());
     }
-
-    // Unique by phone number to prevent duplicate listings
-    const seenPhones = new Set<string>();
-    const uniqueList: Devotee[] = [];
-    for (const d of list) {
-      if (!seenPhones.has(d.phone)) {
-        seenPhones.add(d.phone);
-        uniqueList.push(d);
-      }
-    }
-    return uniqueList;
+    return this.deduplicateDevotees(list);
   }
 
   async createDevotee(input: DevoteeInput, userId?: string): Promise<Devotee> {
-    const existing = await this.devoteeRepo.findByPhone(input.phone);
+    const cleanInputPhone = (input.phone || '').replace(/\D/g, '').slice(-10);
+    const existingList = await this.devoteeRepo.findAll();
+
+    const existing = existingList.find(d => {
+      const p = (d.phone || '').replace(/\D/g, '').slice(-10);
+      if (cleanInputPhone.length >= 7 && p === cleanInputPhone) return true;
+      if (d.name.trim().toLowerCase() === input.name.trim().toLowerCase() && p === cleanInputPhone && p.length > 0) return true;
+      return false;
+    });
+
     if (existing) {
       const updated = await this.devoteeRepo.update(existing.id, input);
       await this.auditLogger.log(userId, AuditAction.UPDATE, 'Devotee', updated.id, existing, updated);

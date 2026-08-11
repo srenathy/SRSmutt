@@ -7,7 +7,7 @@ export class DevoteeController {
 
   async getAll(request: FastifyRequest<{ Querystring: { search?: string } }>, reply: FastifyReply) {
     const search = request.query.search;
-    if (search) {
+    if (search !== undefined && search !== null && search.trim() !== '') {
       const devotees = await this.devoteeService.searchDevotees(search);
       return reply.send({ data: devotees });
     }
