@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: srsmutt-temple-billing
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install && npm run db:generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: file:./dev.db
+      - key: JWT_SECRET
+        value: srsmutt_temple_seva_billing_secure_jwt_secret_2026_key

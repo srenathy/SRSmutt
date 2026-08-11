@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Dedicated Print Styles (@media print) */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* 80mm Thermal Receipt Print Layout */
+  .thermal-receipt-print {
+    width: 78mm;
+    margin: 0 auto;
+    padding: 2mm;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.3;
+    color: black;
+  }
+
+  .thermal-receipt-print h1 {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  /* A5 / Sankalpa List Print Layout */
+  .sankalpa-print {
+    width: 210mm;
+    height: 148mm;
+    margin: 0 auto;
+    padding: 10mm;
+    font-family: 'Fraunces', serif;
+    color: black;
+  }
+}

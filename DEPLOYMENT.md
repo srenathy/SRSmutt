@@ -1,22 +1,30 @@
-# Deployment Checklist
+# Production Deployment Guide
 
-## VPS / Linux
-- Ubuntu 22.04/24.04 or equivalent
-- Docker Engine + Compose plugin
-- DNS A record to the server
-- HTTPS certificate (put TLS termination in front of Nginx, or extend the Nginx config)
+## Prerequisites
+- Linux Server (Ubuntu 22.04 / 24.04 LTS recommended)
+- Docker Engine & Docker Compose Plugin installed
+- Domain DNS A Record pointing to server IP
 
-## Go-live
-1. `cp .env.example .env`
-2. Set a strong `JWT_SECRET` and `POSTGRES_PASSWORD`.
-3. Set `CORS_ORIGIN=https://your-domain.example`.
-4. Set `VITE_API_URL=/api`.
-5. `docker compose up -d --build`
-6. Verify `/health`.
-7. Login with `admin / admin123` once and change the password implementation/seed before production. For a real deployment, add the password-change endpoint before exposing the system publicly.
-8. Configure daily PostgreSQL backups using `pg_dump` and store them outside the server.
+## Go-Live Steps
 
-## Architecture
-Browser → Nginx → React static files / Fastify API → Prisma → PostgreSQL
-
-The application is intentionally containerized so frontend and backend can be deployed independently later without changing the business API.
+1. Clone repository & configure environment:
+   ```bash
+   cp .env.example .env
+   ```
+2. Edit `.env` to set strong, secret values:
+   ```env
+   POSTGRES_PASSWORD=your-ultra-secure-db-password
+   JWT_SECRET=your-32-character-random-jwt-secret
+   CORS_ORIGIN=https://your-temple-domain.org
+   VITE_API_URL=/api
+   ```
+3. Build and launch container stack:
+   ```bash
+   docker compose up -d --build
+   ```
+4. Verify service health:
+   ```bash
+   curl http://localhost/health
+   ```
+5. Log in with `admin` / `admin123` and execute password update.
+6. Configure automated daily `pg_dump` cron job for PostgreSQL container backup.

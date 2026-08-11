@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String     @id @default(uuid())
+  username           String     @unique
+  passwordHash       String
+  fullName           String
+  role               String     @default("STAFF")
+  canAccessBilling   Boolean    @default(true)
+  canAccessExpenses  Boolean    @default(true)
+  canAccessReports   Boolean    @default(true)
+  canAccessMasters   Boolean    @default(false)
+  canApproveExpenses Boolean    @default(false)
+  devoteeId          String?
+  devotee            Devotee?   @relation(fields: [devoteeId], references: [id])
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  receipts           Receipt[]
+  auditLogs          AuditLog[]
+  createdExpenses    Expense[]  @relation("ExpenseCreatedBy")
+  approvedExpenses   Expense[]  @relation("ExpenseApprovedBy")
+
+  @@map("users")
+}
+
+model Temple {
+  id                       String   @id @default(uuid())
+  name                     String
+  deity                    String
+  address                  String
+  city                     String
+  state                    String
+  pincode                  String
+  phone                    String
+  email                    String?
+  registrationNumber       String?
+  upiId                    String?  @default("raghavendra@upi")
+  defaultPriest            String?  @default("Sri Raghavacharya")
+  receiptHeader            String?  @default("Om Sri Raghavendraya Namaha")
+  receiptFooter            String?  @default("Sri Sripadaraja Arpanamastu. Computer generated receipt.")
+  expenseApprovalThreshold Decimal  @default(5000.00)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@map("temples")
+}
+
+model Seva {
+  id          String        @id @default(uuid())
+  name        String
+  code        String        @unique
+  amount      Decimal
+  description String?
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  items       ReceiptItem[]
+
+  @@map("sevas")
+}
+
+model ShashwataSeva {
+  id            String        @id @default(uuid())
+  name          String
+  code          String        @unique
+  amount        Decimal
+  durationYears Int           @default(25)
+  description   String?
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         ReceiptItem[]
+
+  @@map("shashwata_sevas")
+}
+
+model Gotra {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("gotras")
+}
+
+model Nakshatra {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  rulingDeity String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("nakshatras")
+}
+
+model Rashi {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  englishName String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("rashis")
+}
+
+model Devotee {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  address   String?
+  city      String?
+  gotra     String?
+  nakshatra String?
+  rashi     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  users     User[]
+  receipts  Receipt[]
+
+  @@index([phone])
+  @@map("devotees")
+}
+
+model Receipt {
+  id              String        @id @default(uuid())
+  receiptNumber   String        @unique
+  kind            String
+  devoteeId       String
+  devotee         Devotee       @relation(fields: [devoteeId], references: [id])
+  paymentMode     String
+  totalAmount     Decimal
+  sankalpaNote    String?
+  createdByUserId String
+  createdByUser   User          @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime      @default(now())
+  cancelledAt     DateTime?
+  items           ReceiptItem[]
+
+  @@index([createdAt])
+  @@index([devoteeId])
+  @@map("receipts")
+}
+
+model ReceiptItem {
+  id              String         @id @default(uuid())
+  receiptId       String
+  receipt         Receipt        @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  sevaId          String?
+  seva            Seva?          @relation(fields: [sevaId], references: [id])
+  shashwataSevaId String?
+  shashwataSeva   ShashwataSeva? @relation(fields: [shashwataSevaId], references: [id])
+  description     String
+  amount          Decimal
+  quantity        Int            @default(1)
+
+  @@map("receipt_items")
+}
+
+model Expense {
+  id              String    @id @default(uuid())
+  voucherNumber   String    @unique
+  category        String
+  title           String
+  amount          Decimal
+  payee           String?
+  paymentMode     String    @default("CASH")
+  description     String?
+  status          String    @default("APPROVED") // APPROVED, PENDING, REJECTED
+  createdByUserId String
+  createdByUser   User      @relation("ExpenseCreatedBy", fields: [createdByUserId], references: [id])
+  approvedByUserId String?
+  approvedByUser  User?     @relation("ExpenseApprovedBy", fields: [approvedByUserId], references: [id])
+  approvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("expenses")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  beforeJson String?
+  afterJson  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  category  String   @default("ANNOUNCEMENT")
+  content   String
+  imageUrl  String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("announcements")
+}
