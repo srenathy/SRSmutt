@@ -50,3 +50,22 @@
     color: black;
   }
 }
+
+/* Google Translate styling overrides to hide default frames & branding */
+.skiptranslate, iframe.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+/* Hide translate tooltips when hovering translated words */
+#goog-gt-tt, .goog-te-balloon-frame {
+  display: none !important;
+}
+.goog-text-highlight {
+  background: transparent !important;
+  box-shadow: none !important;
+}

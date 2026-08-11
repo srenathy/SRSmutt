@@ -117,6 +117,26 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 text-xs font-medium text-textInk/70">
+            {/* Language Selector Dropdown */}
+            <div className="flex items-center gap-1.5 bg-ivory px-2.5 py-1.5 rounded-lg border border-turmeric/30">
+              <span className="text-[10px] uppercase font-bold text-textInk/50">Language:</span>
+              <select
+                onChange={(e) => {
+                  const lang = e.target.value;
+                  const selectEl = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+                  if (selectEl) {
+                    selectEl.value = lang;
+                    selectEl.dispatchEvent(new Event('change'));
+                  }
+                }}
+                className="bg-transparent border-none font-bold text-kumkum focus:outline-none cursor-pointer"
+              >
+                <option value="en">English</option>
+                <option value="kn">ಕನ್ನಡ</option>
+                <option value="te">తెలుగు</option>
+              </select>
+            </div>
+
             <span className="bg-ivory px-3 py-1.5 rounded-lg border border-turmeric/30">
               Counter Status: <span className="font-bold text-green-700">ONLINE</span>
             </span>
