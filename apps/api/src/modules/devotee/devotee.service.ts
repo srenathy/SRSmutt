@@ -30,10 +30,23 @@ export class DevoteeService extends BaseService<Devotee> implements IDevoteeServ
   }
 
   async searchDevotees(query: string): Promise<Devotee[]> {
+    let list: Devotee[];
     if (!query || query.trim().length === 0) {
-      return this.getAllDevotees();
+      list = await this.devoteeRepo.findAll();
+    } else {
+      list = await this.devoteeRepo.searchByNameOrPhone(query.trim());
     }
-    return this.devoteeRepo.searchByNameOrPhone(query.trim());
+
+    // Unique by phone number to prevent duplicate listings
+    const seenPhones = new Set<string>();
+    const uniqueList: Devotee[] = [];
+    for (const d of list) {
+      if (!seenPhones.has(d.phone)) {
+        seenPhones.add(d.phone);
+        uniqueList.push(d);
+      }
+    }
+    return uniqueList;
   }
 
   async createDevotee(input: DevoteeInput, userId?: string): Promise<Devotee> {

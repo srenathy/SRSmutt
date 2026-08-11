@@ -144,7 +144,7 @@ export const ExpensesPage: React.FC = () => {
       });
       alert(
         res.data.data.status === 'PENDING'
-          ? 'Expense logged successfully! As it exceeds the threshold limit, it requires Admin Approval.'
+          ? 'Voucher submitted successfully and sent to Admin for review!'
           : 'Expense logged and approved successfully!'
       );
       setModalOpen(false);
