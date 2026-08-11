@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   Settings,
   TrendingDown,
-  Users
+  Users,
+  Scroll
 } from 'lucide-react';
 import { Role } from '@temple/shared';
 
@@ -32,6 +33,7 @@ export const DashboardLayout: React.FC = () => {
     { label: 'Overview & Cash Book', path: '/dashboard', icon: LayoutDashboard, exact: true, show: true },
     { label: '+ New Seva Billing', path: '/dashboard/billing', icon: Receipt, show: isAdmin || user?.canAccessBilling !== false },
     { label: 'Receipt History & Reprint', path: '/dashboard/receipts', icon: FileText, show: isAdmin || user?.canAccessBilling !== false },
+    { label: 'Daily Sankalpa List', path: '/dashboard/sankalpa', icon: Scroll, show: true },
     { label: 'Temple Expenditures', path: '/dashboard/expenses', icon: TrendingDown, show: isAdmin || user?.canAccessExpenses !== false },
     { label: 'Masters Management', path: '/dashboard/masters', icon: Layers, show: isAdmin || user?.canAccessMasters === true },
     { label: 'Collection Reports', path: '/dashboard/reports', icon: BarChart3, show: isAdmin || user?.canAccessReports !== false },
@@ -43,7 +45,7 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-ivory-light">
       {/* Sidebar */}
-      <aside className="w-64 bg-ink text-ivory flex flex-col border-r border-turmeric/20 shrink-0">
+      <aside className="w-64 bg-ink text-ivory flex flex-col border-r border-turmeric/20 shrink-0 no-print">
         {/* Brand Header */}
         <div className="p-6 border-b border-turmeric/20 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-kumkum to-turmeric flex items-center justify-center font-display font-bold text-lg text-ivory shadow-md">
@@ -106,7 +108,7 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Topbar */}
-        <header className="h-16 bg-white border-b border-turmeric/20 px-8 flex items-center justify-between shrink-0 shadow-sm">
+        <header className="h-16 bg-white border-b border-turmeric/20 px-8 flex items-center justify-between shrink-0 shadow-sm no-print">
           <div className="flex items-center gap-2">
             <h1 className="font-display font-bold text-base text-kumkum">
               Shri Raghavendra Swamy Brindavana Sannidhana

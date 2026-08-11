@@ -18,6 +18,7 @@ import { ReportsPage } from './pages/ReportsPage.js';
 import { UsersPage } from './pages/UsersPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { BackupPage } from './pages/BackupPage.js';
+import { SankalpaPage } from './pages/SankalpaPage.js';
 
 export const App: React.FC = () => {
   return (
@@ -50,6 +51,7 @@ export const App: React.FC = () => {
           <Route index element={<OverviewPage />} />
           <Route path="billing" element={<BillingPage />} />
           <Route path="receipts" element={<ReceiptsPage />} />
+          <Route path="sankalpa" element={<SankalpaPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="masters" element={<MastersPage />} />
           <Route path="reports" element={<ReportsPage />} />

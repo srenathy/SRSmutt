@@ -27,4 +27,10 @@ export class BillingController {
     const payload = await this.billingService.getReprintPayload(request.params.id);
     return reply.send({ data: payload });
   }
+
+  async getSankalpaList(request: FastifyRequest<{ Querystring: { date?: string; sevaId?: string } }>, reply: FastifyReply) {
+    const dateStr = request.query.date || new Date().toLocaleDateString('en-CA');
+    const list = await this.billingService.getSankalpaList(dateStr, request.query.sevaId);
+    return reply.send({ data: list });
+  }
 }

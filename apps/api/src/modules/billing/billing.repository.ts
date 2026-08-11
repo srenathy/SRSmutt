@@ -16,6 +16,7 @@ export interface IBillingRepository {
     createdByUserId: string;
     prepared: PreparedReceiptData;
   }): Promise<any>;
+  findSankalpaList(dateStr: string, sevaId?: string): Promise<any[]>;
 }
 
 export class BillingRepository implements IBillingRepository {
@@ -144,6 +145,51 @@ export class BillingRepository implements IBillingRepository {
       });
 
       return receipt;
+    });
+  }
+
+  async findSankalpaList(dateStr: string, sevaId?: string): Promise<any[]> {
+    const start = new Date(dateStr);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(dateStr);
+    end.setHours(23, 59, 59, 999);
+
+    const where: any = {
+      receipt: {
+        cancelledAt: null,
+        createdAt: {
+          gte: start,
+          lte: end
+        }
+      },
+      OR: [
+        { sevaId: { not: null } },
+        { shashwataSevaId: { not: null } }
+      ]
+    };
+
+    if (sevaId) {
+      where.OR = undefined;
+      where.sevaId = sevaId;
+    }
+
+    return this.prisma.receiptItem.findMany({
+      where,
+      include: {
+        receipt: {
+          include: {
+            devotee: true
+          }
+        },
+        seva: true,
+        shashwataSeva: true
+      },
+      orderBy: {
+        receipt: {
+          createdAt: 'asc'
+        }
+      }
     });
   }
 }

@@ -29,7 +29,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/60 backdrop-blur-sm flex justify-center items-start p-4 sm:p-10">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-turmeric/30 flex flex-col">
         {/* Top Control Bar (Hidden during print) */}
         <div className="no-print p-4 bg-ivory border-b border-ivory-dark flex items-center justify-between">

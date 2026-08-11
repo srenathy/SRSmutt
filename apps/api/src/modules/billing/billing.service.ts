@@ -12,6 +12,7 @@ export interface IBillingService {
   getReceipts(params: ReceiptQueryParams): Promise<PaginatedResult<any>>;
   getReceiptById(id: string): Promise<any>;
   getReprintPayload(id: string): Promise<any>;
+  getSankalpaList(dateStr: string, sevaId?: string): Promise<any[]>;
 }
 
 export class BillingService implements IBillingService {
@@ -75,5 +76,9 @@ export class BillingService implements IBillingService {
       },
       reprintedAt: new Date().toISOString()
     };
+  }
+
+  async getSankalpaList(dateStr: string, sevaId?: string): Promise<any[]> {
+    return this.billingRepo.findSankalpaList(dateStr, sevaId);
   }
 }
