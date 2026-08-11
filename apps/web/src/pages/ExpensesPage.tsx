@@ -144,7 +144,7 @@ export const ExpensesPage: React.FC = () => {
       });
       alert(
         res.data.data.status === 'PENDING'
-          ? 'Voucher submitted successfully and sent to Admin for review!'
+          ? 'Bill / Request submitted successfully and sent to Admin for review!'
           : 'Expense logged and approved successfully!'
       );
       setModalOpen(false);
@@ -175,7 +175,7 @@ export const ExpensesPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this expense voucher?')) return;
+    if (!confirm('Are you sure you want to delete this expense bill/request?')) return;
     try {
       await apiClient.delete(`/expenses/${id}`);
       fetchExpenses();
@@ -216,7 +216,7 @@ export const ExpensesPage: React.FC = () => {
         <div>
           <h2 className="font-display text-2xl font-bold text-kumkum">Temple Expenditures</h2>
           <p className="text-xs text-textInk/60 mt-1">
-            Record temple operational expenses, vendor vouchers, and admin approval workflows.
+            Record temple operational expenses, bills / requests, and admin approval workflows.
           </p>
         </div>
 
@@ -302,14 +302,14 @@ export const ExpensesPage: React.FC = () => {
           </div>
         ) : expenses.length === 0 ? (
           <div className="p-12 text-center text-textInk/50 text-xs font-medium">
-            No temple expenditures recorded yet. Click "Add Temple Expense" to log your first voucher.
+            No temple expenditures recorded yet. Click "Add Temple Expense" to log your first bill/request.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-ivory border-b border-turmeric/20 text-kumkum font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="p-4">Voucher #</th>
+                  <th className="p-4">Bill/Request #</th>
                   <th className="p-4">Date</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Title / Purpose</th>
@@ -382,7 +382,7 @@ export const ExpensesPage: React.FC = () => {
                           <button
                             onClick={() => handleDelete(item.id)}
                             className="p-1.5 text-textInk/40 hover:text-red-700 transition-colors"
-                            title="Delete Voucher"
+                            title="Delete Bill/Request"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -469,7 +469,7 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Additional Voucher Details</label>
+                <label className="block text-xs font-semibold text-textInk mb-1">Additional Bill / Request Details</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -533,7 +533,7 @@ export const ExpensesPage: React.FC = () => {
                   disabled={submitting}
                   className="px-5 py-2 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all disabled:opacity-50"
                 >
-                  {submitting ? 'Submitting...' : 'Save Expense Voucher'}
+                  {submitting ? 'Submitting...' : 'Save Bill / Request'}
                 </button>
               </div>
             </form>

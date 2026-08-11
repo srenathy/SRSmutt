@@ -15,44 +15,74 @@ export class ExpenseService {
   }
 
   async createExpense(input: ExpenseInput, userId: string): Promise<Expense> {
-    // Generate Voucher Number: EXP-YYYYMMDD-XXXX
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const countToday = await this.prisma.expense.count({
-      where: {
-        createdAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0))
+    const todayPrefix = `BILL-${dateStr}-`;
+
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        const lastExpense = await this.prisma.expense.findFirst({
+          where: {
+            voucherNumber: {
+              startsWith: todayPrefix
+            }
+          },
+          orderBy: {
+            voucherNumber: 'desc'
+          }
+        });
+
+        let nextSeq = 1;
+        if (lastExpense) {
+          const parts = lastExpense.voucherNumber.split('-');
+          const lastSeqStr = parts[parts.length - 1];
+          const lastSeq = parseInt(lastSeqStr, 10);
+          if (!isNaN(lastSeq)) {
+            nextSeq = lastSeq + 1;
+          }
+        }
+        const seq = nextSeq.toString().padStart(4, '0');
+        const voucherNumber = `${todayPrefix}${seq}`;
+
+        // Fetch the logging user to get their user-specific auto-approval limit
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const isUserAdmin = user?.role === 'ADMIN';
+        const userLimit = user ? Number(user.expenditureLimit) : 2000;
+
+        // Auto-Flag for Admin Approval if amount > userLimit (unless creator is an Admin)
+        const requiresApproval = !isUserAdmin && input.amount > userLimit;
+        const status = requiresApproval ? 'PENDING' : 'APPROVED';
+
+        const created = await this.repo.create({
+          voucherNumber,
+          category: input.category,
+          title: input.title,
+          amount: input.amount,
+          payee: input.payee || null,
+          paymentMode: input.paymentMode || 'CASH',
+          description: input.description || null,
+          attachment: input.attachment || null,
+          status,
+          createdByUserId: userId,
+          approvedByUserId: requiresApproval ? null : userId,
+          approvedAt: requiresApproval ? null : new Date()
+        });
+
+        await this.auditLogger.log(userId, AuditAction.CREATE, 'Expense', created.id, undefined, created);
+        return created;
+      } catch (err: any) {
+        if (err.code === 'P2002' && (err.meta?.target?.includes('voucherNumber') || err.message?.includes('voucherNumber'))) {
+          retries--;
+          if (retries === 0) {
+            throw err;
+          }
+          await new Promise(resolve => setTimeout(resolve, 50));
+        } else {
+          throw err;
         }
       }
-    });
-    const seq = (countToday + 1).toString().padStart(4, '0');
-    const voucherNumber = `EXP-${dateStr}-${seq}`;
-
-    // Fetch the logging user to get their user-specific auto-approval limit
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    const isUserAdmin = user?.role === 'ADMIN';
-    const userLimit = user ? Number(user.expenditureLimit) : 2000;
-
-    // Auto-Flag for Admin Approval if amount > userLimit (unless creator is an Admin)
-    const requiresApproval = !isUserAdmin && input.amount > userLimit;
-    const status = requiresApproval ? 'PENDING' : 'APPROVED';
-
-    const created = await this.repo.create({
-      voucherNumber,
-      category: input.category,
-      title: input.title,
-      amount: input.amount,
-      payee: input.payee || null,
-      paymentMode: input.paymentMode || 'CASH',
-      description: input.description || null,
-      attachment: input.attachment || null,
-      status,
-      createdByUserId: userId,
-      approvedByUserId: requiresApproval ? null : userId,
-      approvedAt: requiresApproval ? null : new Date()
-    });
-
-    await this.auditLogger.log(userId, AuditAction.CREATE, 'Expense', created.id, undefined, created);
-    return created;
+    }
+    throw new Error('Failed to generate a unique bill number.');
   }
 
   async approveExpense(id: string, adminUserId: string): Promise<Expense> {
