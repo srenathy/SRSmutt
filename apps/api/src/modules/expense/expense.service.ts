@@ -27,12 +27,13 @@ export class ExpenseService {
     const seq = (countToday + 1).toString().padStart(4, '0');
     const voucherNumber = `EXP-${dateStr}-${seq}`;
 
-    // Get Temple Approval Threshold Limit
-    const temple = await this.prisma.temple.findFirst();
-    const threshold = temple ? Number(temple.expenseApprovalThreshold) : 5000;
+    // Fetch the logging user to get their user-specific auto-approval limit
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const isUserAdmin = user?.role === 'ADMIN';
+    const userLimit = user ? Number(user.expenditureLimit) : 2000;
 
-    // Auto-Flag for Admin Approval if amount > threshold
-    const requiresApproval = input.amount > threshold;
+    // Auto-Flag for Admin Approval if amount > userLimit (unless creator is an Admin)
+    const requiresApproval = !isUserAdmin && input.amount > userLimit;
     const status = requiresApproval ? 'PENDING' : 'APPROVED';
 
     const created = await this.repo.create({

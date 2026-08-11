@@ -19,7 +19,8 @@ export const UsersPage: React.FC = () => {
     canAccessExpenses: true,
     canAccessReports: true,
     canAccessMasters: false,
-    canApproveExpenses: false
+    canApproveExpenses: false,
+    expenditureLimit: 2000
   });
 
   const fetchUsers = async () => {
@@ -50,7 +51,8 @@ export const UsersPage: React.FC = () => {
         canAccessExpenses: u.canAccessExpenses ?? true,
         canAccessReports: u.canAccessReports ?? true,
         canAccessMasters: u.canAccessMasters ?? false,
-        canApproveExpenses: u.canApproveExpenses ?? false
+        canApproveExpenses: u.canApproveExpenses ?? false,
+        expenditureLimit: u.expenditureLimit ?? 2000
       });
     } else {
       setEditingUser(null);
@@ -63,7 +65,8 @@ export const UsersPage: React.FC = () => {
         canAccessExpenses: true,
         canAccessReports: true,
         canAccessMasters: false,
-        canApproveExpenses: false
+        canApproveExpenses: false,
+        expenditureLimit: 2000
       });
     }
     setModalOpen(true);
@@ -137,6 +140,7 @@ export const UsersPage: React.FC = () => {
                   <th className="p-4">Reports</th>
                   <th className="p-4">Masters</th>
                   <th className="p-4">Approval Rights</th>
+                  <th className="p-4">Expense Limit</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -160,6 +164,9 @@ export const UsersPage: React.FC = () => {
                       ) : (
                         <span className="text-textInk/40">NO</span>
                       )}
+                    </td>
+                    <td className="p-4 font-mono font-bold">
+                      ₹{Number(u.expenditureLimit ?? 2000).toLocaleString('en-IN')}
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -244,6 +251,23 @@ export const UsersPage: React.FC = () => {
                   <option value="MANAGER">TEMPLE MANAGER</option>
                   <option value="ADMIN">SYSTEM ADMIN</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-textInk mb-1">
+                  Auto-Approval Expenditure Limit (₹)
+                </label>
+                <input
+                  type="number"
+                  value={formData.expenditureLimit}
+                  onChange={(e) => setFormData({ ...formData, expenditureLimit: Number(e.target.value) })}
+                  required
+                  min={0}
+                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-mono font-bold"
+                />
+                <p className="text-[10px] text-textInk/50 mt-1">
+                  Expenditure vouchers logged by this user up to this amount will be auto-approved. Greater amounts will go to Admin review.
+                </p>
               </div>
 
               {/* Module Access Rights Checkboxes */}

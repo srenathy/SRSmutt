@@ -22,6 +22,7 @@ export class UserController {
         canAccessReports: true,
         canAccessMasters: true,
         canApproveExpenses: true,
+        expenditureLimit: true,
         createdAt: true,
         updatedAt: true
       },
@@ -44,7 +45,8 @@ export class UserController {
         canAccessExpenses: input.canAccessExpenses,
         canAccessReports: input.canAccessReports,
         canAccessMasters: input.canAccessMasters,
-        canApproveExpenses: input.canApproveExpenses
+        canApproveExpenses: input.canApproveExpenses,
+        expenditureLimit: input.expenditureLimit
       },
       select: {
         id: true,
@@ -56,6 +58,7 @@ export class UserController {
         canAccessReports: true,
         canAccessMasters: true,
         canApproveExpenses: true,
+        expenditureLimit: true,
         createdAt: true
       }
     });
@@ -74,7 +77,8 @@ export class UserController {
       canAccessExpenses: input.canAccessExpenses,
       canAccessReports: input.canAccessReports,
       canAccessMasters: input.canAccessMasters,
-      canApproveExpenses: input.canApproveExpenses
+      canApproveExpenses: input.canApproveExpenses,
+      expenditureLimit: input.expenditureLimit
     };
 
     if (input.password && input.password.trim() !== '') {
@@ -94,6 +98,7 @@ export class UserController {
         canAccessReports: true,
         canAccessMasters: true,
         canApproveExpenses: true,
+        expenditureLimit: true,
         updatedAt: true
       }
     });

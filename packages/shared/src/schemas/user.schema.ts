@@ -9,7 +9,8 @@ export const createUserSchema = z.object({
   canAccessExpenses: z.boolean().default(true),
   canAccessReports: z.boolean().default(true),
   canAccessMasters: z.boolean().default(false),
-  canApproveExpenses: z.boolean().default(false)
+  canApproveExpenses: z.boolean().default(false),
+  expenditureLimit: z.number().nonnegative().default(2000)
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;

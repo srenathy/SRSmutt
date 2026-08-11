@@ -18,6 +18,7 @@ model User {
   canAccessReports   Boolean    @default(true)
   canAccessMasters   Boolean    @default(false)
   canApproveExpenses Boolean    @default(false)
+  expenditureLimit   Float      @default(2000)
   devoteeId          String?
   devotee            Devotee?   @relation(fields: [devoteeId], references: [id])
   createdAt          DateTime   @default(now())
