@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -169,22 +169,22 @@ model ReceiptItem {
 }
 
 model Expense {
-  id              String    @id @default(uuid())
-  voucherNumber   String    @unique
-  category        String
-  title           String
-  amount          Decimal
-  payee           String?
-  paymentMode     String    @default("CASH")
-  description     String?
-  status          String    @default("APPROVED") // APPROVED, PENDING, REJECTED
-  createdByUserId String
-  createdByUser   User      @relation("ExpenseCreatedBy", fields: [createdByUserId], references: [id])
+  id               String    @id @default(uuid())
+  voucherNumber    String    @unique
+  category         String
+  title            String
+  amount           Decimal
+  payee            String?
+  paymentMode      String    @default("CASH")
+  description      String?
+  status           String    @default("APPROVED")
+  createdByUserId  String
+  createdByUser    User      @relation("ExpenseCreatedBy", fields: [createdByUserId], references: [id])
   approvedByUserId String?
-  approvedByUser  User?     @relation("ExpenseApprovedBy", fields: [approvedByUserId], references: [id])
-  approvedAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  approvedByUser   User?     @relation("ExpenseApprovedBy", fields: [approvedByUserId], references: [id])
+  approvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([createdAt])
   @@index([status])

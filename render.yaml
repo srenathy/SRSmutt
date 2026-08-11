@@ -12,6 +12,15 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        value: file:./dev.db
+        fromDatabase:
+          name: srsmutt-db
+          property: connectionString
       - key: JWT_SECRET
         value: srsmutt_temple_seva_billing_secure_jwt_secret_2026_key
+
+databases:
+  - name: srsmutt-db
+    plan: free
+    region: singapore
+    databaseName: srsmutt_db
+    user: srsmutt_user
