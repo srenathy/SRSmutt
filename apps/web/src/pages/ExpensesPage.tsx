@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.js';
 import { Role } from '@temple/shared';
-import { Plus, CheckCircle, XCircle, AlertTriangle, Receipt, FileText, Check, X, Trash2 } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, AlertTriangle, Receipt, FileText, Check, X, Trash2, Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 
 export const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [temple, setTemple] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -33,8 +34,18 @@ export const ExpensesPage: React.FC = () => {
     }
   };
 
+  const fetchTemple = async () => {
+    try {
+      const res = await apiClient.get('/temple');
+      setTemple(res.data.data);
+    } catch (err) {
+      console.error('Failed to fetch temple info:', err);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
+    fetchTemple();
   }, []);
 
   const handleOpenModal = () => {
@@ -109,6 +120,21 @@ export const ExpensesPage: React.FC = () => {
     'Miscellaneous'
   ];
 
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const monthName = new Date().toLocaleString('default', { month: 'long' });
+
+  const totalSpentThisMonth = expenses
+    .filter((e) => {
+      const d = new Date(e.createdAt);
+      return e.status === 'APPROVED' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+
+  const walletLimit = Number(temple?.monthlyExpenseBudget) || 5000;
+  const remainingBalance = walletLimit - totalSpentThisMonth;
+  const thresholdLimit = Number(temple?.expenseApprovalThreshold) || 5000;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,12 +155,67 @@ export const ExpensesPage: React.FC = () => {
         </button>
       </div>
 
+      {/* Wallet Balance Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Monthly Wallet Limit */}
+        <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Monthly Wallet Limit</p>
+            <p className="text-xl font-mono font-bold text-textInk">
+              ₹{walletLimit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-[10px] text-textInk/60">Configured monthly allowance</p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-ivory text-kumkum">
+            <Wallet className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Spent This Month */}
+        <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Spent in {monthName}</p>
+            <p className="text-xl font-mono font-bold text-kumkum">
+              ₹{totalSpentThisMonth.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-[10px] text-textInk/60">Sum of approved monthly expenses</p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-red-50 text-red-600">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+        </div>
+
+        {/* Remaining Wallet Balance */}
+        <div className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between ${
+          remainingBalance >= 0 
+            ? 'bg-emerald-50/50 border-emerald-200 text-emerald-950' 
+            : 'bg-red-50/50 border-red-200 text-red-950'
+        }`}>
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Remaining Balance</p>
+            <p className={`text-xl font-mono font-bold ${
+              remainingBalance >= 0 ? 'text-emerald-700' : 'text-red-700'
+            }`}>
+              ₹{remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-[10px] text-textInk/60">
+              {remainingBalance >= 0 ? 'Within budget limit' : 'Budget limit exceeded!'}
+            </p>
+          </div>
+          <div className={`p-3.5 rounded-xl ${
+            remainingBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+          }`}>
+            <TrendingDown className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
       {/* Threshold Approval Rule Alert Banner */}
       <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 text-xs flex items-center gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
         <div>
           <span className="font-bold">Admin Approval Threshold Rule: </span>
-          Expenses exceeding ₹5,000 will be automatically flagged for Admin Approval before being deducted from temple net earnings.
+          Expenses exceeding ₹{thresholdLimit.toLocaleString('en-IN')} will be automatically flagged for Admin Approval before being deducted from temple net earnings.
         </div>
       </div>
 

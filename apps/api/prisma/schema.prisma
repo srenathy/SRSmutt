@@ -46,6 +46,7 @@ model Temple {
   receiptHeader            String?  @default("Om Sri Raghavendraya Namaha")
   receiptFooter            String?  @default("Sri Sripadaraja Arpanamastu. Computer generated receipt.")
   expenseApprovalThreshold Decimal  @default(5000.00)
+  monthlyExpenseBudget     Decimal  @default(5000.00)
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

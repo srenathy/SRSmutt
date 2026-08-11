@@ -65,7 +65,9 @@ async function main() {
     upiId: 'raghavendra@upi',
     defaultPriest: 'Sri Raghavacharya',
     receiptHeader: 'Om Sri Raghavendraya Namaha | Mulabagala Sri Sripadaraja Matha',
-    receiptFooter: 'Sri Sripadaraja Arpanamastu. Receipts are computer generated.'
+    receiptFooter: 'Sri Sripadaraja Arpanamastu. Receipts are computer generated.',
+    expenseApprovalThreshold: 5000.00,
+    monthlyExpenseBudget: 5000.00
   };
 
   const existingTemple = await prisma.temple.findFirst();

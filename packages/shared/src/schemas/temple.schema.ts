@@ -14,7 +14,8 @@ export const templeSchema = z.object({
   defaultPriest: z.string().optional().or(z.literal('')),
   receiptHeader: z.string().optional().or(z.literal('')),
   receiptFooter: z.string().optional().or(z.literal('')),
-  expenseApprovalThreshold: z.number().min(0, 'Threshold must be non-negative').default(5000)
+  expenseApprovalThreshold: z.number().min(0, 'Threshold must be non-negative').default(5000),
+  monthlyExpenseBudget: z.number().min(0, 'Budget must be non-negative').default(5000)
 });
 
 export type TempleInput = z.infer<typeof templeSchema>;

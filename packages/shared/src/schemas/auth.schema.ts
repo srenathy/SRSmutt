@@ -34,6 +34,11 @@ export const userResponseSchema = z.object({
   username: z.string(),
   fullName: z.string(),
   role: z.nativeEnum(Role),
+  canAccessBilling: z.boolean().optional(),
+  canAccessExpenses: z.boolean().optional(),
+  canAccessReports: z.boolean().optional(),
+  canAccessMasters: z.boolean().optional(),
+  canApproveExpenses: z.boolean().optional(),
   devoteeId: z.string().optional(),
   createdAt: z.string().or(z.date())
 });

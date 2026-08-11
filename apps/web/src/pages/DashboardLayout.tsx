@@ -26,21 +26,19 @@ export const DashboardLayout: React.FC = () => {
     navigate('/login');
   };
 
+  const isAdmin = user?.role === Role.ADMIN;
+
   const navItems = [
-    { label: 'Overview & Cash Book', path: '/dashboard', icon: LayoutDashboard, exact: true },
-    { label: '+ New Seva Billing', path: '/dashboard/billing', icon: Receipt },
-    { label: 'Receipt History & Reprint', path: '/dashboard/receipts', icon: FileText },
-    { label: 'Temple Expenditures', path: '/dashboard/expenses', icon: TrendingDown },
-    { label: 'Masters Management', path: '/dashboard/masters', icon: Layers },
-    { label: 'Collection Reports', path: '/dashboard/reports', icon: BarChart3 },
-    ...(user?.role === Role.ADMIN
-      ? [
-          { label: 'User & Access Control', path: '/dashboard/users', icon: Users },
-          { label: 'Temple & Billing Settings', path: '/dashboard/settings', icon: Settings },
-          { label: 'Database Backup', path: '/dashboard/backup', icon: Database }
-        ]
-      : [{ label: 'Temple & Billing Settings', path: '/dashboard/settings', icon: Settings }])
-  ];
+    { label: 'Overview & Cash Book', path: '/dashboard', icon: LayoutDashboard, exact: true, show: true },
+    { label: '+ New Seva Billing', path: '/dashboard/billing', icon: Receipt, show: isAdmin || user?.canAccessBilling !== false },
+    { label: 'Receipt History & Reprint', path: '/dashboard/receipts', icon: FileText, show: isAdmin || user?.canAccessBilling !== false },
+    { label: 'Temple Expenditures', path: '/dashboard/expenses', icon: TrendingDown, show: isAdmin || user?.canAccessExpenses !== false },
+    { label: 'Masters Management', path: '/dashboard/masters', icon: Layers, show: isAdmin || user?.canAccessMasters === true },
+    { label: 'Collection Reports', path: '/dashboard/reports', icon: BarChart3, show: isAdmin || user?.canAccessReports !== false },
+    { label: 'User & Access Control', path: '/dashboard/users', icon: Users, show: isAdmin },
+    { label: 'Temple & Billing Settings', path: '/dashboard/settings', icon: Settings, show: isAdmin },
+    { label: 'Database Backup', path: '/dashboard/backup', icon: Database, show: isAdmin }
+  ].filter(item => item.show);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-ivory-light">

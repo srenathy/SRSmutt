@@ -32,7 +32,7 @@ export const App: React.FC = () => {
         <Route
           path="/devotee/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['DEVOTEE', 'ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['DEVOTEE', 'ADMIN', 'STAFF', 'ACCOUNTANT', 'MANAGER']}>
               <DevoteeDashboardPage />
             </ProtectedRoute>
           }
@@ -42,7 +42,7 @@ export const App: React.FC = () => {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'STAFF', 'ACCOUNTANT', 'MANAGER']}>
               <DashboardLayout />
             </ProtectedRoute>
           }

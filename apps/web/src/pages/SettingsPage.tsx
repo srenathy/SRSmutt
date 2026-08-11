@@ -20,7 +20,9 @@ export const SettingsPage: React.FC = () => {
     upiId: '',
     defaultPriest: '',
     receiptHeader: '',
-    receiptFooter: ''
+    receiptFooter: '',
+    expenseApprovalThreshold: 5000,
+    monthlyExpenseBudget: 5000
   });
 
   const [printerSettings, setPrinterSettings] = useState({
@@ -47,7 +49,9 @@ export const SettingsPage: React.FC = () => {
             upiId: res.data.data.upiId || 'raghavendra@upi',
             defaultPriest: res.data.data.defaultPriest || 'Sri Raghavacharya',
             receiptHeader: res.data.data.receiptHeader || 'Om Sri Raghavendraya Namaha',
-            receiptFooter: res.data.data.receiptFooter || 'Sri Sripadaraja Arpanamastu. Computer generated receipt.'
+            receiptFooter: res.data.data.receiptFooter || 'Sri Sripadaraja Arpanamastu. Computer generated receipt.',
+            expenseApprovalThreshold: Number(res.data.data.expenseApprovalThreshold) || 5000,
+            monthlyExpenseBudget: Number(res.data.data.monthlyExpenseBudget) || 5000
           });
         }
       } catch (err) {
@@ -77,7 +81,12 @@ export const SettingsPage: React.FC = () => {
     setSubmitting(true);
     setSuccessMessage(null);
     try {
-      await apiClient.put('/temple', formData);
+      const payload = {
+        ...formData,
+        expenseApprovalThreshold: Number(formData.expenseApprovalThreshold),
+        monthlyExpenseBudget: Number(formData.monthlyExpenseBudget)
+      };
+      await apiClient.put('/temple', payload);
       localStorage.setItem('temple_printer_settings', JSON.stringify(printerSettings));
       setSuccessMessage('Temple information and billing settings updated successfully!');
       setTimeout(() => setSuccessMessage(null), 4000);
@@ -247,6 +256,36 @@ export const SettingsPage: React.FC = () => {
                 className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
               />
               <p className="text-[10px] text-textInk/50 mt-1">Appears on Sankalpa & Seva receipts as officiating priest.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-turmeric/10 pt-4">
+            <div>
+              <label className="block text-xs font-semibold text-textInk mb-1">Monthly Expenditure Wallet Amount (₹)</label>
+              <input
+                type="number"
+                name="monthlyExpenseBudget"
+                value={formData.monthlyExpenseBudget}
+                onChange={handleChange}
+                required
+                min="0"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+              />
+              <p className="text-[10px] text-textInk/50 mt-1">Operational budget allocated every month. Expenditures deduct from this balance.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-textInk mb-1">Admin Approval Threshold Limit (₹)</label>
+              <input
+                type="number"
+                name="expenseApprovalThreshold"
+                value={formData.expenseApprovalThreshold}
+                onChange={handleChange}
+                required
+                min="0"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+              />
+              <p className="text-[10px] text-textInk/50 mt-1">Expenses exceeding this amount will automatically require Admin Approval.</p>
             </div>
           </div>
         </div>

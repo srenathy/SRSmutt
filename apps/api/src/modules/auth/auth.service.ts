@@ -28,6 +28,11 @@ export class AuthService implements IAuthService {
       username: user.username,
       fullName: user.fullName,
       role: user.role as any,
+      canAccessBilling: user.canAccessBilling,
+      canAccessExpenses: user.canAccessExpenses,
+      canAccessReports: user.canAccessReports,
+      canAccessMasters: user.canAccessMasters,
+      canApproveExpenses: user.canApproveExpenses,
       createdAt: user.createdAt
     };
 
@@ -67,6 +72,11 @@ export class AuthService implements IAuthService {
       username: user.username,
       fullName: user.fullName,
       role: user.role as any,
+      canAccessBilling: user.canAccessBilling,
+      canAccessExpenses: user.canAccessExpenses,
+      canAccessReports: user.canAccessReports,
+      canAccessMasters: user.canAccessMasters,
+      canApproveExpenses: user.canApproveExpenses,
       createdAt: user.createdAt
     };
   }
