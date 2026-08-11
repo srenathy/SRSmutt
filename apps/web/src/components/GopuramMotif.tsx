@@ -48,18 +48,18 @@ export const GopuramProgressRail: React.FC<GopuramProgressRailProps> = ({
   currentStep
 }) => {
   return (
-    <div className="w-full bg-ivory/60 border border-turmeric/30 rounded-xl p-4 mb-6 shadow-sm">
+    <div className="w-full bg-ivory/60 border border-turmeric/30 rounded-xl p-3 sm:p-4 mb-6 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between relative">
         {steps.map((label, index) => {
           const isActive = index <= currentStep;
           const isCurrent = index === currentStep;
 
           return (
-            <div key={label} className="flex flex-col items-center z-10 flex-1">
+            <div key={label} className="flex flex-col items-center z-10 flex-1 px-1">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-display text-sm font-bold transition-all duration-300 ${
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-display text-xs sm:text-sm font-bold transition-all duration-300 ${
                   isCurrent
-                    ? 'bg-kumkum text-ivory ring-4 ring-turmeric/50 shadow-md scale-110'
+                    ? 'bg-kumkum text-ivory ring-2 sm:ring-4 ring-turmeric/50 shadow-md scale-105 sm:scale-110'
                     : isActive
                     ? 'bg-turmeric text-ink font-bold'
                     : 'bg-ivory-dark text-textInk/40 border border-turmeric/20'
@@ -68,7 +68,7 @@ export const GopuramProgressRail: React.FC<GopuramProgressRailProps> = ({
                 {index + 1}
               </div>
               <span
-                className={`mt-2 text-xs font-medium text-center ${
+                className={`mt-1.5 text-[9px] sm:text-xs font-medium text-center leading-tight max-w-[70px] sm:max-w-none ${
                   isCurrent ? 'text-kumkum font-bold' : isActive ? 'text-textInk font-semibold' : 'text-textInk/50'
                 }`}
               >
@@ -79,7 +79,7 @@ export const GopuramProgressRail: React.FC<GopuramProgressRailProps> = ({
         })}
 
         {/* Connecting Stepped Rail Background */}
-        <div className="absolute top-5 left-8 right-8 h-1 bg-ivory-dark -z-0">
+        <div className="absolute top-4 sm:top-5 left-6 sm:left-8 right-6 sm:right-8 h-1 bg-ivory-dark -z-0">
           <div
             className="h-full bg-gradient-to-r from-turmeric to-kumkum transition-all duration-500"
             style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}

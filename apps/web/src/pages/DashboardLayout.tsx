@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
 import {
@@ -14,13 +14,16 @@ import {
   Settings,
   TrendingDown,
   Users,
-  Scroll
+  Scroll,
+  Menu,
+  X
 } from 'lucide-react';
 import { Role } from '@temple/shared';
 
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -57,13 +60,12 @@ export const DashboardLayout: React.FC = () => {
     window.location.reload();
   };
 
-  return (
-    <div className="flex h-screen w-screen overflow-hidden bg-ivory-light">
-      {/* Sidebar */}
-      <aside className="w-64 bg-ink text-ivory flex flex-col border-r border-turmeric/20 shrink-0 no-print">
-        {/* Brand Header */}
-        <div className="p-6 border-b border-turmeric/20 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-turmeric to-turmeric-dark flex items-center justify-center shadow-md">
+  const renderNavContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Brand Header */}
+      <div className="p-5 md:p-6 border-b border-turmeric/20 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-turmeric to-turmeric-dark flex items-center justify-center shadow-md shrink-0">
             <ShieldCheck className="w-5 h-5 text-ink" />
           </div>
           <div>
@@ -75,69 +77,113 @@ export const DashboardLayout: React.FC = () => {
             </p>
           </div>
         </div>
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden p-1 text-ivory/60 hover:text-ivory"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.exact}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                  isActive
-                    ? 'bg-kumkum text-ivory font-extrabold'
-                    : 'text-ivory/70 hover:bg-ivory/10 hover:text-ivory'
-                }`
-              }
-            >
-              <item.icon className="w-4 h-4 shrink-0" />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* User Footer Panel */}
-        <div className="p-4 border-t border-turmeric/20 bg-ink-dark/50 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-ivory/10 flex items-center justify-center shrink-0 border border-turmeric/20">
-              <User className="w-4 h-4 text-turmeric" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-bold truncate text-ivory">{user?.fullName || 'Staff Account'}</p>
-              <p className="text-[9px] font-semibold text-turmeric uppercase tracking-wider">{user?.role || 'Guest'}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-xl text-ivory/60 hover:bg-kumkum/30 hover:text-ivory transition-colors"
-            title="Sign Out"
+      {/* Navigation Menu */}
+      <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.exact}
+            onClick={() => setMobileMenuOpen(false)}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                isActive
+                  ? 'bg-kumkum text-ivory font-extrabold'
+                  : 'text-ivory/70 hover:bg-ivory/10 hover:text-ivory'
+              }`
+            }
           >
-            <LogOut className="w-4 h-4" />
-          </button>
+            <item.icon className="w-4 h-4 shrink-0" />
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* User Footer Panel */}
+      <div className="p-4 border-t border-turmeric/20 bg-ink-dark/50 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-full bg-ivory/10 flex items-center justify-center shrink-0 border border-turmeric/20">
+            <User className="w-4 h-4 text-turmeric" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold truncate text-ivory">{user?.fullName || 'Staff Account'}</p>
+            <p className="text-[9px] font-semibold text-turmeric uppercase tracking-wider">{user?.role || 'Guest'}</p>
+          </div>
         </div>
+
+        <button
+          onClick={handleLogout}
+          className="p-2 rounded-xl text-ivory/60 hover:bg-kumkum/30 hover:text-ivory transition-colors"
+          title="Sign Out"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-ivory-light">
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs md:hidden transition-opacity"
+        />
+      )}
+
+      {/* Mobile Slide-out Sidebar Drawer */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-ink text-ivory transform transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        } no-print`}
+      >
+        {renderNavContent()}
+      </aside>
+
+      {/* Desktop Static Sidebar */}
+      <aside className="hidden md:flex w-64 bg-ink text-ivory flex-col border-r border-turmeric/20 shrink-0 no-print">
+        {renderNavContent()}
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Topbar */}
-        <header className="h-16 bg-white border-b border-turmeric/20 px-8 flex items-center justify-between shrink-0 shadow-sm no-print">
-          <div className="flex items-center gap-2">
-            <h1 className="font-display font-bold text-base text-kumkum">
-              Shri Raghavendra Swamy Brindavana Sannidhana
-            </h1>
-            <span className="text-xs text-textInk/50 font-mono hidden md:inline">| Mulabagala Sri Sripadaraja Matha</span>
+        {/* Topbar Header */}
+        <header className="min-h-16 bg-white border-b border-turmeric/20 px-4 md:px-8 py-3.5 flex flex-wrap items-center justify-between shrink-0 shadow-sm gap-3 no-print">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-xl bg-ivory border border-turmeric/30 text-kumkum hover:bg-ivory-dark transition-colors"
+              aria-label="Toggle navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="font-display font-bold text-sm md:text-base text-kumkum leading-tight">
+                Shri Raghavendra Swamy Brindavana Sannidhana
+              </h1>
+              <span className="text-[10px] md:text-xs text-textInk/50 font-mono block md:inline">
+                Mulabagala Sri Sripadaraja Matha
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-medium text-textInk/70">
+          <div className="flex items-center gap-2 md:gap-4 text-xs font-medium text-textInk/70">
             {/* Language Selector Dropdown */}
             <div className="flex items-center gap-1.5 bg-ivory px-2.5 py-1.5 rounded-lg border border-turmeric/30">
               <span className="text-[10px] uppercase font-bold text-textInk/50">Language:</span>
               <select
                 value={getSelectedLanguage()}
                 onChange={(e) => changeLanguage(e.target.value)}
-                className="bg-transparent border-none font-bold text-kumkum focus:outline-none cursor-pointer"
+                className="bg-transparent border-none font-bold text-kumkum focus:outline-none cursor-pointer text-xs"
               >
                 <option value="en">English</option>
                 <option value="kn">ಕನ್ನಡ</option>
@@ -145,14 +191,14 @@ export const DashboardLayout: React.FC = () => {
               </select>
             </div>
 
-            <span className="bg-ivory px-3 py-1.5 rounded-lg border border-turmeric/30">
+            <span className="bg-ivory px-2.5 py-1.5 rounded-lg border border-turmeric/30 hidden sm:inline-block text-xs">
               Counter Status: <span className="font-bold text-green-700">ONLINE</span>
             </span>
           </div>
         </header>
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 overflow-y-auto p-8 bg-ivory-light/50">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-ivory-light/50">
           <Outlet />
         </main>
       </div>
