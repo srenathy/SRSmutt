@@ -141,6 +141,7 @@ model Receipt {
   devoteeId       String
   devotee         Devotee       @relation(fields: [devoteeId], references: [id])
   paymentMode     String
+  transactionRef  String?
   totalAmount     Decimal
   sankalpaNote    String?
   createdByUserId String

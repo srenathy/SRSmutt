@@ -32,6 +32,7 @@ export class BillingService implements IBillingService {
       kind: input.kind as any,
       devoteeId: input.devoteeId,
       paymentMode: input.paymentMode as any,
+      transactionRef: input.transactionRef,
       sankalpaNote: input.sankalpaNote,
       createdByUserId: userId,
       prepared

@@ -11,6 +11,7 @@ export interface IBillingRepository {
     kind: ReceiptKind;
     devoteeId: string;
     paymentMode: PaymentMode;
+    transactionRef?: string;
     sankalpaNote?: string;
     createdByUserId: string;
     prepared: PreparedReceiptData;
@@ -102,6 +103,7 @@ export class BillingRepository implements IBillingRepository {
     kind: ReceiptKind;
     devoteeId: string;
     paymentMode: PaymentMode;
+    transactionRef?: string;
     sankalpaNote?: string;
     createdByUserId: string;
     prepared: PreparedReceiptData;
@@ -113,6 +115,7 @@ export class BillingRepository implements IBillingRepository {
           kind: data.kind,
           devoteeId: data.devoteeId,
           paymentMode: data.paymentMode,
+          transactionRef: data.transactionRef,
           totalAmount: data.prepared.totalAmount,
           sankalpaNote: data.sankalpaNote,
           createdByUserId: data.createdByUserId,

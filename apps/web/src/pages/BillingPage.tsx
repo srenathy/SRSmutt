@@ -26,6 +26,7 @@ export const BillingPage: React.FC = () => {
     { sevaId?: string; shashwataSevaId?: string; description: string; amount: number; quantity: number }[]
   >([]);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(PaymentMode.CASH);
+  const [transactionRef, setTransactionRef] = useState('');
   const [sankalpaNote, setSankalpaNote] = useState('');
 
   // Created receipt result for printing
@@ -82,6 +83,8 @@ export const BillingPage: React.FC = () => {
       setSelectedDevotee(null);
       setItems([]);
       setSankalpaNote('');
+      setTransactionRef('');
+      setPaymentMode(PaymentMode.CASH);
       setCurrentStep(0);
     }
   });
@@ -149,11 +152,16 @@ export const BillingPage: React.FC = () => {
       alert('Please add at least one Seva item.');
       return;
     }
+    if (paymentMode !== PaymentMode.CASH && !transactionRef.trim()) {
+      alert('Please enter the transaction reference / instrument number.');
+      return;
+    }
 
     const payload = {
       kind,
       devoteeId: selectedDevotee.id,
       paymentMode,
+      transactionRef: paymentMode !== PaymentMode.CASH ? transactionRef.trim() : undefined,
       sankalpaNote,
       items
     };
@@ -555,6 +563,32 @@ export const BillingPage: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Transaction / Reference Number (Rendered conditionally for non-cash modes) */}
+          {paymentMode !== PaymentMode.CASH && (
+            <div className="space-y-1.5 animate-fadeIn">
+              <label className="text-xs font-bold text-textInk/80 flex items-center gap-1">
+                <span>Transaction Reference / Instrument Number *</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder={
+                  paymentMode === PaymentMode.UPI
+                    ? "e.g. UPI Ref / UTR / Txn ID"
+                    : paymentMode === PaymentMode.BANK
+                    ? "e.g. Cheque Number / NEFT Txn Ref"
+                    : "e.g. Card Slip Txn Ref / Approval Code"
+                }
+                value={transactionRef}
+                onChange={(e) => setTransactionRef(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium text-textInk"
+              />
+              <p className="text-[10px] text-textInk/50">
+                Please enter the payment reference to associate it with this ledger entry.
+              </p>
+            </div>
+          )}
 
           {/* Optional Sankalpa Note */}
           <div>

@@ -169,7 +169,12 @@ export const ReceiptsPage: React.FC = () => {
                         {r.kind}
                       </span>
                     </td>
-                    <td className="p-4 font-semibold text-textInk">{r.paymentMode}</td>
+                    <td className="p-4 font-semibold text-textInk">
+                      {r.paymentMode}
+                      {r.transactionRef && (
+                        <div className="text-[10px] text-textInk/50 font-mono font-normal">Ref: {r.transactionRef}</div>
+                      )}
+                    </td>
                     <td className="p-4 text-right font-mono font-bold text-kumkum">
                       ₹{Number(r.totalAmount).toFixed(2)}
                     </td>

@@ -14,6 +14,7 @@ export type ReceiptItemInput = z.infer<typeof receiptItemInputSchema>;
 export const baseReceiptSchema = z.object({
   devoteeId: z.string().min(1, 'Devotee selection is required'),
   paymentMode: z.nativeEnum(PaymentMode),
+  transactionRef: z.string().optional().or(z.literal('')),
   sankalpaNote: z.string().optional().or(z.literal('')),
   items: z.array(receiptItemInputSchema).min(1, 'At least one item is required')
 });

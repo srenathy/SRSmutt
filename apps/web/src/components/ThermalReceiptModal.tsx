@@ -73,7 +73,10 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
             </div>
             <div className="flex justify-between">
               <span>Payment Mode:</span>
-              <span className="font-semibold">{receipt.paymentMode}</span>
+              <span className="font-semibold">
+                {receipt.paymentMode}
+                {receipt.transactionRef ? ` (${receipt.transactionRef})` : ''}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Receipt Kind:</span>
