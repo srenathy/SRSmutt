@@ -157,11 +157,11 @@ export const OverviewPage: React.FC = () => {
             {/* Total Expenditure Card (Excludes Petty Cash) */}
             <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-textInk/60">Total Expenditure (Approved)</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-textInk/60">Operational Expenditure (Excl. Petty Cash)</p>
                 <h3 className="font-mono text-2xl font-bold text-red-600 mt-1">
                   ₹{monthExpenses.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </h3>
-                <p className="text-[10px] font-semibold text-textInk/50 mt-1">Excludes petty cash threshold</p>
+                <p className="text-[10px] font-semibold text-textInk/50 mt-1">Cook Salary, Flowers, Maintenance etc. (Petty Cash NOT included)</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
                 <TrendingDown className="w-5 h-5" />

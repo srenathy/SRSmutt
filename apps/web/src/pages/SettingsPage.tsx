@@ -32,16 +32,13 @@ export const SettingsPage: React.FC = () => {
     showSankalpa: true
   });
 
-  const [categoryBudgets, setCategoryBudgets] = useState<Array<{ id: string; categoryName: string; monthlyCap: number }>>([
-    { id: '1', categoryName: 'Cook & Kitchen Staff Salaries', monthlyCap: 30000 },
-    { id: '2', categoryName: 'Catering & Prasadam Ingredients', monthlyCap: 50000 },
-    { id: '3', categoryName: 'Electricity & Utility Bills', monthlyCap: 15000 },
-    { id: '4', categoryName: 'Temple Cleaning & Maintenance', monthlyCap: 20000 },
-    { id: '5', categoryName: 'Flowers & Pooja Samagri', monthlyCap: 12000 }
-  ]);
-
-  const [newCatName, setNewCatName] = useState('');
+  const [categoryBudgets, setCategoryBudgets] = useState<Array<{ id: string; categoryName: string; monthlyCap: number }>>([]);
+  const [newCatPreset, setNewCatPreset] = useState('Cook & Kitchen Staff Salary');
+  const [newCatName, setNewCatName] = useState('Cook & Kitchen Staff Salary');
   const [newCatCap, setNewCatCap] = useState('');
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatCap, setEditCatCap] = useState('');
 
   useEffect(() => {
     const fetchTempleInfo = async () => {
@@ -338,9 +335,12 @@ export const SettingsPage: React.FC = () => {
                 <p className="text-[10px] text-textInk/50 mt-0.5">Printed as officiating priest on Sankalpa & Seva receipts.</p>
               </div>
 
-            {/* Petty Cash Controls (Renamed & Kept Separate) */}
-            <div className="bg-ivory/60 p-4 rounded-xl border border-turmeric/20 space-y-3">
-              <h4 className="font-display font-bold text-xs text-kumkum uppercase">PETTY CASH ALLOWANCE & THRESHOLDS (KEPT SEPARATE FROM EXPENDITURE)</h4>
+            {/* Petty Cash Controls — COMPLETELY EXCLUDED from Dashboard & Reports */}
+            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-300/50 space-y-3">
+              <h4 className="font-display font-bold text-xs text-amber-900 uppercase">🧺 PETTY CASH ALLOWANCE & THRESHOLDS</h4>
+              <p className="text-[10px] text-amber-800 font-semibold bg-amber-100 px-2.5 py-1.5 rounded-lg border border-amber-200">
+                ⚠️ Petty Cash is completely separate — it is NOT included in the Dashboard, NOT counted in monthly expenditures, and NOT shown in any financial reports. Only visible under the Petty Cash tab in Income & Expenditures.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-[11px] font-bold text-textInk mb-1">Petty Cash Monthly Allowance Limit (₹)</label>
@@ -353,7 +353,7 @@ export const SettingsPage: React.FC = () => {
                     min="0"
                     className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum bg-white"
                   />
-                  <p className="text-[10px] text-textInk/60 mt-0.5 font-medium">Petty cash allowance for minor daily branch outlays (kept separate from operational expenditure calculations and does not count towards total temple expenditures on dashboard).</p>
+                  <p className="text-[10px] text-textInk/60 mt-0.5 font-medium">Minor daily branch cash outlays. Completely excluded from all dashboard & report calculations.</p>
                 </div>
 
                 <div>
@@ -372,70 +372,168 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Configurable Monthly Expenditure Capped Budgets by Category (Cook, Catering, Utilities, etc.) */}
-            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 space-y-4 shadow-xs">
+            {/* Configurable Monthly Operational Expenditure Caps — INCLUDED in Dashboard & Reports */}
+            <div className="bg-white p-5 rounded-2xl border border-emerald-200/50 space-y-4 shadow-xs">
               <div className="flex items-center justify-between border-b border-turmeric/20 pb-2">
                 <div>
-                  <h4 className="font-display font-bold text-sm text-kumkum">Configurable Monthly Expenditure Caps (Cooks, Catering, Utilities)</h4>
-                  <p className="text-[11px] text-textInk/60">Configure monthly capped spending budgets for specific recurring categories.</p>
+                  <h4 className="font-display font-bold text-sm text-kumkum">💸 Operational Expenditure Category Caps (Included in Dashboard)</h4>
+                  <p className="text-[11px] text-emerald-800 font-medium">These operational expenses (Cook Salary, Electricity, Flowers, Maintenance) ARE calculated into monthly expenditures on the Dashboard & Reports.</p>
                 </div>
               </div>
 
               {/* Add New Category Budget Form */}
-              <div className="flex flex-wrap items-center gap-2 bg-ivory/50 p-3 rounded-xl border border-turmeric/20">
-                <input
-                  type="text"
-                  placeholder="Category Name (e.g. Cook Salary, Catering, Electricity)"
-                  value={newCatName}
-                  onChange={(e) => setNewCatName(e.target.value)}
-                  className="flex-1 min-w-[200px] px-3 py-1.5 rounded-lg border border-turmeric/30 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum font-semibold"
-                />
-                <input
-                  type="number"
-                  placeholder="Monthly Cap (₹)"
-                  value={newCatCap}
-                  onChange={(e) => setNewCatCap(e.target.value)}
-                  className="w-32 px-3 py-1.5 rounded-lg border border-turmeric/30 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!newCatName.trim() || !newCatCap) return;
-                    setCategoryBudgets((prev) => [
-                      ...prev,
-                      { id: Date.now().toString(), categoryName: newCatName.trim(), monthlyCap: Number(newCatCap) }
-                    ]);
-                    setNewCatName('');
-                    setNewCatCap('');
-                  }}
-                  className="bg-kumkum hover:bg-kumkum-light text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-xs transition"
-                >
-                  + Add Category Cap
-                </button>
+              <div className="space-y-2 bg-ivory/50 p-3 rounded-xl border border-turmeric/20">
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={newCatPreset}
+                    onChange={(e) => {
+                      setNewCatPreset(e.target.value);
+                      if (e.target.value !== 'CUSTOM') {
+                        setNewCatName(e.target.value);
+                      } else {
+                        setNewCatName('');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-turmeric/30 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-kumkum bg-white"
+                  >
+                    <option value="Cook & Kitchen Staff Salary">Cook & Kitchen Staff Salary</option>
+                    <option value="Electricity & Utility Bills">Electricity & Utility Bills</option>
+                    <option value="Flowers & Pooja Samagri">Flowers & Pooja Samagri</option>
+                    <option value="Temple Cleaning & Maintenance">Temple Cleaning & Maintenance</option>
+                    <option value="Staff Honorarium & Archaka Allowance">Staff Honorarium & Archaka Allowance</option>
+                    <option value="CUSTOM">Custom Category (Type Manually)</option>
+                  </select>
+
+                  {(newCatPreset === 'CUSTOM' || !newCatPreset) && (
+                    <input
+                      type="text"
+                      placeholder="Enter Custom Category Name"
+                      value={newCatName}
+                      onChange={(e) => setNewCatName(e.target.value)}
+                      className="flex-1 min-w-[180px] px-3 py-1.5 rounded-lg border border-turmeric/30 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum font-semibold bg-white"
+                    />
+                  )}
+
+                  <input
+                    type="number"
+                    placeholder="Monthly Cap (₹)"
+                    value={newCatCap}
+                    onChange={(e) => setNewCatCap(e.target.value)}
+                    className="w-32 px-3 py-1.5 rounded-lg border border-turmeric/30 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum bg-white"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const finalCatName = newCatName.trim() || newCatPreset;
+                      if (!finalCatName || !newCatCap) return;
+                      const updated = [
+                        ...categoryBudgets,
+                        { id: Date.now().toString(), categoryName: finalCatName, monthlyCap: Number(newCatCap) }
+                      ];
+                      setCategoryBudgets(updated);
+                      localStorage.setItem('temple_category_budgets', JSON.stringify(updated));
+                      setNewCatName('');
+                      setNewCatCap('');
+                    }}
+                    className="bg-kumkum hover:bg-kumkum-light text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-xs transition"
+                  >
+                    + Add Category Cap
+                  </button>
+                </div>
               </div>
 
               {/* List of Configured Category Budgets */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
-                {categoryBudgets.map((cat, idx) => (
-                  <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl border border-turmeric/20 bg-ivory/30 text-xs">
-                    <div>
-                      <p className="font-bold text-textInk">{cat.categoryName}</p>
-                      <p className="text-[10px] text-textInk/50">Monthly Capped Limit</p>
+              {categoryBudgets.length === 0 ? (
+                <div className="p-6 text-center text-textInk/50 text-xs bg-ivory/20 rounded-xl border border-turmeric/10">
+                  No monthly category caps configured yet. Select or type a category above to configure capped spending budgets.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+                  {categoryBudgets.map((cat, idx) => (
+                    <div key={cat.id} className="p-3 rounded-xl border border-turmeric/20 bg-ivory/30 text-xs space-y-2">
+                      {editingCatId === cat.id ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={editCatName}
+                            onChange={(e) => setEditCatName(e.target.value)}
+                            className="w-full px-2.5 py-1 rounded border border-turmeric/30 font-semibold text-xs"
+                          />
+                          <div className="flex items-center justify-between">
+                            <input
+                              type="number"
+                              value={editCatCap}
+                              onChange={(e) => setEditCatCap(e.target.value)}
+                              className="w-28 px-2.5 py-1 rounded border border-turmeric/30 font-mono font-bold text-xs"
+                            />
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!editCatName.trim() || !editCatCap) return;
+                                  const updated = categoryBudgets.map((item) =>
+                                    item.id === cat.id
+                                      ? { ...item, categoryName: editCatName.trim(), monthlyCap: Number(editCatCap) }
+                                      : item
+                                  );
+                                  setCategoryBudgets(updated);
+                                  localStorage.setItem('temple_category_budgets', JSON.stringify(updated));
+                                  setEditingCatId(null);
+                                }}
+                                className="px-2.5 py-1 bg-emerald-700 text-white rounded font-bold text-[10px]"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingCatId(null)}
+                                className="px-2.5 py-1 bg-ivory border border-turmeric/30 text-textInk/70 rounded font-bold text-[10px]"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-textInk">{cat.categoryName}</p>
+                            <p className="text-[10px] text-textInk/50">Monthly Capped Limit</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-kumkum text-sm">₹{cat.monthlyCap.toLocaleString('en-IN')}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCatId(cat.id);
+                                setEditCatName(cat.categoryName);
+                                setEditCatCap(cat.monthlyCap.toString());
+                              }}
+                              className="px-2 py-1 rounded bg-ivory text-kumkum font-bold text-[10px] border border-turmeric/30 hover:bg-turmeric/10 transition"
+                              title="Edit Category Cap"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = categoryBudgets.filter((_, i) => i !== idx);
+                                setCategoryBudgets(updated);
+                                localStorage.setItem('temple_category_budgets', JSON.stringify(updated));
+                              }}
+                              className="w-6 h-6 rounded bg-red-100 text-red-700 font-bold flex items-center justify-center text-xs hover:bg-red-200 transition"
+                              title="Remove Category Budget"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-kumkum text-sm">₹{cat.monthlyCap.toLocaleString('en-IN')}</span>
-                      <button
-                        type="button"
-                        onClick={() => setCategoryBudgets((prev) => prev.filter((_, i) => i !== idx))}
-                        className="w-6 h-6 rounded-lg bg-red-100 text-red-700 font-bold flex items-center justify-center text-xs hover:bg-red-200 transition"
-                        title="Remove Category Budget"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
             </div>
           </div>

@@ -17,15 +17,15 @@ import {
   TrendingDown,
   Paperclip,
   Download,
-  IndianRupee,
   Coins,
   Building,
-  Landmark
+  Landmark,
+  PiggyBank
 } from 'lucide-react';
 
 export const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'UNBILLED_INCOMES' | 'EXPENDITURES'>('UNBILLED_INCOMES');
+  const [activeTab, setActiveTab] = useState<'EXPENDITURES' | 'UNBILLED_INCOMES' | 'PETTY_CASH'>('EXPENDITURES');
 
   // Expense states
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -33,6 +33,7 @@ export const ExpensesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [isPettyCashModal, setIsPettyCashModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Unbilled Income states
@@ -55,13 +56,19 @@ export const ExpensesPage: React.FC = () => {
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
 
   const [formData, setFormData] = useState({
-    category: 'Puja Materials',
+    category: 'Puja Materials & Flowers',
     title: '',
     amount: '',
     payee: '',
     paymentMode: 'CASH',
     description: ''
   });
+
+  const isPettyCashCat = (cat?: string) => {
+    if (!cat) return false;
+    const lower = cat.toLowerCase();
+    return lower.includes('petty cash') || lower.includes('pettycash') || lower.includes('daily allowance');
+  };
 
   const fetchExpenses = async () => {
     setLoading(true);
@@ -100,9 +107,10 @@ export const ExpensesPage: React.FC = () => {
     fetchUnbilledIncomes();
   }, []);
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (pettyMode = false) => {
+    setIsPettyCashModal(pettyMode);
     setFormData({
-      category: 'Puja Materials',
+      category: pettyMode ? 'Petty Cash & Daily Outlay' : 'Puja Materials & Flowers',
       title: '',
       amount: '',
       payee: '',
@@ -285,11 +293,10 @@ export const ExpensesPage: React.FC = () => {
 
   const categories = [
     'Puja Materials & Flowers',
+    'Cook & Kitchen Staff Salary',
     'Staff Salary & Honorarium',
     'Electricity & Water Utility',
-    'Annadana Provisions & Catering',
-    'Temple Maintenance & Repairs',
-    'Petty Cash & Daily Outlay (Excluded from Dashboard)',
+    'Temple Cleaning & Maintenance',
     'Special Event & Festival',
     'Miscellaneous'
   ];
@@ -308,7 +315,18 @@ export const ExpensesPage: React.FC = () => {
   const currentYear = new Date().getFullYear();
   const monthName = new Date().toLocaleString('default', { month: 'long' });
 
-  const totalSpentThisMonth = expenses
+  // Separate Operational Expenses vs Petty Cash Expenses
+  const operationalExpenses = expenses.filter((e) => !isPettyCashCat(e.category));
+  const pettyCashExpenses = expenses.filter((e) => isPettyCashCat(e.category));
+
+  const totalSpentOperationalThisMonth = operationalExpenses
+    .filter((e) => {
+      const d = new Date(e.createdAt);
+      return e.status === 'APPROVED' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+
+  const totalSpentPettyThisMonth = pettyCashExpenses
     .filter((e) => {
       const d = new Date(e.createdAt);
       return e.status === 'APPROVED' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
@@ -323,22 +341,22 @@ export const ExpensesPage: React.FC = () => {
     .reduce((sum, r) => sum + Number(r.totalAmount), 0);
 
   const walletLimit = Number(temple?.monthlyExpenseBudget) || 5000;
-  const remainingBalance = walletLimit - totalSpentThisMonth;
+  const remainingPettyBalance = walletLimit - totalSpentPettyThisMonth;
   const thresholdLimit = Number(temple?.expenseApprovalThreshold) || 5000;
 
   return (
     <div className="space-y-6">
-      {/* Header & Tabs */}
+      {/* Header & 3 Navigation Tabs */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-2xl font-bold text-kumkum">Income & Expenditures</h2>
             <p className="text-xs text-textInk/60 mt-1">
-              Manage unbilled direct temple income (Hundi, Lease, Bank) & operational expenditure vouchers.
+              Manage operational expenditures, direct unbilled income (Hundi, Lease, Bank) & branch petty cash outlays.
             </p>
           </div>
 
-          {activeTab === 'UNBILLED_INCOMES' ? (
+          {activeTab === 'UNBILLED_INCOMES' && (
             <button
               onClick={handleOpenIncomeModal}
               className="px-4 py-2.5 bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md hover:bg-emerald-800 transition-all flex items-center gap-2 self-start"
@@ -346,31 +364,31 @@ export const ExpensesPage: React.FC = () => {
               <Plus className="w-4 h-4" />
               + Log Direct / Unbilled Income
             </button>
-          ) : (
+          )}
+
+          {activeTab === 'EXPENDITURES' && (
             <button
-              onClick={handleOpenModal}
+              onClick={() => handleOpenModal(false)}
               className="px-4 py-2.5 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all flex items-center gap-2 self-start"
             >
               <Plus className="w-4 h-4" />
-              + Add Temple Expense
+              + Add Operational Expense
+            </button>
+          )}
+
+          {activeTab === 'PETTY_CASH' && (
+            <button
+              onClick={() => handleOpenModal(true)}
+              className="px-4 py-2.5 bg-amber-700 text-white rounded-xl font-bold text-xs shadow-md hover:bg-amber-800 transition-all flex items-center gap-2 self-start"
+            >
+              <Plus className="w-4 h-4" />
+              + Log Petty Cash Expense
             </button>
           )}
         </div>
 
-        {/* Tab Selection Navigation Bar */}
-        <div className="flex items-center gap-3 border-b border-turmeric/30 pb-3">
-          <button
-            onClick={() => setActiveTab('UNBILLED_INCOMES')}
-            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
-              activeTab === 'UNBILLED_INCOMES'
-                ? 'bg-emerald-700 text-white shadow-md'
-                : 'bg-white text-textInk/70 hover:bg-ivory border border-turmeric/20'
-            }`}
-          >
-            <TrendingUp className="w-4 h-4" />
-            Direct / Unbilled Income (Hundi, Lease, Bank)
-          </button>
-
+        {/* Tab Selection Navigation Bar (3 TABS) */}
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-turmeric/30 pb-3">
           <button
             onClick={() => setActiveTab('EXPENDITURES')}
             className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
@@ -380,12 +398,187 @@ export const ExpensesPage: React.FC = () => {
             }`}
           >
             <TrendingDown className="w-4 h-4" />
-            Temple Expenditures & Bills
+            💸 Operational Expenditures ({operationalExpenses.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('UNBILLED_INCOMES')}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
+              activeTab === 'UNBILLED_INCOMES'
+                ? 'bg-emerald-700 text-white shadow-md'
+                : 'bg-white text-textInk/70 hover:bg-ivory border border-turmeric/20'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            💰 Direct / Unbilled Income ({unbilledIncomes.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('PETTY_CASH')}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
+              activeTab === 'PETTY_CASH'
+                ? 'bg-amber-700 text-white shadow-md'
+                : 'bg-white text-textInk/70 hover:bg-ivory border border-turmeric/20'
+            }`}
+          >
+            <PiggyBank className="w-4 h-4" />
+            🧺 Petty Cash Management ({pettyCashExpenses.length})
           </button>
         </div>
       </div>
 
-      {/* TAB 1: DIRECT UNBILLED INCOMES */}
+      {/* TAB 1: OPERATIONAL TEMPLE EXPENDITURES */}
+      {activeTab === 'EXPENDITURES' && (
+        <div className="space-y-6">
+          {/* Operational Expenses Summary Card */}
+          <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Operational Spent in {monthName}</p>
+              <p className="text-2xl font-mono font-bold text-kumkum">
+                ₹{totalSpentOperationalThisMonth.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-[10px] text-textInk/60">Cook Salary, Electricity, Flowers, Maintenance & Provisions (Calculated into Dashboard Net Profit)</p>
+            </div>
+            <div className="p-3.5 rounded-xl bg-red-50 text-red-600">
+              <TrendingDown className="w-7 h-7" />
+            </div>
+          </div>
+
+          {/* Operational Expense Table */}
+          <div className="bg-white rounded-2xl border border-turmeric/30 shadow-sm overflow-hidden">
+            <div className="p-4 bg-ivory/60 border-b border-turmeric/20 flex items-center justify-between">
+              <h3 className="font-display font-bold text-sm text-kumkum">Operational Expenditure Records (Calculated into Dashboard)</h3>
+              <span className="text-xs font-semibold text-textInk/60">{operationalExpenses.length} total entries</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-ivory text-textInk/70 uppercase font-bold text-[10px] border-b border-turmeric/20">
+                  <tr>
+                    <th className="p-4">Voucher #</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Category & Title</th>
+                    <th className="p-4">Payee / Vendor</th>
+                    <th className="p-4">Mode</th>
+                    <th className="p-4">Bill Copy</th>
+                    <th className="p-4 text-right">Amount (₹)</th>
+                    <th className="p-4 text-center">Status</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-turmeric/10 font-medium">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-textInk/50">
+                        Loading operational expenses...
+                      </td>
+                    </tr>
+                  ) : operationalExpenses.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-textInk/50">
+                        No operational expenditure bills logged yet. Click "+ Add Operational Expense" to record cook salaries, utilities, flowers, or maintenance bills.
+                      </td>
+                    </tr>
+                  ) : (
+                    operationalExpenses.map((expense) => (
+                      <tr key={expense.id} className="hover:bg-ivory/40">
+                        <td className="p-4 font-mono font-bold text-kumkum">{expense.voucherNumber}</td>
+                        <td className="p-4 text-textInk/70">
+                          {new Date(expense.createdAt).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-textInk block">{expense.title}</span>
+                          <span className="text-[10px] text-textInk/50">{expense.category}</span>
+                        </td>
+                        <td className="p-4 text-textInk/80">{expense.payee || '-'}</td>
+                        <td className="p-4">
+                          <span className="px-2.5 py-1 rounded-md bg-ivory border border-turmeric/20 font-bold text-[10px] text-kumkum">
+                            {expense.paymentMode}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {expense.attachment ? (
+                            <button
+                              type="button"
+                              onClick={() => handlePreviewAttachment(expense)}
+                              className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all font-bold text-[10px] flex items-center gap-1"
+                            >
+                              <Paperclip className="w-3 h-3" />
+                              View Bill
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                              Missing
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-textInk text-sm">
+                          ₹{Number(expense.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-4 text-center">
+                          {expense.status === 'APPROVED' && (
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] inline-flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Approved
+                            </span>
+                          )}
+                          {expense.status === 'PENDING' && (
+                            <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px] inline-flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" /> Pending Approval
+                            </span>
+                          )}
+                          {expense.status === 'REJECTED' && (
+                            <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-800 font-bold text-[10px] inline-flex items-center gap-1">
+                              <XCircle className="w-3 h-3" /> Rejected
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {user?.role === Role.ADMIN && expense.status === 'PENDING' && (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(expense.id)}
+                                  className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all"
+                                  title="Approve Expense"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleReject(expense.id)}
+                                  className="p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+                                  title="Reject Expense"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+
+                            {user?.role === Role.ADMIN && (
+                              <button
+                                onClick={() => handleDelete(expense.id)}
+                                className="p-1.5 bg-ivory text-red-600 rounded-lg border border-turmeric/20 hover:bg-red-50 transition-all"
+                                title="Delete Expense Record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: DIRECT UNBILLED INCOMES */}
       {activeTab === 'UNBILLED_INCOMES' && (
         <div className="space-y-6">
           {/* Income Overview Cards */}
@@ -488,20 +681,20 @@ export const ExpensesPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: TEMPLE EXPENDITURES */}
-      {activeTab === 'EXPENDITURES' && (
+      {/* TAB 3: PETTY CASH MANAGEMENT (KEPT SEPARATE) */}
+      {activeTab === 'PETTY_CASH' && (
         <div className="space-y-6">
-          {/* Wallet Balance Cards */}
+          {/* Petty Cash Allowance Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Petty Cash Monthly Allowance Limit</p>
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Petty Cash Monthly Limit</p>
                 <p className="text-xl font-mono font-bold text-textInk">
                   ₹{walletLimit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
-                <p className="text-[10px] text-textInk/60">Branch petty cash allowance (Excluded from temple expenditures)</p>
+                <p className="text-[10px] text-textInk/60">Configured branch petty allowance (Kept separate from dashboard)</p>
               </div>
-              <div className="p-3.5 rounded-xl bg-ivory text-kumkum">
+              <div className="p-3.5 rounded-xl bg-amber-100 text-amber-800">
                 <Wallet className="w-6 h-6" />
               </div>
             </div>
@@ -509,34 +702,34 @@ export const ExpensesPage: React.FC = () => {
             <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Spent in {monthName}</p>
-                <p className="text-xl font-mono font-bold text-kumkum">
-                  ₹{totalSpentThisMonth.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <p className="text-xl font-mono font-bold text-amber-800">
+                  ₹{totalSpentPettyThisMonth.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
-                <p className="text-[10px] text-textInk/60">Sum of approved operational expenditures</p>
+                <p className="text-[10px] text-textInk/60">Sum of approved petty cash outlays</p>
               </div>
-              <div className="p-3.5 rounded-xl bg-red-50 text-red-600">
-                <TrendingUp className="w-6 h-6" />
+              <div className="p-3.5 rounded-xl bg-amber-50 text-amber-700">
+                <PiggyBank className="w-6 h-6" />
               </div>
             </div>
 
             <div className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between ${
-              remainingBalance >= 0 
+              remainingPettyBalance >= 0 
                 ? 'bg-emerald-50/50 border-emerald-200 text-emerald-950' 
                 : 'bg-red-50/50 border-red-200 text-red-950'
             }`}>
               <div className="space-y-1">
-                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Remaining Balance</p>
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Remaining Petty Balance</p>
                 <p className={`text-xl font-mono font-bold ${
-                  remainingBalance >= 0 ? 'text-emerald-700' : 'text-red-700'
+                  remainingPettyBalance >= 0 ? 'text-emerald-700' : 'text-red-700'
                 }`}>
-                  ₹{remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  ₹{remainingPettyBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-[10px] text-textInk/60">
-                  {remainingBalance >= 0 ? 'Within budget limit' : 'Budget limit exceeded!'}
+                  {remainingPettyBalance >= 0 ? 'Within petty budget' : 'Petty allowance exceeded!'}
                 </p>
               </div>
               <div className={`p-3.5 rounded-xl ${
-                remainingBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                remainingPettyBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
               }`}>
                 <TrendingDown className="w-6 h-6" />
               </div>
@@ -546,16 +739,16 @@ export const ExpensesPage: React.FC = () => {
           <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 text-xs flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
             <div>
-              <span className="font-bold">Admin Approval Threshold Rule: </span>
-              Expenses exceeding ₹{thresholdLimit.toLocaleString('en-IN')} will be automatically flagged for Admin Approval before being deducted from temple net earnings.
+              <span className="font-bold">Petty Cash Separation Notice: </span>
+              Petty Cash expenses are kept separate from operational temple expenditures and do not deduct from Main Dashboard Net Profit. Single petty cash vouchers exceeding ₹{thresholdLimit.toLocaleString('en-IN')} require Admin Approval.
             </div>
           </div>
 
-          {/* Expense List Table */}
+          {/* Petty Cash Expense List Table */}
           <div className="bg-white rounded-2xl border border-turmeric/30 shadow-sm overflow-hidden">
             <div className="p-4 bg-ivory/60 border-b border-turmeric/20 flex items-center justify-between">
-              <h3 className="font-display font-bold text-sm text-kumkum">Temple Expenditure Records</h3>
-              <span className="text-xs font-semibold text-textInk/60">{expenses.length} total entries</span>
+              <h3 className="font-display font-bold text-sm text-kumkum">Petty Cash Expense Outlays</h3>
+              <span className="text-xs font-semibold text-textInk/60">{pettyCashExpenses.length} entries</span>
             </div>
 
             <div className="overflow-x-auto">
@@ -577,17 +770,17 @@ export const ExpensesPage: React.FC = () => {
                   {loading ? (
                     <tr>
                       <td colSpan={9} className="p-8 text-center text-textInk/50">
-                        Loading expenses...
+                        Loading petty cash expenses...
                       </td>
                     </tr>
-                  ) : expenses.length === 0 ? (
+                  ) : pettyCashExpenses.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="p-8 text-center text-textInk/50">
-                        No expenditure bills logged yet. Click "+ Add Temple Expense" to log your first expense.
+                        No petty cash expenses logged yet. Click "+ Log Petty Cash Expense" to log minor daily outlays.
                       </td>
                     </tr>
                   ) : (
-                    expenses.map((expense) => (
+                    pettyCashExpenses.map((expense) => (
                       <tr key={expense.id} className="hover:bg-ivory/40">
                         <td className="p-4 font-mono font-bold text-kumkum">{expense.voucherNumber}</td>
                         <td className="p-4 text-textInk/70">
@@ -634,7 +827,7 @@ export const ExpensesPage: React.FC = () => {
                           )}
                           {expense.status === 'PENDING' && (
                             <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px] inline-flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3" /> Pending Admin Approval
+                              <AlertTriangle className="w-3 h-3" /> Pending Approval
                             </span>
                           )}
                           {expense.status === 'REJECTED' && (
@@ -790,8 +983,12 @@ export const ExpensesPage: React.FC = () => {
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl overflow-hidden">
-            <div className="p-4 bg-kumkum text-ivory flex items-center justify-between">
-              <h3 className="font-display font-bold text-base">Add Temple Operational Expense</h3>
+            <div className={`p-4 text-ivory flex items-center justify-between ${
+              isPettyCashModal ? 'bg-amber-800' : 'bg-kumkum'
+            }`}>
+              <h3 className="font-display font-bold text-base">
+                {isPettyCashModal ? '🧺 Log Petty Cash Expense Outlay' : 'Add Operational Temple Expense'}
+              </h3>
               <button
                 onClick={() => setModalOpen(false)}
                 className="text-ivory/80 hover:text-ivory"
@@ -803,15 +1000,24 @@ export const ExpensesPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
               <div>
                 <label className="font-bold text-textInk block mb-1">Expense Category *</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-kumkum"
-                >
-                  {categories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                {isPettyCashModal ? (
+                  <input
+                    type="text"
+                    disabled
+                    value="Petty Cash & Daily Outlay"
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory text-textInk font-bold cursor-not-allowed"
+                  />
+                ) : (
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-kumkum"
+                  >
+                    {categories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div>
@@ -819,7 +1025,7 @@ export const ExpensesPage: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Purchase of Flowers & Garlands for Puja"
+                  placeholder={isPettyCashModal ? "e.g. Minor Office Tea & Stationery" : "e.g. Purchase of Flowers for Puja"}
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
@@ -859,7 +1065,7 @@ export const ExpensesPage: React.FC = () => {
                 <label className="font-bold text-textInk block mb-1">Payee / Vendor Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. Sri Krishna Flower Merchants"
+                  placeholder="e.g. Local Vendor Name"
                   value={formData.payee}
                   onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
@@ -922,9 +1128,11 @@ export const ExpensesPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting || compressing}
-                  className="px-5 py-2.5 bg-kumkum text-ivory font-bold rounded-xl shadow-md hover:bg-kumkum-light transition-all disabled:opacity-50"
+                  className={`px-5 py-2.5 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 ${
+                    isPettyCashModal ? 'bg-amber-700 hover:bg-amber-800' : 'bg-kumkum hover:bg-kumkum-light'
+                  }`}
                 >
-                  {submitting ? 'Submitting...' : 'Submit Expense Voucher'}
+                  {submitting ? 'Submitting...' : isPettyCashModal ? 'Log Petty Expense' : 'Submit Expense Voucher'}
                 </button>
               </div>
             </form>

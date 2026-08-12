@@ -363,13 +363,13 @@ export const ReportsPage: React.FC = () => {
 
               <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
                 <div className="flex items-center justify-between text-xs font-semibold text-textInk/60">
-                  <span>Total Temple Expenditures</span>
+                  <span>Total Operational Expenditures (Excl. Petty Cash)</span>
                   <ArrowUpRight className="w-5 h-5 text-red-600" />
                 </div>
                 <p className="font-mono text-3xl font-bold text-red-700 mt-1">
                   ₹{Number(financialBalanceQuery.data.totalExpenditure || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
-                <p className="text-[11px] text-textInk/50 font-medium">Across {financialBalanceQuery.data.totalExpensesCount || 0} expense vouchers</p>
+                <p className="text-[11px] text-textInk/50 font-medium">Operational expenses only (Petty Cash excluded)</p>
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-1 bg-gradient-to-br from-white to-ivory">
