@@ -46,18 +46,31 @@ export class BillingService implements IBillingService {
       devoteeId = defaultDevotee.id;
     }
 
-    const receipt = await this.billingRepo.createReceiptInTransaction({
-      receiptNumber,
-      kind: input.kind as any,
-      devoteeId,
-      paymentMode: input.paymentMode as any,
-      transactionRef: input.transactionRef,
-      sankalpaNote: input.sankalpaNote,
-      createdAt: (input as any).createdAt,
-      sevaDate: (input as any).sevaDate,
-      createdByUserId: userId,
-      prepared
-    });
+    let receipt: any;
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        const receiptNumber = await this.numberGenerator.generateNextNumber();
+        receipt = await this.billingRepo.createReceiptInTransaction({
+          receiptNumber,
+          kind: input.kind as any,
+          devoteeId,
+          paymentMode: input.paymentMode as any,
+          transactionRef: input.transactionRef,
+          sankalpaNote: input.sankalpaNote,
+          createdAt: (input as any).createdAt,
+          sevaDate: (input as any).sevaDate,
+          createdByUserId: userId,
+          prepared
+        });
+        break;
+      } catch (err: any) {
+        attempts++;
+        if (attempts >= 3 || !err.message?.includes('receiptNumber')) {
+          throw err;
+        }
+      }
+    }
 
     await this.auditLogger.log(userId, AuditAction.CREATE, 'Receipt', receipt.id, undefined, {
       receiptNumber: receipt.receiptNumber,

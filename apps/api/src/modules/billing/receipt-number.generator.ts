@@ -23,7 +23,7 @@ export class ReceiptNumberGenerator implements IReceiptNumberGenerator {
     const fyString = `${fyStart}-${String(fyEnd).slice(2)}`; // e.g. 2026-27
     const prefix = `TS/${fyString}/`;
 
-    // Find latest receipt with this prefix
+    // Find latest receipt with this prefix ordered by sequence (receiptNumber desc)
     const latestReceipt = await this.prisma.receipt.findFirst({
       where: {
         receiptNumber: {
@@ -31,7 +31,7 @@ export class ReceiptNumberGenerator implements IReceiptNumberGenerator {
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        receiptNumber: 'desc'
       }
     });
 
@@ -45,7 +45,13 @@ export class ReceiptNumberGenerator implements IReceiptNumberGenerator {
       }
     }
 
-    const paddedSequence = String(nextSequence).padStart(6, '0');
-    return `${prefix}${paddedSequence}`;
+    // Incremental collision safety check
+    let candidate = `${prefix}${String(nextSequence).padStart(6, '0')}`;
+    while (await this.prisma.receipt.findUnique({ where: { receiptNumber: candidate } })) {
+      nextSequence += 1;
+      candidate = `${prefix}${String(nextSequence).padStart(6, '0')}`;
+    }
+
+    return candidate;
   }
 }
