@@ -5,7 +5,9 @@ import { PaymentMode, ReceiptKind } from '@temple/shared';
 import { GopuramProgressRail } from '../components/GopuramMotif';
 import { ThermalReceiptModal } from '../components/ThermalReceiptModal';
 import { SankalpaModal } from '../components/SankalpaModal';
-import { Plus, Trash2, UserPlus, CheckCircle, Banknote, Smartphone, CreditCard, Building2 } from 'lucide-react';
+import { VedicAutocomplete } from '../components/VedicAutocomplete';
+import { useVedicMasters } from '../hooks/useVedicMasters';
+import { Plus, Trash2, UserPlus, CheckCircle, Banknote, Smartphone, CreditCard, Building2, Search } from 'lucide-react';
 
 export const BillingPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -34,7 +36,8 @@ export const BillingPage: React.FC = () => {
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [showSankalpaModal, setShowSankalpaModal] = useState(false);
 
-  // Queries
+  // Master Vedic lists (Gotra, Nakshatra, Rashi)
+  const { gotras, nakshatras, rashis } = useVedicMasters();
   const sevasQuery = useQuery({
     queryKey: ['active-sevas'],
     queryFn: async () => {
@@ -285,30 +288,52 @@ export const BillingPage: React.FC = () => {
 
           {!showQuickAddDevotee ? (
             <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Search by Devotee Name or Phone..."
-                value={devoteeSearch}
-                onChange={(e) => setDevoteeSearch(e.target.value)}
-                className="w-full px-4 py-2.5 border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by Name, Phone, Gotra, Nakshatra, or City (Type 3+ chars for fuzzy search)..."
+                  value={devoteeSearch}
+                  onChange={(e) => setDevoteeSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-turmeric/40 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 text-textInk font-medium bg-white"
+                />
+                <Search className="w-4 h-4 text-textInk/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
 
-              <div className="max-h-48 overflow-y-auto divide-y divide-ivory-dark border border-ivory-dark rounded-xl">
-                {devoteesQuery.data?.map((d: any) => (
-                  <div
-                    key={d.id}
-                    onClick={() => setSelectedDevotee(d)}
-                    className={`p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-ivory/50 transition-colors ${
-                      selectedDevotee?.id === d.id ? 'bg-ivory font-bold border-l-4 border-kumkum' : ''
-                    }`}
-                  >
-                    <div>
-                      <p className="font-bold text-textInk">{d.name} ({d.phone})</p>
-                      <p className="text-[10px] text-textInk/60">Gotra: {d.gotra || '-'} | City: {d.city || '-'}</p>
-                    </div>
-                    {selectedDevotee?.id === d.id && <CheckCircle className="w-4 h-4 text-kumkum" />}
+              {devoteeSearch.trim().length > 0 && devoteeSearch.trim().length < 3 && (
+                <p className="text-[11px] text-turmeric-dark italic px-1">
+                  💡 Type at least 3 letters to activate fuzzy search suggestion dropdown.
+                </p>
+              )}
+
+              <div className="max-h-56 overflow-y-auto divide-y divide-turmeric/10 border border-turmeric/20 rounded-xl bg-white shadow-xs">
+                {devoteesQuery.isLoading ? (
+                  <div className="p-4 text-xs text-textInk/50 text-center italic">Searching devotees database...</div>
+                ) : devoteesQuery.data?.length === 0 ? (
+                  <div className="p-4 text-xs text-textInk/50 text-center italic">
+                    No matching devotees found. Click "Quick Add Devotee" above to register new entry.
                   </div>
-                ))}
+                ) : (
+                  devoteesQuery.data?.map((d: any) => (
+                    <div
+                      key={d.id}
+                      onClick={() => setSelectedDevotee(d)}
+                      className={`p-3 text-xs flex items-center justify-between cursor-pointer hover:bg-ivory/60 transition-colors ${
+                        selectedDevotee?.id === d.id ? 'bg-kumkum/10 font-bold border-l-4 border-kumkum' : ''
+                      }`}
+                    >
+                      <div>
+                        <p className="font-bold text-textInk">{d.name} <span className="text-textInk/60 font-medium">({d.phone})</span></p>
+                        <p className="text-[10px] text-textInk/60 mt-0.5">
+                          Gotra: <span className="font-semibold text-textInk/80">{d.gotra || '-'}</span> | 
+                          Nakshatra: <span className="font-semibold text-textInk/80">{d.nakshatra || '-'}</span> | 
+                          Rashi: <span className="font-semibold text-textInk/80">{d.rashi || '-'}</span> | 
+                          City: <span className="font-semibold text-textInk/80">{d.city || '-'}</span>
+                        </p>
+                      </div>
+                      {selectedDevotee?.id === d.id && <CheckCircle className="w-4 h-4 text-kumkum" />}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           ) : (
@@ -320,50 +345,80 @@ export const BillingPage: React.FC = () => {
               className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-ivory-light/40 p-4 rounded-xl border border-turmeric/20"
             >
               <div>
-                <label className="text-xs font-semibold text-textInk/80">Devotee Name *</label>
+                <label className="text-xs font-semibold text-textInk mb-1 block">Devotee Name *</label>
                 <input
                   type="text"
                   required
+                  placeholder="e.g. Srinivas Rao"
                   value={newDevotee.name}
                   onChange={(e) => setNewDevotee({ ...newDevotee, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm mt-1"
+                  className="w-full px-3.5 py-2 bg-white border border-turmeric/40 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 text-textInk font-medium"
                 />
               </div>
+
               <div>
-                <label className="text-xs font-semibold text-textInk/80">Phone Number *</label>
+                <label className="text-xs font-semibold text-textInk mb-1 block">Phone Number *</label>
                 <input
                   type="text"
                   required
+                  placeholder="10-digit mobile number"
                   value={newDevotee.phone}
                   onChange={(e) => setNewDevotee({ ...newDevotee, phone: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm mt-1"
+                  className="w-full px-3.5 py-2 bg-white border border-turmeric/40 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 text-textInk font-medium"
                 />
               </div>
+
               <div>
-                <label className="text-xs font-semibold text-textInk/80">Gotra</label>
-                <input
-                  type="text"
+                <VedicAutocomplete
+                  label="Gotra"
+                  placeholder="Type 3+ letters to search Gotra..."
                   value={newDevotee.gotra}
-                  onChange={(e) => setNewDevotee({ ...newDevotee, gotra: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm mt-1"
+                  onChange={(val) => setNewDevotee({ ...newDevotee, gotra: val })}
+                  options={gotras}
+                  minChars={3}
                 />
               </div>
+
               <div>
-                <label className="text-xs font-semibold text-textInk/80">Nakshatra</label>
+                <VedicAutocomplete
+                  label="Nakshatra"
+                  placeholder="Type 3+ letters to search Nakshatra..."
+                  value={newDevotee.nakshatra}
+                  onChange={(val) => setNewDevotee({ ...newDevotee, nakshatra: val })}
+                  options={nakshatras}
+                  minChars={3}
+                />
+              </div>
+
+              <div>
+                <VedicAutocomplete
+                  label="Rashi"
+                  placeholder="Type 3+ letters to search Rashi..."
+                  value={newDevotee.rashi}
+                  onChange={(val) => setNewDevotee({ ...newDevotee, rashi: val })}
+                  options={rashis}
+                  minChars={3}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-textInk mb-1 block">City / Town</label>
                 <input
                   type="text"
-                  value={newDevotee.nakshatra}
-                  onChange={(e) => setNewDevotee({ ...newDevotee, nakshatra: e.target.value })}
-                  className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm mt-1"
+                  placeholder="e.g. Bengaluru"
+                  value={newDevotee.city}
+                  onChange={(e) => setNewDevotee({ ...newDevotee, city: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-white border border-turmeric/40 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 text-textInk font-medium"
                 />
               </div>
+
               <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
                 <button
                   type="submit"
                   disabled={createDevoteeMutation.isPending}
-                  className="bg-kumkum text-ivory text-xs font-bold px-4 py-2 rounded-xl"
+                  className="bg-kumkum hover:bg-kumkum-light text-ivory text-xs font-bold px-5 py-2.5 rounded-xl shadow-md transition-colors"
                 >
-                  Save & Select Devotee
+                  {createDevoteeMutation.isPending ? 'Saving Devotee...' : 'Save & Select Devotee'}
                 </button>
               </div>
             </form>

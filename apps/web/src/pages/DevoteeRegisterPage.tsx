@@ -5,20 +5,29 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { devoteeRegisterSchema, DevoteeRegisterInput } from '@temple/shared';
 import { apiClient } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.js';
+import { VedicAutocomplete } from '../components/VedicAutocomplete.js';
+import { useVedicMasters } from '../hooks/useVedicMasters.js';
 
 export const DevoteeRegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { gotras, nakshatras, rashis } = useVedicMasters();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors }
   } = useForm<DevoteeRegisterInput>({
     resolver: zodResolver(devoteeRegisterSchema)
   });
+
+  const gotraVal = watch('gotra') || '';
+  const nakshatraVal = watch('nakshatra') || '';
+  const rashiVal = watch('rashi') || '';
 
   const onSubmit = async (data: DevoteeRegisterInput) => {
     setErrorMsg(null);
@@ -119,32 +128,37 @@ export const DevoteeRegisterPage: React.FC = () => {
             <span className="text-[11px] font-bold text-turmeric uppercase tracking-wider block mb-3">
               Vedic & Sankalpa Information (Optional)
             </span>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] text-textInk/60 mb-1">Gotra</label>
-                <input
-                  {...register('gotra')}
-                  type="text"
-                  placeholder="Kashyapa"
-                  className="w-full bg-white border border-turmeric/30 rounded-lg px-2.5 py-1.5 text-xs text-textInk focus:outline-none focus:border-kumkum focus:ring-2 focus:ring-kumkum/20"
+                <VedicAutocomplete
+                  label="Gotra"
+                  placeholder="Search Gotra..."
+                  value={gotraVal}
+                  onChange={(val) => setValue('gotra', val, { shouldValidate: true })}
+                  options={gotras}
+                  minChars={3}
                 />
               </div>
+
               <div>
-                <label className="block text-[11px] text-textInk/60 mb-1">Nakshatra</label>
-                <input
-                  {...register('nakshatra')}
-                  type="text"
-                  placeholder="Uttara"
-                  className="w-full bg-white border border-turmeric/30 rounded-lg px-2.5 py-1.5 text-xs text-textInk focus:outline-none focus:border-kumkum focus:ring-2 focus:ring-kumkum/20"
+                <VedicAutocomplete
+                  label="Nakshatra"
+                  placeholder="Search Nakshatra..."
+                  value={nakshatraVal}
+                  onChange={(val) => setValue('nakshatra', val, { shouldValidate: true })}
+                  options={nakshatras}
+                  minChars={3}
                 />
               </div>
+
               <div>
-                <label className="block text-[11px] text-textInk/60 mb-1">Rashi</label>
-                <input
-                  {...register('rashi')}
-                  type="text"
-                  placeholder="Meena"
-                  className="w-full bg-white border border-turmeric/30 rounded-lg px-2.5 py-1.5 text-xs text-textInk focus:outline-none focus:border-kumkum focus:ring-2 focus:ring-kumkum/20"
+                <VedicAutocomplete
+                  label="Rashi"
+                  placeholder="Search Rashi..."
+                  value={rashiVal}
+                  onChange={(val) => setValue('rashi', val, { shouldValidate: true })}
+                  options={rashis}
+                  minChars={3}
                 />
               </div>
             </div>
