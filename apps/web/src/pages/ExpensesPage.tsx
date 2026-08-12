@@ -201,10 +201,6 @@ export const ExpensesPage: React.FC = () => {
       alert('Please wait for file compression to finish.');
       return;
     }
-    if (!attachment) {
-      alert('Bill copy or voucher attachment is mandatory for all expenditure entries. Please attach a bill receipt image or PDF file.');
-      return;
-    }
     setSubmitting(true);
     try {
       const res = await apiClient.post('/expenses', {
@@ -990,15 +986,36 @@ export const ExpensesPage: React.FC = () => {
                     className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory text-textInk font-bold cursor-not-allowed"
                   />
                 ) : (
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-kumkum"
-                  >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    <select
+                      value={categories.includes(formData.category) ? formData.category : 'CUSTOM'}
+                      onChange={(e) => {
+                        if (e.target.value !== 'CUSTOM') {
+                          setFormData({ ...formData, category: e.target.value });
+                        } else {
+                          setFormData({ ...formData, category: '' });
+                        }
+                      }}
+                      className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-kumkum"
+                    >
+                      {categories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                      <option value="CUSTOM">✏️ + Enter Custom Category Manually...</option>
+                    </select>
+
+                    {/* Manual input when custom category or typing */}
+                    {(!categories.includes(formData.category) || formData.category === '') && (
+                      <input
+                        type="text"
+                        required
+                        placeholder="Enter manual category name (e.g. Temple Printing & Flex)"
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full p-2.5 rounded-xl border border-kumkum/40 bg-white font-semibold text-kumkum focus:outline-none focus:border-kumkum animate-fadeIn"
+                      />
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -1054,16 +1071,15 @@ export const ExpensesPage: React.FC = () => {
                 />
               </div>
 
-              {/* MANDATORY ATTACHMENT FIELD */}
+              {/* ATTACHMENT FIELD (OPTIONAL) */}
               <div>
                 <label className="font-bold text-textInk block mb-1">
-                  Mandatory Bill Copy / Receipt Voucher Image or PDF *
+                  Bill Copy / Receipt Voucher Image or PDF (Optional)
                 </label>
                 <div className="space-y-2">
                   <input
                     type="file"
                     accept="image/*,application/pdf"
-                    required
                     onChange={handleFileChange}
                     className="w-full p-2 border border-turmeric/30 rounded-xl bg-ivory/30 text-xs text-textInk file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-kumkum file:text-ivory hover:file:bg-kumkum-light"
                   />

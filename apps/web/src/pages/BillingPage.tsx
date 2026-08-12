@@ -108,7 +108,7 @@ export const BillingPage: React.FC = () => {
     },
     onSuccess: (data) => {
       setCreatedReceipt(data);
-      setShowSuccessModal(true);
+      setCurrentStep(4);
     }
   });
 
@@ -201,7 +201,7 @@ export const BillingPage: React.FC = () => {
     createReceiptMutation.mutate(payload);
   };
 
-  const steps = ['1. Receipt Type', '2. Devotee Details', '3. Seva Items', '4. Payment & Issue'];
+  const steps = ['1. Receipt Type', '2. Devotee Details', '3. Seva Items', '4. Payment & Issue', '5. Receipt & Print'];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -810,66 +810,79 @@ export const BillingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Success & Exit Flow Modal */}
-      {showSuccessModal && createdReceipt && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/70 backdrop-blur-xs flex justify-center items-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-turmeric/30 text-center space-y-4 animate-scaleUp">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl font-bold shadow-xs">
-              ✓
+      {/* STEP 5: Receipt Created & Print Actions (Inline in Wizard Box) */}
+      {currentStep === 4 && createdReceipt && (
+        <div className="bg-white p-8 rounded-2xl border border-turmeric/30 shadow-lg text-center space-y-6 animate-fadeIn">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl font-bold shadow-xs">
+            ✓
+          </div>
+
+          <div>
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full uppercase tracking-wider">
+              SUCCESSFULLY GENERATED & RECORDED
+            </span>
+            <h3 className="font-display font-bold text-2xl text-kumkum mt-2">
+              Official Receipt Issued
+            </h3>
+            <p className="text-sm font-mono font-bold text-kumkum mt-1">
+              Receipt No: #{createdReceipt.receiptNumber}
+            </p>
+          </div>
+
+          {/* Receipt Details Summary Card */}
+          <div className="bg-ivory/60 p-6 rounded-2xl border border-turmeric/30 text-left text-xs space-y-3 max-w-lg mx-auto shadow-inner">
+            <div className="flex justify-between border-b border-turmeric/10 pb-2">
+              <span className="text-textInk/60 font-medium">Devotee Name:</span>
+              <span className="font-bold text-textInk">{createdReceipt.devotee?.name} ({createdReceipt.devotee?.phone})</span>
             </div>
-
-            <div>
-              <h3 className="font-display font-bold text-xl text-kumkum">Bill Generated Successfully!</h3>
-              <p className="text-xs text-textInk/60 mt-1">
-                Receipt <span className="font-mono font-bold text-kumkum">#{createdReceipt.receiptNumber}</span> has been created.
-              </p>
+            <div className="flex justify-between border-b border-turmeric/10 pb-2">
+              <span className="text-textInk/60 font-medium">Gotra / Nakshatra:</span>
+              <span className="font-semibold text-textInk">{createdReceipt.devotee?.gotra || '-'} / {createdReceipt.devotee?.nakshatra || '-'}</span>
             </div>
-
-            <div className="bg-ivory/60 p-4 rounded-xl border border-turmeric/20 text-left text-xs space-y-1.5 font-sans">
-              <div className="flex justify-between">
-                <span className="text-textInk/60">Devotee:</span>
-                <span className="font-bold text-textInk">{createdReceipt.devotee?.name} ({createdReceipt.devotee?.phone})</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-textInk/60">Gotra / Nakshatra:</span>
-                <span className="font-semibold text-textInk/80">{createdReceipt.devotee?.gotra || '-'} / {createdReceipt.devotee?.nakshatra || '-'}</span>
-              </div>
-              <div className="flex justify-between border-t border-turmeric/10 pt-1.5 font-bold text-sm text-kumkum font-mono">
-                <span>TOTAL AMOUNT:</span>
-                <span>₹{Number(createdReceipt.totalAmount).toFixed(2)}</span>
-              </div>
+            <div className="flex justify-between border-b border-turmeric/10 pb-2">
+              <span className="text-textInk/60 font-medium">Payment Mode:</span>
+              <span className="font-bold text-kumkum">{createdReceipt.paymentMode} {createdReceipt.transactionRef ? `(Ref: ${createdReceipt.transactionRef})` : ''}</span>
             </div>
-
-            <div className="space-y-2 pt-2">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setShowThermalModal(true)}
-                  className="bg-kumkum hover:bg-kumkum-light text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
-                >
-                  <Printer className="w-4 h-4" /> Print Receipt
-                </button>
-                <button
-                  onClick={() => setShowSankalpaModal(true)}
-                  className="bg-turmeric-dark hover:bg-kumkum text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
-                >
-                  📜 Sankalpa Sheet
-                </button>
+            {createdReceipt.items && createdReceipt.items.length > 0 && (
+              <div className="space-y-1.5 border-b border-turmeric/10 pb-2">
+                <span className="text-textInk/60 font-medium block mb-1">Seva Items:</span>
+                {createdReceipt.items.map((it: any, i: number) => (
+                  <div key={i} className="flex justify-between font-semibold text-[11px] text-textInk pl-2 border-l-2 border-turmeric/40">
+                    <span>{it.description} (x{it.quantity})</span>
+                    <span>₹{Number(it.amount * it.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
               </div>
+            )}
+            <div className="flex justify-between pt-1 font-bold text-base text-kumkum font-mono">
+              <span>FINAL AMOUNT PAID:</span>
+              <span>₹{Number(createdReceipt.totalAmount).toFixed(2)}</span>
+            </div>
+          </div>
 
+          {/* Print & Next Bill Buttons */}
+          <div className="max-w-md mx-auto space-y-3 pt-2">
+            <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={handleStartNewBill}
-                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2"
+                onClick={() => setShowThermalModal(true)}
+                className="bg-kumkum hover:bg-kumkum-light text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all transform hover:-translate-y-0.5"
               >
-                <span>✨ Generate Next Bill / New Transaction</span>
+                <Printer className="w-4 h-4" /> Thermal Print
               </button>
-
               <button
-                onClick={() => setShowSuccessModal(false)}
-                className="w-full text-xs text-textInk/60 hover:text-textInk font-semibold py-1.5"
+                onClick={() => setShowSankalpaModal(true)}
+                className="bg-turmeric-dark hover:bg-kumkum text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all transform hover:-translate-y-0.5"
               >
-                Close / Exit
+                📜 Sankalpa Sheet
               </button>
             </div>
+
+            <button
+              onClick={handleStartNewBill}
+              className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 px-4 rounded-xl text-sm shadow-lg transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+            >
+              <span>✨ Start Next Seva Bill (Step 1)</span>
+            </button>
           </div>
         </div>
       )}
