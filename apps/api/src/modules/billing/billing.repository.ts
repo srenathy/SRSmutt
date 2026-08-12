@@ -28,8 +28,13 @@ export class BillingRepository implements IBillingRepository {
     const page = params.page || 1;
     const limit = params.limit || 10;
     const skip = (page - 1) * limit;
-
-    const where: any = {};
+    const where: any = {
+      kind: { not: 'HUNDI_COLLECTION' },
+      devotee: {
+        phone: { not: '0000000000' },
+        NOT: { name: { contains: 'General Temple Income' } }
+      }
+    };
 
     if (params.startDate) {
       where.createdAt = { ...where.createdAt, gte: new Date(params.startDate) };
