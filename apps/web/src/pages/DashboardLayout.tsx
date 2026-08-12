@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Settings,
   TrendingDown,
+  Wallet,
   Users,
   Scroll,
   Menu,
