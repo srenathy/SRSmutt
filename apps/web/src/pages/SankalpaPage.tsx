@@ -32,9 +32,18 @@ export const SankalpaPage: React.FC = () => {
     }
   });
 
-  // Filter the fetched list locally by search term
+  // Filter the fetched list locally by search term (excluding direct income / hundi entries)
   const filteredList = listData?.filter((item: any) => {
     const devotee = item.receipt?.devotee || {};
+    if (
+      item.receipt?.kind === 'HUNDI_COLLECTION' ||
+      devotee.phone === '0000000000' ||
+      devotee.name?.toLowerCase().includes('general temple income') ||
+      devotee.name?.toLowerCase().includes('hundi')
+    ) {
+      return false;
+    }
+
     const name = (devotee.name || '').toLowerCase();
     const phone = (devotee.phone || '').toLowerCase();
     const gotra = (devotee.gotra || '').toLowerCase();

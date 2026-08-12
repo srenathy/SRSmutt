@@ -170,10 +170,17 @@ export class BillingRepository implements IBillingRepository {
     const targetMonth = targetDate.getMonth() + 1;
     const targetDay = targetDate.getDate();
 
-    // 1. Regular Sevas matching sevaDate or createdAt on dateStr
+    // 1. Regular Sevas matching sevaDate or createdAt on dateStr (excluding Hundi / Direct Income)
     const regularItems = await this.prisma.receiptItem.findMany({
       where: {
-        receipt: { cancelledAt: null },
+        receipt: {
+          cancelledAt: null,
+          kind: { not: 'HUNDI_COLLECTION' },
+          devotee: {
+            phone: { not: '0000000000' },
+            NOT: { name: { contains: 'General Temple Income' } }
+          }
+        },
         OR: [
           { sevaDate: { gte: start, lte: end } },
           {
@@ -194,7 +201,14 @@ export class BillingRepository implements IBillingRepository {
     // 2. Annual Shashwata Seva recurrence (same month & day)
     const shashwataItems = await this.prisma.receiptItem.findMany({
       where: {
-        receipt: { cancelledAt: null },
+        receipt: {
+          cancelledAt: null,
+          kind: { not: 'HUNDI_COLLECTION' },
+          devotee: {
+            phone: { not: '0000000000' },
+            NOT: { name: { contains: 'General Temple Income' } }
+          }
+        },
         shashwataSevaId: { not: null },
         ...(sevaId ? { sevaId } : {})
       },
