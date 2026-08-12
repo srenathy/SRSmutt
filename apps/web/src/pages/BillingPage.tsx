@@ -151,13 +151,19 @@ export const BillingPage: React.FC = () => {
 
   const handleQuantityChange = (index: number, qty: number) => {
     setItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, quantity: Math.max(1, qty) } : item))
+      prev.map((item, i) => (i === index ? { ...item, quantity: Math.max(1, isNaN(qty) ? 1 : qty) } : item))
     );
   };
 
   const handleAmountChange = (index: number, amount: number) => {
     setItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, amount: Math.max(0, amount) } : item))
+      prev.map((item, i) => (i === index ? { ...item, amount: Math.max(0, isNaN(amount) ? 0 : amount) } : item))
+    );
+  };
+
+  const handleDevoteeCountChange = (index: number, count: number) => {
+    setItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, devoteeCount: Math.max(1, isNaN(count) ? 1 : count) } : item))
     );
   };
 
@@ -540,24 +546,43 @@ export const BillingPage: React.FC = () => {
                           type="number"
                           min={1}
                           value={item.quantity}
+                          onFocus={(e) => e.target.select()}
                           onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value, 10))}
-                          className="w-16 px-2 py-1 border border-turmeric/20 rounded-lg text-xs text-center"
+                          className="w-16 px-2 py-1 border border-turmeric/20 rounded-lg text-xs text-center font-bold focus:bg-white"
                         />
                       </td>
                       <td className="p-3 text-center">
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.devoteeCount || 1}
-                          onChange={(e) =>
-                            setItems((prev) =>
-                              prev.map((it, i) =>
-                                i === idx ? { ...it, devoteeCount: Math.max(1, parseInt(e.target.value, 10) || 1) } : it
-                              )
-                            )
-                          }
-                          className="w-20 px-2 py-1 border border-turmeric/30 rounded-lg text-xs text-center font-bold bg-ivory/40 focus:bg-white"
-                        />
+                        <div className="inline-flex items-center gap-1 border border-turmeric/40 rounded-xl bg-white p-1 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => handleDevoteeCountChange(idx, (item.devoteeCount || 1) - 1)}
+                            className="w-6 h-6 rounded-lg bg-ivory hover:bg-turmeric/20 text-kumkum font-bold flex items-center justify-center text-xs transition-colors"
+                            title="Decrease devotees"
+                          >
+                            -
+                          </button>
+
+                          <input
+                            type="number"
+                            min={1}
+                            value={item.devoteeCount ?? 1}
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) => {
+                              const parsed = parseInt(e.target.value, 10);
+                              handleDevoteeCountChange(idx, isNaN(parsed) ? 1 : parsed);
+                            }}
+                            className="w-12 text-center text-xs font-bold text-kumkum focus:outline-none focus:ring-1 focus:ring-kumkum/40 rounded py-0.5"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => handleDevoteeCountChange(idx, (item.devoteeCount || 1) + 1)}
+                            className="w-6 h-6 rounded-lg bg-ivory hover:bg-turmeric/20 text-kumkum font-bold flex items-center justify-center text-xs transition-colors"
+                            title="Increase devotees"
+                          >
+                            +
+                          </button>
+                        </div>
                       </td>
                       <td className="p-3 text-right font-mono">
                         <input
