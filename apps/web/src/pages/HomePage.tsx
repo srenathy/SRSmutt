@@ -99,43 +99,9 @@ export const HomePage: React.FC = () => {
             Mulabagala Sri Sripadaraja Matha — Rajajinagar Branch
           </p>
 
-          <p className="text-sm md:text-base text-textInk/80 max-w-3xl mx-auto leading-relaxed mb-8">
-            Experience divine blessings at our Rajajinagar branch housing the sacred Mrittika Brindavana of Sri Raghavendra Swamy under the holy lineage of Sri Sripadaraja Swamiji. Book Sevas online, view daily Darshan timings, and sponsor Nitya Annadana.
+          <p className="text-sm md:text-base text-textInk/80 max-w-3xl mx-auto leading-relaxed">
+            Experience divine blessings at our Rajajinagar branch housing the sacred Mrittika Brindavana of Sri Raghavendra Swamy under the holy lineage of Sri Sripadaraja Swamiji. View daily Darshan timings, Seva offerings, and sponsor Nitya Annadana.
           </p>
-
-          {/* Action CTAs */}
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              to="/devotee-register"
-              className="px-6 py-3 rounded-xl font-bold text-sm bg-kumkum text-ivory shadow-lg shadow-kumkum/20 hover:bg-kumkum-light hover:shadow-kumkum/30 hover:scale-105 transition transform flex items-center gap-2"
-            >
-              🚩 Devotee Registration
-            </Link>
-            <button
-              onClick={() => setActiveTab('events')}
-              className="px-6 py-3 rounded-xl font-bold text-sm bg-amber-700 text-ivory shadow-md hover:bg-amber-800 transition flex items-center gap-2"
-            >
-              🚩 Temple Events & News
-            </button>
-            <button
-              onClick={() => setActiveTab('sevas')}
-              className="px-6 py-3 rounded-xl font-bold text-sm bg-white text-kumkum border border-kumkum/30 hover:bg-kumkum/5 transition flex items-center gap-2"
-            >
-              🌸 View Seva Offerings
-            </button>
-            <button
-              onClick={() => setActiveTab('timings')}
-              className="px-6 py-3 rounded-xl font-semibold text-sm bg-ivory text-textInk/80 border border-turmeric/30 hover:bg-ivory-dark transition flex items-center gap-2"
-            >
-              ⏰ Darshan & Pooja Timings
-            </button>
-            <button
-              onClick={() => setActiveTab('contact')}
-              className="px-6 py-3 rounded-xl font-semibold text-sm bg-white text-turmeric-dark border border-turmeric/30 hover:bg-ivory transition flex items-center gap-2"
-            >
-              📍 Branch Address & Info
-            </button>
-          </div>
         </div>
 
         {/* Live News Ticker */}
@@ -377,7 +343,7 @@ export const HomePage: React.FC = () => {
             <div className="text-center max-w-2xl mx-auto mb-6">
               <h3 className="font-display text-2xl font-bold text-kumkum">Sacred Sevas & Offerings</h3>
               <p className="text-xs text-textInk/60 mt-1">
-                Book Sevas online or at our Rajajinagar billing counter to receive divine Prasada.
+                View active Seva details. Seva bookings can be performed directly at our Rajajinagar billing counter.
               </p>
             </div>
 
@@ -429,12 +395,9 @@ export const HomePage: React.FC = () => {
                           ₹{Number(s.amount).toLocaleString('en-IN')}
                         </span>
                       </div>
-                      <Link
-                        to="/login"
-                        className="px-4 py-2 text-xs font-bold bg-kumkum text-ivory rounded-lg hover:bg-kumkum-light transition shadow-xs"
-                      >
-                        Book Seva
-                      </Link>
+                      <span className="text-[11px] font-bold text-turmeric-dark bg-turmeric/10 border border-turmeric/30 px-3 py-1.5 rounded-lg">
+                        Book at Counter
+                      </span>
                     </div>
                   </div>
                 ))}

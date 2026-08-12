@@ -4,9 +4,11 @@ import { X } from 'lucide-react';
 export interface FieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'email' | 'textarea' | 'checkbox';
+  type: 'text' | 'number' | 'email' | 'textarea' | 'checkbox' | 'image' | 'select';
   placeholder?: string;
   required?: boolean;
+  options?: { label: string; value: string }[];
+  allowCustomText?: boolean;
 }
 
 interface MasterFormDrawerProps {
@@ -31,6 +33,40 @@ export const MasterFormDrawer: React.FC<MasterFormDrawerProps> = ({
   isSubmitting
 }) => {
   if (!isOpen) return null;
+
+  const handleImageFile = (file: File, fieldName: string) => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 800;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        onChange(fieldName, compressedBase64);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-ink/50 backdrop-blur-sm flex justify-end transition-opacity">
@@ -73,6 +109,90 @@ export const MasterFormDrawer: React.FC<MasterFormDrawerProps> = ({
                   />
                   <span className="text-sm font-medium text-textInk">Active</span>
                 </label>
+              ) : field.type === 'image' ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer bg-kumkum/10 text-kumkum hover:bg-kumkum/20 border border-kumkum/30 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                      📁 Choose Image File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageFile(file, field.name);
+                        }}
+                      />
+                    </label>
+                    <span className="text-[10px] text-textInk/50">Auto-compressed max 800px</span>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={formData[field.name] ?? ''}
+                    onChange={(e) => onChange(field.name, e.target.value)}
+                    placeholder={field.placeholder || "Paste image URL or choose file above..."}
+                    className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50 font-mono text-xs"
+                  />
+
+                  {formData[field.name] && (
+                    <div className="relative inline-block mt-1">
+                      <img
+                        src={formData[field.name]}
+                        alt="Preview"
+                        className="w-24 h-20 object-cover rounded-lg border border-turmeric/40 shadow-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onChange(field.name, '')}
+                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 text-[10px] font-bold hover:bg-red-700 shadow-sm"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : field.type === 'select' ? (
+                <div className="space-y-1.5">
+                  <select
+                    value={
+                      field.options?.some((o) => o.value === formData[field.name])
+                        ? formData[field.name]
+                        : field.allowCustomText && formData[field.name]
+                        ? 'CUSTOM'
+                        : formData[field.name] || (field.options?.[0]?.value ?? '')
+                    }
+                    onChange={(e) => {
+                      if (e.target.value === 'CUSTOM') {
+                        onChange(field.name, formData[field.name] && !field.options?.some(o => o.value === formData[field.name]) ? formData[field.name] : '');
+                      } else {
+                        onChange(field.name, e.target.value);
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50 font-semibold text-textInk"
+                  >
+                    {field.options?.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                    {field.allowCustomText && (
+                      <option value="CUSTOM">✏️ Custom Category (Type your own)...</option>
+                    )}
+                  </select>
+
+                  {(field.allowCustomText &&
+                    (!field.options?.some((o) => o.value === formData[field.name]) ||
+                      formData[field.name] === '')) && (
+                    <input
+                      type="text"
+                      value={formData[field.name] ?? ''}
+                      onChange={(e) => onChange(field.name, e.target.value)}
+                      placeholder="Type custom category name (e.g. Rathotsava)..."
+                      className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50 mt-1"
+                    />
+                  )}
+                </div>
               ) : (
                 <input
                   type={field.type}

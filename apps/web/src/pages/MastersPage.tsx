@@ -55,7 +55,13 @@ export const MastersPage: React.FC = () => {
       setFormData({ ...item });
     } else {
       setEditingItem(null);
-      setFormData(activeTab === 'shashwata' ? { durationYears: 25, active: true } : { active: true });
+      setFormData(
+        activeTab === 'shashwata'
+          ? { durationYears: 25, active: true }
+          : activeTab === 'announcements'
+          ? { category: 'EVENT', active: true }
+          : { active: true }
+      );
     }
     setDrawerOpen(true);
   };
@@ -295,8 +301,22 @@ export const MastersPage: React.FC = () => {
     } else {
       return [
         { name: 'title', label: 'Event / Announcement Title', type: 'text', required: true },
-        { name: 'category', label: 'Category (EVENT / ANNOUNCEMENT / UTSAVA / SPECIAL_PUJA)', type: 'text', required: true },
-        { name: 'imageUrl', label: 'Photo / Image URL (Optional)', type: 'text' },
+        {
+          name: 'category',
+          label: 'Category',
+          type: 'select',
+          required: true,
+          allowCustomText: true,
+          options: [
+            { label: '🚩 EVENT (Temple Event / Celebration)', value: 'EVENT' },
+            { label: '📢 ANNOUNCEMENT (General Notice)', value: 'ANNOUNCEMENT' },
+            { label: '🛕 UTSAVA (Temple Festival / Rathotsava)', value: 'UTSAVA' },
+            { label: '🌸 SPECIAL_PUJA (Special Pooja Ritual)', value: 'SPECIAL_PUJA' },
+            { label: '⏰ DARSHAN_TIMINGS (Pooja & Darshan Timings)', value: 'DARSHAN_TIMINGS' },
+            { label: '📜 GURU_PARAMPARA (Lineage & Heritage)', value: 'GURU_PARAMPARA' }
+          ]
+        },
+        { name: 'imageUrl', label: 'Photo / Image Attachment (Upload File or Paste URL)', type: 'image' },
         { name: 'content', label: 'Content & Event Details', type: 'textarea', required: true },
         { name: 'active', label: 'Active on Homepage', type: 'checkbox' }
       ];
