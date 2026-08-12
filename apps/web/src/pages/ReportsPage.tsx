@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Printer, Calendar, Download, TrendingUp, DollarSign, Award, Layers } from 'lucide-react';
+import { generateTallyXML, generateTallyCSV, downloadFile } from '../utils/tallyExport.js';
+import { Printer, Calendar, Download, TrendingUp, DollarSign, Award, Layers, FileCode, FileSpreadsheet } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
   const [reportType, setReportType] = useState<'daily' | 'monthly'>('daily');
@@ -53,6 +54,24 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
+  const handleExportTallyXML = () => {
+    if (!reportData?.receipts || reportData.receipts.length === 0) {
+      alert('No receipt vouchers found in this report period for Tally XML export.');
+      return;
+    }
+    const xmlContent = generateTallyXML(reportData.receipts, `Collection Report (${reportType === 'daily' ? selectedDate : `${selectedYear}-${selectedMonth}`})`);
+    downloadFile(xmlContent, `tally_vouchers_${reportType}_${selectedDate || selectedYear}.xml`, 'application/xml');
+  };
+
+  const handleExportTallyCSV = () => {
+    if (!reportData?.receipts || reportData.receipts.length === 0) {
+      alert('No receipt vouchers found in this report period for Tally CSV export.');
+      return;
+    }
+    const csvContent = generateTallyCSV(reportData.receipts);
+    downloadFile(csvContent, `tally_vouchers_${reportType}_${selectedDate || selectedYear}.csv`, 'text/csv');
+  };
+
   const handleExportCSV = () => {
     if (!reportData) return;
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -89,23 +108,43 @@ export const ReportsPage: React.FC = () => {
         <div>
           <h2 className="font-display text-2xl font-bold text-kumkum">Collection Reports & Financial Insights</h2>
           <p className="text-xs text-textInk/60 mt-1">
-            Comprehensive audit report breakdown by payment mode, date period, and revenue share.
+            Comprehensive audit report breakdown by payment mode, date period, and Tally Prime XML/CSV exports.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto no-print">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto no-print">
+          <button
+            onClick={handleExportTallyXML}
+            disabled={!reportData?.receipts || reportData.receipts.length === 0 || isLoading}
+            className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-40"
+            title="Export Tally Prime XML Vouchers format for direct import"
+          >
+            <FileCode className="w-3.5 h-3.5" />
+            Tally XML Export
+          </button>
+
+          <button
+            onClick={handleExportTallyCSV}
+            disabled={!reportData?.receipts || reportData.receipts.length === 0 || isLoading}
+            className="bg-turmeric-dark hover:bg-kumkum text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-40"
+            title="Export Tally CSV Spreadsheet Vouchers format"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            Tally CSV Export
+          </button>
+
           <button
             onClick={handleExportCSV}
             disabled={!reportData || isLoading}
-            className="bg-white border border-turmeric/30 text-kumkum font-semibold px-3.5 py-2 rounded-xl text-xs hover:bg-kumkum/5 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-40"
+            className="bg-white border border-turmeric/30 text-kumkum font-semibold px-3 py-2 rounded-xl text-xs hover:bg-kumkum/5 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-40"
           >
             <Download className="w-3.5 h-3.5" />
-            Export CSV
+            Export Summary CSV
           </button>
 
           <button
             onClick={handlePrintReport}
-            className="bg-kumkum hover:bg-kumkum-light text-ivory font-bold px-4 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-md"
+            className="bg-kumkum hover:bg-kumkum-light text-ivory font-bold px-3.5 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-md"
           >
             <Printer className="w-4 h-4" />
             Print Report

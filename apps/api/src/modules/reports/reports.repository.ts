@@ -87,12 +87,12 @@ export class ReportsRepository implements IReportsRepository {
           createdAt: { gte: startDate, lte: endDate },
           cancelledAt: null
         },
-        select: {
-          createdAt: true,
-          totalAmount: true,
-          paymentMode: true,
-          kind: true
-        }
+        include: {
+          devotee: true,
+          createdByUser: { select: { fullName: true } },
+          items: true
+        },
+        orderBy: { createdAt: 'asc' }
       }),
       this.prisma.receipt.groupBy({
         by: ['paymentMode'],
@@ -157,7 +157,8 @@ export class ReportsRepository implements IReportsRepository {
       dailyBreakdown: Object.keys(dailyBreakdown).map((date) => ({
         date,
         totalAmount: dailyBreakdown[date]
-      }))
+      })),
+      receipts
     };
   }
 }
