@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Printer, FileText, Receipt, Layout } from 'lucide-react';
+import { X, Printer, FileText, Receipt, MessageCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client.js';
 
@@ -112,7 +112,22 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {receipt?.devotee?.phone && receipt.devotee.phone !== '0000000000' && (
+              <button
+                onClick={() => {
+                  const phone = receipt.devotee.phone.replace(/\D/g, '');
+                  const itemsList = receipt.items?.map((it: any) => `${it.description} (x${it.quantity})`).join(', ') || 'Seva';
+                  const text = `Jay Sri Krishna! 🙏\n\n*Mulabagala Sri Sripadaraja Matha (Rajajinagar Branch)*\n\n*Official Receipt No:* #${receipt.receiptNumber}\n*Devotee:* ${receipt.devotee.name}\n*Sevas:* ${itemsList}\n*Total Paid:* ₹${safeNum(receipt.totalAmount).toFixed(2)}\n*Payment Mode:* ${receipt.paymentMode}\n\nThank you for your devotion and divine contribution!`;
+                  const url = `https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(text)}`;
+                  window.open(url, '_blank');
+                }}
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-md transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                WhatsApp Share
+              </button>
+            )}
             <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-1.5 rounded-xl text-xs font-bold shadow-md transition-colors"
