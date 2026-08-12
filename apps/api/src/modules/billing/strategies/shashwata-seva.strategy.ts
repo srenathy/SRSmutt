@@ -30,7 +30,8 @@ export class ShashwataSevaStrategy implements ReceiptTypeStrategy {
         shashwataSevaId: sSeva.id,
         description: item.description || `${sSeva.name} (${sSeva.durationYears} Years)`,
         amount: itemAmount,
-        quantity: item.quantity
+        quantity: item.quantity,
+        devoteeCount: item.devoteeCount || 1
       });
     }
 

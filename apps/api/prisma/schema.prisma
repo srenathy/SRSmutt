@@ -167,6 +167,7 @@ model ReceiptItem {
   description     String
   amount          Decimal
   quantity        Int            @default(1)
+  devoteeCount    Int            @default(1)
 
   @@map("receipt_items")
 }

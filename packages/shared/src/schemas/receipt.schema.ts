@@ -6,7 +6,8 @@ export const receiptItemInputSchema = z.object({
   shashwataSevaId: z.string().optional(),
   description: z.string().min(1, 'Item description is required'),
   amount: z.number().min(0, 'Amount must be non-negative'),
-  quantity: z.number().int().min(1, 'Quantity must be at least 1').default(1)
+  quantity: z.number().int().min(1, 'Quantity must be at least 1').default(1),
+  devoteeCount: z.number().int().min(1, 'Devotee count must be at least 1').default(1).optional()
 });
 
 export type ReceiptItemInput = z.infer<typeof receiptItemInputSchema>;

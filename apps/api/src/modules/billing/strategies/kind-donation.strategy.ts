@@ -20,7 +20,8 @@ export class KindDonationStrategy implements ReceiptTypeStrategy {
       items.push({
         description: item.description,
         amount: itemAmount,
-        quantity: item.quantity
+        quantity: item.quantity,
+        devoteeCount: item.devoteeCount || 1
       });
     }
 

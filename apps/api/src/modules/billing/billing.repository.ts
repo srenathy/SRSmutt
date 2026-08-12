@@ -126,7 +126,8 @@ export class BillingRepository implements IBillingRepository {
               shashwataSevaId: item.shashwataSevaId,
               description: item.description,
               amount: item.amount,
-              quantity: item.quantity
+              quantity: item.quantity,
+              devoteeCount: item.devoteeCount || 1
             }))
           }
         },

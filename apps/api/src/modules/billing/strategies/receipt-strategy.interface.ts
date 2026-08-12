@@ -7,6 +7,7 @@ export interface ValidatedReceiptItem {
   description: string;
   amount: number;
   quantity: number;
+  devoteeCount: number;
 }
 
 export interface PreparedReceiptData {

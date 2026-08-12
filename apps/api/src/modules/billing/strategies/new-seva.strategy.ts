@@ -30,7 +30,8 @@ export class NewSevaStrategy implements ReceiptTypeStrategy {
         sevaId: seva.id,
         description: item.description || seva.name,
         amount: itemAmount,
-        quantity: item.quantity
+        quantity: item.quantity,
+        devoteeCount: item.devoteeCount || 1
       });
     }
 

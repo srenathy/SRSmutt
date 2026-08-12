@@ -140,9 +140,14 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
             </div>
             {receipt.items?.map((item: any, idx: number) => (
               <div key={idx} className="flex justify-between py-1 text-[11px]">
-                <span className="w-1/2 truncate">{item.description}</span>
-                <span className="w-1/4 text-center">{item.quantity}</span>
-                <span className="w-1/4 text-right">₹{Number(item.amount).toFixed(2)}</span>
+                <span className="w-1/2">
+                  <div className="font-bold">{item.description}</div>
+                  {item.devoteeCount ? (
+                    <div className="text-[9px] text-gray-700 font-semibold">Devotees: {item.devoteeCount}</div>
+                  ) : null}
+                </span>
+                <span className="w-1/4 text-center font-bold">{item.quantity}</span>
+                <span className="w-1/4 text-right font-mono font-bold">₹{Number(item.amount).toFixed(2)}</span>
               </div>
             ))}
           </div>

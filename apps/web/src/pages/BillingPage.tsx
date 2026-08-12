@@ -23,7 +23,7 @@ export const BillingPage: React.FC = () => {
   });
 
   const [items, setItems] = useState<
-    { sevaId?: string; shashwataSevaId?: string; description: string; amount: number; quantity: number }[]
+    { sevaId?: string; shashwataSevaId?: string; description: string; amount: number; quantity: number; devoteeCount: number }[]
   >([]);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(PaymentMode.CASH);
   const [transactionRef, setTransactionRef] = useState('');
@@ -112,7 +112,8 @@ export const BillingPage: React.FC = () => {
           sevaId: seva.id,
           description: seva.name,
           amount: Number(seva.amount),
-          quantity: 1
+          quantity: 1,
+          devoteeCount: 1
         }
       ]);
     } else if (kind === ReceiptKind.SHASHWATA_SEVA) {
@@ -122,7 +123,8 @@ export const BillingPage: React.FC = () => {
           shashwataSevaId: seva.id,
           description: `${seva.name} (${seva.durationYears} Years)`,
           amount: Number(seva.amount),
-          quantity: 1
+          quantity: 1,
+          devoteeCount: 1
         }
       ]);
     }
@@ -134,7 +136,8 @@ export const BillingPage: React.FC = () => {
       {
         description: 'Dravya / In-Kind Donation',
         amount: 100,
-        quantity: 1
+        quantity: 1,
+        devoteeCount: 1
       }
     ]);
   };
@@ -449,6 +452,7 @@ export const BillingPage: React.FC = () => {
                 <tr>
                   <th className="p-3">Seva Description</th>
                   <th className="p-3 text-center">Qty</th>
+                  <th className="p-3 text-center">No. of Devotees</th>
                   <th className="p-3 text-right">Unit Price (₹)</th>
                   <th className="p-3 text-right">Line Total</th>
                   <th className="p-3 text-center">Action</th>
@@ -457,7 +461,7 @@ export const BillingPage: React.FC = () => {
               <tbody className="divide-y divide-ivory-dark/60">
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-textInk/50">
+                    <td colSpan={6} className="p-6 text-center text-textInk/50">
                       No items added yet. Click an offering above to add.
                     </td>
                   </tr>
@@ -483,6 +487,21 @@ export const BillingPage: React.FC = () => {
                           value={item.quantity}
                           onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value, 10))}
                           className="w-16 px-2 py-1 border border-turmeric/20 rounded-lg text-xs text-center"
+                        />
+                      </td>
+                      <td className="p-3 text-center">
+                        <input
+                          type="number"
+                          min={1}
+                          value={item.devoteeCount || 1}
+                          onChange={(e) =>
+                            setItems((prev) =>
+                              prev.map((it, i) =>
+                                i === idx ? { ...it, devoteeCount: Math.max(1, parseInt(e.target.value, 10) || 1) } : it
+                              )
+                            )
+                          }
+                          className="w-20 px-2 py-1 border border-turmeric/30 rounded-lg text-xs text-center font-bold bg-ivory/40 focus:bg-white"
                         />
                       </td>
                       <td className="p-3 text-right font-mono">

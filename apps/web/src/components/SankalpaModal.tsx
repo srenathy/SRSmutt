@@ -111,7 +111,9 @@ export const SankalpaModal: React.FC<SankalpaModalProps> = ({
                 <li key={idx} className="flex items-center gap-3 text-base font-semibold text-textInk">
                   <span className="h-2 w-2 rounded-full bg-turmeric"></span>
                   <span>{item.description}</span>
-                  <span className="text-xs text-textInk/50 font-normal">(Qty: {item.quantity})</span>
+                  <span className="text-xs text-textInk/60 font-medium">
+                    (Qty: {item.quantity}{item.devoteeCount ? ` | ${item.devoteeCount} Devotee${item.devoteeCount > 1 ? 's' : ''}` : ''})
+                  </span>
                 </li>
               ))}
             </ul>

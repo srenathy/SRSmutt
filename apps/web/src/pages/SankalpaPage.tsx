@@ -227,11 +227,9 @@ export const SankalpaPage: React.FC = () => {
                       <td className="p-4 print:p-2 text-textInk/90 print:text-black">{devotee.rashi || '-'}</td>
                       <td className="p-4 print:p-2 font-bold text-kumkum print:text-black">
                         {item.seva?.name || item.description || 'Seva'}
-                        {item.quantity > 1 && (
-                          <span className="text-[10px] font-normal text-textInk/60 ml-1 print:text-black">
-                            ({item.quantity} Nos)
-                          </span>
-                        )}
+                        <span className="text-[10px] font-normal text-textInk/60 ml-1 print:text-black">
+                          (Qty: {item.quantity}{item.devoteeCount ? ` | Devotees: ${item.devoteeCount}` : ''})
+                        </span>
                       </td>
                       <td className="p-4 print:p-2 text-textInk/70 italic print:text-black">
                         {item.receipt?.sankalpaNote || '-'}

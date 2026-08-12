@@ -135,12 +135,16 @@ export const ExpensesPage: React.FC = () => {
       alert('Please wait for file compression to finish.');
       return;
     }
+    if (!attachment) {
+      alert('Bill copy or voucher attachment is mandatory for all expenditure entries. Please attach a bill receipt image or PDF file.');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await apiClient.post('/expenses', {
         ...formData,
         amount: Number(formData.amount),
-        attachment: attachment || undefined
+        attachment: attachment
       });
       alert(
         res.data.data.status === 'PENDING'
@@ -479,8 +483,9 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">
-                  Upload Receipt / Invoice (Optional)
+                <label className="block text-xs font-bold text-kumkum mb-1 flex items-center justify-between">
+                  <span>Upload Receipt / Invoice <span className="text-red-600 font-bold">* (Mandatory)</span></span>
+                  {!attachment && <span className="text-[10px] text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded border border-red-200">Attachment Required</span>}
                 </label>
                 <div className="flex items-center gap-3">
                   <input
