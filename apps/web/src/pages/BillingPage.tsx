@@ -82,6 +82,9 @@ export const BillingPage: React.FC = () => {
       // Defensive client-side deduplication by phone or name+gotra+city
       const seen = new Set<string>();
       return rawList.filter((d: any) => {
+        if (d.phone === '0000000000' || d.name?.toLowerCase().includes('general temple income') || d.name?.toLowerCase().includes('hundi')) {
+          return false;
+        }
         const cleanPhone = (d.phone || '').replace(/\D/g, '').slice(-10);
         const cleanName = (d.name || '').trim().toLowerCase();
         const cleanGotra = (d.gotra || '').trim().toLowerCase();

@@ -26,6 +26,9 @@ export class DevoteeService extends BaseService<Devotee> implements IDevoteeServ
     const result: Devotee[] = [];
 
     for (const d of list) {
+      if (d.phone === '0000000000' || d.name?.toLowerCase().includes('general temple income') || d.name?.toLowerCase().includes('hundi')) {
+        continue;
+      }
       const cleanPhone = (d.phone || '').replace(/\D/g, '');
       const cleanName = (d.name || '').trim().toLowerCase();
       const cleanGotra = (d.gotra || '').trim().toLowerCase();
