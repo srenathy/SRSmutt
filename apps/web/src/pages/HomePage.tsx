@@ -26,7 +26,7 @@ export const HomePage: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [sevas, setSevas] = useState<Seva[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'about' | 'timings' | 'sevas' | 'annadana' | 'contact'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'timings' | 'events' | 'sevas' | 'annadana' | 'contact'>('about');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,6 +112,12 @@ export const HomePage: React.FC = () => {
               🚩 Devotee Registration
             </Link>
             <button
+              onClick={() => setActiveTab('events')}
+              className="px-6 py-3 rounded-xl font-bold text-sm bg-amber-700 text-ivory shadow-md hover:bg-amber-800 transition flex items-center gap-2"
+            >
+              🚩 Temple Events & News
+            </button>
+            <button
               onClick={() => setActiveTab('sevas')}
               className="px-6 py-3 rounded-xl font-bold text-sm bg-white text-kumkum border border-kumkum/30 hover:bg-kumkum/5 transition flex items-center gap-2"
             >
@@ -160,6 +166,16 @@ export const HomePage: React.FC = () => {
             }`}
           >
             🏛️ About Rajajinagar Branch
+          </button>
+          <button
+            onClick={() => setActiveTab('events')}
+            className={`px-5 py-2.5 rounded-lg font-semibold text-xs md:text-sm transition ${
+              activeTab === 'events'
+                ? 'bg-kumkum text-ivory shadow-md font-bold'
+                : 'text-textInk/60 hover:text-kumkum hover:bg-kumkum/5'
+            }`}
+          >
+            🚩 Temple Events & News
           </button>
           <button
             onClick={() => setActiveTab('timings')}
@@ -246,6 +262,64 @@ export const HomePage: React.FC = () => {
           </div>
         )}
 
+        {/* Tab: Events & Announcements Showcase */}
+        {activeTab === 'events' && (
+          <div className="space-y-6 animate-fadeIn">
+            <div className="text-center max-w-2xl mx-auto mb-6">
+              <h3 className="font-display text-2xl font-bold text-kumkum">🚩 Temple Events, Aradhana & Special News</h3>
+              <p className="text-xs text-textInk/60 mt-1">
+                Upcoming religious programs, festival celebrations, and important branch announcements.
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="grid md:grid-cols-2 gap-6">
+                {[1, 2].map((i) => (
+                  <div key={i} className="bg-white border border-turmeric/20 rounded-xl p-6 animate-pulse space-y-4">
+                    <div className="h-4 w-24 bg-ivory rounded" />
+                    <div className="h-6 w-3/4 bg-ivory rounded" />
+                    <div className="h-32 w-full bg-ivory rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            ) : announcements.length === 0 ? (
+              <div className="bg-white border border-turmeric/20 rounded-2xl p-12 text-center text-xs text-textInk/60 space-y-2">
+                <p className="font-bold text-sm text-kumkum">No special events currently scheduled.</p>
+                <p>Check back regularly for upcoming Aradhana Mahotsava & Utsava details.</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {announcements.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white border border-turmeric/20 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between"
+                  >
+                    <div>
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="w-full h-48 object-cover rounded-xl border border-turmeric/20 mb-4"
+                        />
+                      )}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                          {item.category || 'EVENT'}
+                        </span>
+                        <span className="text-[10px] text-textInk/50 font-mono">
+                          {new Date(item.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <h4 className="font-display font-bold text-kumkum text-lg mb-2">{item.title}</h4>
+                      <p className="text-xs text-textInk/80 leading-relaxed whitespace-pre-line">{item.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tab 2: Verified Darshan & Pooja Timings */}
         {activeTab === 'timings' && (
           <div className="bg-white border border-turmeric/20 rounded-2xl p-8 shadow-sm animate-fadeIn space-y-6">
@@ -273,7 +347,7 @@ export const HomePage: React.FC = () => {
                   </li>
                   <li className="flex justify-between pb-1">
                     <span className="font-semibold text-textInk">Teertha Prasada (Nitya Annadana)</span>
-                    <span className="text-turmeric-dark font-mono font-bold">12:30 PM – 2:00 PM</span>
+                    <span className="text-turmeric-dark font-mono font-bold">12:30 PM</span>
                   </li>
                 </ul>
               </div>
@@ -323,7 +397,7 @@ export const HomePage: React.FC = () => {
               /* Empty State Fallback */
               <div className="bg-white border border-turmeric/20 rounded-2xl p-12 text-center text-xs text-textInk/60 space-y-3">
                 <p className="font-bold text-sm text-kumkum">No active Sevas currently published.</p>
-                <p>Please contact temple counter at +91 89046 74124 / +91 98800 54620 for Seva details.</p>
+                <p>Please contact temple counter at +91 89046 74124 for Seva details.</p>
               </div>
             ) : (
               /* Dynamic Seva Cards */
@@ -378,7 +452,7 @@ export const HomePage: React.FC = () => {
                 Nitya Annadana — Teertha Prasada Daily
               </h3>
               <p className="text-textInk/80 text-sm leading-relaxed mb-6">
-                Annadana is considered the highest form of charity (*Annam Brahma*). At our Rajajinagar Branch, hot sanctified meals (Teertha Prasada) are served daily to pilgrims from 12:30 PM to 2:00 PM following afternoon Mahamangalarathi.
+                Annadana is considered the highest form of charity (*Annam Brahma*). At our Rajajinagar Branch, hot sanctified meals (Teertha Prasada) are served daily to pilgrims at 12:30 PM following afternoon Mahamangalarathi.
               </p>
 
               <div className="grid md:grid-cols-2 gap-4 mb-6">
@@ -429,19 +503,9 @@ export const HomePage: React.FC = () => {
                   <div className="border-t border-turmeric/20 pt-4 flex items-start gap-3">
                     <Phone className="w-5 h-5 text-kumkum shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-bold text-ink text-sm">Phone Numbers</h4>
+                      <h4 className="font-bold text-ink text-sm">Phone Number</h4>
                       <p className="text-xs text-textInk/80 mt-1 font-mono font-semibold">
-                        +91 89046 74124 / +91 98800 54620
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-turmeric/20 pt-4 flex items-start gap-3">
-                    <UserCheck className="w-5 h-5 text-kumkum shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-bold text-ink text-sm">In-Charge Contacts</h4>
-                      <p className="text-xs text-textInk/80 mt-1 font-semibold">
-                        Sri Ashwatha Narayan / Sri Ravikiran
+                        +91 89046 74124
                       </p>
                     </div>
                   </div>
@@ -458,7 +522,7 @@ export const HomePage: React.FC = () => {
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-green-700 shrink-0" />
-                      <span className="font-semibold">Teertha Prasada</span> — Daily afternoon Annadana (12:30 PM - 2:00 PM)
+                      <span className="font-semibold">Teertha Prasada</span> — Daily afternoon Annadana (12:30 PM)
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-green-700 shrink-0" />

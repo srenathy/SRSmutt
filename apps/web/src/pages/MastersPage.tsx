@@ -222,9 +222,27 @@ export const MastersPage: React.FC = () => {
       ];
     } else {
       return [
-        { key: 'title', header: 'Title' },
-        { key: 'category', header: 'Category' },
-        { key: 'content', header: 'Content' },
+        { key: 'title', header: 'Event / Announcement Title' },
+        {
+          key: 'category',
+          header: 'Category',
+          render: (r: any) => (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+              {r.category}
+            </span>
+          )
+        },
+        {
+          key: 'imageUrl',
+          header: 'Event Photo',
+          render: (r: any) =>
+            r.imageUrl ? (
+              <img src={r.imageUrl} alt={r.title} className="w-10 h-10 object-cover rounded-lg border border-turmeric/30" />
+            ) : (
+              <span className="text-textInk/40 italic text-[10px]">No Photo</span>
+            )
+        },
+        { key: 'content', header: 'Content Details' },
         {
           key: 'active',
           header: 'Status',
@@ -276,9 +294,10 @@ export const MastersPage: React.FC = () => {
       ];
     } else {
       return [
-        { name: 'title', label: 'Announcement Title', type: 'text', required: true },
-        { name: 'category', label: 'Category (ANNOUNCEMENT / EVENT / DARSHAN_TIMINGS / GURU_PARAMPARA)', type: 'text', required: true },
-        { name: 'content', label: 'Content Details', type: 'textarea', required: true },
+        { name: 'title', label: 'Event / Announcement Title', type: 'text', required: true },
+        { name: 'category', label: 'Category (EVENT / ANNOUNCEMENT / UTSAVA / SPECIAL_PUJA)', type: 'text', required: true },
+        { name: 'imageUrl', label: 'Photo / Image URL (Optional)', type: 'text' },
+        { name: 'content', label: 'Content & Event Details', type: 'textarea', required: true },
         { name: 'active', label: 'Active on Homepage', type: 'checkbox' }
       ];
     }
