@@ -34,7 +34,7 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-ink flex items-center justify-center p-6 selection:bg-turmeric selection:text-ink">
+    <div className="min-h-screen bg-ivory-light flex items-center justify-center p-6 selection:bg-turmeric selection:text-ink">
       <div className="w-full max-w-md bg-ivory-light rounded-3xl shadow-2xl overflow-hidden border border-turmeric/40">
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-kumkum-dark via-kumkum to-kumkum-light p-8 text-center text-ivory">
@@ -100,10 +100,6 @@ export const LoginPage: React.FC = () => {
               </>
             )}
           </button>
-
-          <div className="pt-4 text-center text-xs text-textInk/50 font-mono">
-            Default seed credentials: <span className="font-bold text-kumkum">admin</span> / <span className="font-bold text-kumkum">admin123</span>
-          </div>
         </form>
       </div>
     </div>

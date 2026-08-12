@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.js';
-import { Building2, CreditCard, UserCheck, FileText, Printer, CheckCircle, Save } from 'lucide-react';
+import { Building2, CreditCard, Printer, CheckCircle, Save } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'temple' | 'finance' | 'printer'>('temple');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -109,274 +110,337 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="font-display text-2xl font-bold text-kumkum">Temple Information & Settings</h2>
-        <p className="text-xs text-textInk/60 mt-1">
-          Configure official temple name, address, UPI ID, default archaka/priest, and receipt print templates.
-        </p>
+    <div className="w-full max-w-6xl mx-auto space-y-3">
+      {/* Page Title Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-xl font-bold text-kumkum">Temple & Billing Settings</h2>
+          <p className="text-[11px] text-textInk/60">
+            Configure temple profile, UPI payments, archaka details, and print receipt templates.
+          </p>
+        </div>
+      </div>
+
+      {/* Main Options Row (Horizontal Navigation Tabs) */}
+      <div className="bg-white p-1.5 rounded-xl border border-turmeric/20 shadow-xs grid grid-cols-3 gap-1.5 text-xs">
+        <button
+          type="button"
+          onClick={() => setActiveTab('temple')}
+          className={`py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'temple'
+              ? 'bg-kumkum text-ivory shadow-xs'
+              : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+          }`}
+        >
+          <Building2 className="w-4 h-4 shrink-0" />
+          <span>Temple Profile</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('finance')}
+          className={`py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'finance'
+              ? 'bg-kumkum text-ivory shadow-xs'
+              : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+          }`}
+        >
+          <CreditCard className="w-4 h-4 shrink-0" />
+          <span>UPI & Archaka Details</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('printer')}
+          className={`py-2 px-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'printer'
+              ? 'bg-kumkum text-ivory shadow-xs'
+              : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+          }`}
+        >
+          <Printer className="w-4 h-4 shrink-0" />
+          <span>Receipt Print Setup</span>
+        </button>
       </div>
 
       {successMessage && (
-        <div className="p-4 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle className="w-5 h-5 text-emerald-600" />
+        <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-xs font-semibold flex items-center justify-center gap-2 animate-fadeIn">
+          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
           {successMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* TEMPLE INFORMATION CARD */}
-        <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-turmeric/20 pb-3">
-            <Building2 className="w-5 h-5 text-kumkum" />
-            <h3 className="font-display font-bold text-base text-kumkum uppercase tracking-wider">
-              TEMPLE INFORMATION
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">Temple Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
-              />
+      {/* Wide, Compact Centered Form Editing Card */}
+      <form onSubmit={handleSubmit} className="bg-white p-5 md:p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-4">
+        {/* OPTION 1: TEMPLE PROFILE */}
+        {activeTab === 'temple' && (
+          <div className="space-y-4 animate-fadeIn">
+            <div className="border-b border-turmeric/20 pb-2 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-kumkum" />
+              <h3 className="font-display font-bold text-xs md:text-sm text-kumkum uppercase tracking-wider">
+                TEMPLE INFORMATION & LOCATION
+              </h3>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                rows={2}
-                required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">City</label>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Temple Full Name</label>
                 <input
                   type="text"
-                  name="city"
-                  value={formData.city}
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum font-medium"
                 />
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">State</label>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Primary Deity / Sannidhana</label>
                 <input
                   type="text"
-                  name="state"
-                  value={formData.state}
+                  name="deity"
+                  value={formData.deity}
                   onChange={handleChange}
-                  required
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  placeholder="e.g. Shri Raghavendra Swamy Brindavana Sannidhana"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Pincode</label>
+
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-bold text-textInk mb-1">Address</label>
                 <input
                   type="text"
-                  name="pincode"
-                  value={formData.pincode}
+                  name="address"
+                  value={formData.address}
                   onChange={handleChange}
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum font-medium"
                 />
               </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Pincode</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Phone Number(s)</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* OPTION 2: FINANCIAL & PRIEST DETAILS */}
+        {activeTab === 'finance' && (
+          <div className="space-y-4 animate-fadeIn">
+            <div className="border-b border-turmeric/20 pb-2 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-kumkum" />
+              <h3 className="font-display font-bold text-xs md:text-sm text-kumkum uppercase tracking-wider">
+                UPI, PRIEST & BUDGET DETAILS
+              </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Phone Number</label>
+                <label className="block text-[11px] font-bold text-textInk mb-1">UPI VPA ID (for Billing QR Code)</label>
                 <input
                   type="text"
-                  name="phone"
-                  value={formData.phone}
+                  name="upiId"
+                  value={formData.upiId}
+                  onChange={handleChange}
+                  placeholder="e.g. raghavendra@upi"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-kumkum"
+                />
+                <p className="text-[10px] text-textInk/50 mt-0.5">Encoded into dynamic payment QR codes on counter receipt printouts.</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Default Priest / Archaka Name</label>
+                <input
+                  type="text"
+                  name="defaultPriest"
+                  value={formData.defaultPriest}
+                  onChange={handleChange}
+                  placeholder="e.g. Sri Ashwatha Narayan / Sri Ravikiran"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                />
+                <p className="text-[10px] text-textInk/50 mt-0.5">Printed as officiating priest on Sankalpa & Seva receipts.</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Monthly Expenditure Budget (₹)</label>
+                <input
+                  type="number"
+                  name="monthlyExpenseBudget"
+                  value={formData.monthlyExpenseBudget}
                   onChange={handleChange}
                   required
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  min="0"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum"
                 />
+                <p className="text-[10px] text-textInk/50 mt-0.5">Operational budget allocated every month.</p>
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Email Address</label>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Admin Approval Threshold Limit (₹)</label>
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  type="number"
+                  name="expenseApprovalThreshold"
+                  value={formData.expenseApprovalThreshold}
                   onChange={handleChange}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  required
+                  min="0"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum"
                 />
+                <p className="text-[10px] text-textInk/50 mt-0.5">Expenses above this require explicit admin approval.</p>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* FINANCIAL & PRIEST DETAILS CARD */}
-        <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-turmeric/20 pb-3">
-            <CreditCard className="w-5 h-5 text-kumkum" />
-            <h3 className="font-display font-bold text-base text-kumkum uppercase tracking-wider">
-              UPI & PRIEST / ARCHAKA DETAILS
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">UPI ID (for Billing QR Code)</label>
-              <input
-                type="text"
-                name="upiId"
-                value={formData.upiId}
-                onChange={handleChange}
-                placeholder="e.g. raghavendra@upi"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-              />
-              <p className="text-[10px] text-textInk/50 mt-1">This UPI VPA will be encoded in the QR code on devotee receipts.</p>
+        {/* OPTION 3: BILLING RECEIPT & THERMAL PRINTER */}
+        {activeTab === 'printer' && (
+          <div className="space-y-4 animate-fadeIn">
+            <div className="border-b border-turmeric/20 pb-2 flex items-center gap-2">
+              <Printer className="w-4 h-4 text-kumkum" />
+              <h3 className="font-display font-bold text-xs md:text-sm text-kumkum uppercase tracking-wider">
+                BILLING RECEIPT & THERMAL PRINTER SETTINGS
+              </h3>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">Default Priest / Archaka</label>
-              <input
-                type="text"
-                name="defaultPriest"
-                value={formData.defaultPriest}
-                onChange={handleChange}
-                placeholder="e.g. Sri Raghavacharya"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-              />
-              <p className="text-[10px] text-textInk/50 mt-1">Appears on Sankalpa & Seva receipts as officiating priest.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-turmeric/10 pt-4">
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">Monthly Expenditure Wallet Amount (₹)</label>
-              <input
-                type="number"
-                name="monthlyExpenseBudget"
-                value={formData.monthlyExpenseBudget}
-                onChange={handleChange}
-                required
-                min="0"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-              />
-              <p className="text-[10px] text-textInk/50 mt-1">Operational budget allocated every month. Expenditures deduct from this balance.</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">Admin Approval Threshold Limit (₹)</label>
-              <input
-                type="number"
-                name="expenseApprovalThreshold"
-                value={formData.expenseApprovalThreshold}
-                onChange={handleChange}
-                required
-                min="0"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-turmeric/40 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-              />
-              <p className="text-[10px] text-textInk/50 mt-1">Expenses exceeding this amount will automatically require Admin Approval.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* RECEIPT PRINT TEMPLATE CARD */}
-        <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 border-b border-turmeric/20 pb-3">
-            <Printer className="w-5 h-5 text-kumkum" />
-            <h3 className="font-display font-bold text-base text-kumkum uppercase tracking-wider">
-              BILLING RECEIPT & THERMAL PRINTER SETTINGS
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">Receipt Header Line</label>
-              <input
-                type="text"
-                name="receiptHeader"
-                value={formData.receiptHeader}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-textInk mb-1">Receipt Footer Note</label>
-              <input
-                type="text"
-                name="receiptFooter"
-                value={formData.receiptFooter}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Printer Roll Size</label>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Receipt Top Header Line</label>
+                <input
+                  type="text"
+                  name="receiptHeader"
+                  value={formData.receiptHeader}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                />
+                <p className="text-[10px] text-textInk/50 mt-0.5">Header line printed at top of thermal POS slip.</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Receipt Footer Note</label>
+                <input
+                  type="text"
+                  name="receiptFooter"
+                  value={formData.receiptFooter}
+                  onChange={handleChange}
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                />
+                <p className="text-[10px] text-textInk/50 mt-0.5">Blessing line printed at bottom of thermal POS slip.</p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-textInk mb-1">Printer Roll Size</label>
                 <select
                   value={printerSettings.paperWidth}
                   onChange={(e) => setPrinterSettings({ ...printerSettings, paperWidth: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-kumkum"
                 >
-                  <option value="80mm">80mm Thermal Paper (Standard)</option>
+                  <option value="80mm">80mm Thermal Paper (Standard POS)</option>
                   <option value="58mm">58mm Mini Thermal Paper</option>
                   <option value="A4">A4 Full Page Document</option>
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 pt-6">
-                <input
-                  type="checkbox"
-                  id="showLogo"
-                  checked={printerSettings.showLogo}
-                  onChange={(e) => setPrinterSettings({ ...printerSettings, showLogo: e.target.checked })}
-                  className="w-4 h-4 text-kumkum border-turmeric/40 rounded focus:ring-kumkum/20"
-                />
-                <label htmlFor="showLogo" className="text-xs font-semibold text-textInk">Show Gopuram Header Logo</label>
-              </div>
+              <div className="flex items-center gap-6 pt-3">
+                <label className="flex items-center gap-2 text-xs font-bold text-textInk cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="showLogo"
+                    checked={printerSettings.showLogo}
+                    onChange={(e) => setPrinterSettings({ ...printerSettings, showLogo: e.target.checked })}
+                    className="w-4 h-4 text-kumkum border-turmeric/40 rounded focus:ring-kumkum/20"
+                  />
+                  Show Gopuram Logo
+                </label>
 
-              <div className="flex items-center gap-2 pt-6">
-                <input
-                  type="checkbox"
-                  id="showSankalpa"
-                  checked={printerSettings.showSankalpa}
-                  onChange={(e) => setPrinterSettings({ ...printerSettings, showSankalpa: e.target.checked })}
-                  className="w-4 h-4 text-kumkum border-turmeric/40 rounded focus:ring-kumkum/20"
-                />
-                <label htmlFor="showSankalpa" className="text-xs font-semibold text-textInk">Include Sankalpa Text on Bill</label>
+                <label className="flex items-center gap-2 text-xs font-bold text-textInk cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="showSankalpa"
+                    checked={printerSettings.showSankalpa}
+                    onChange={(e) => setPrinterSettings({ ...printerSettings, showSankalpa: e.target.checked })}
+                    className="w-4 h-4 text-kumkum border-turmeric/40 rounded focus:ring-kumkum/20"
+                  />
+                  Include Sankalpa Text
+                </label>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* SUBMIT BUTTON */}
-        <div className="pt-2">
+        {/* Centered Save Button at Bottom */}
+        <div className="pt-2 border-t border-turmeric/20 flex justify-center">
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-3 bg-kumkum text-ivory rounded-xl font-bold text-sm shadow-md hover:bg-kumkum-dark transition-all flex items-center gap-2 disabled:opacity-50"
+            className="px-8 py-2.5 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50 min-w-[200px]"
           >
             {submitting ? (
               <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-ivory border-t-transparent" />
-                Saving Temple Information...
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ivory border-t-transparent" />
+                <span>Saving Settings...</span>
               </>
             ) : (
               <>
-                <Save className="w-4 h-4" />
-                Save Temple Information
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Temple Settings</span>
               </>
             )}
           </button>

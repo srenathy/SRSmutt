@@ -6,6 +6,7 @@ import { Role } from '@temple/shared';
 
 export function registerTempleRoutes(fastify: FastifyInstance, controller: TempleController) {
   fastify.get('/', { preHandler: [authGuard] }, (req, reply) => controller.getTemple(req, reply));
+  fastify.get('/public', (req, reply) => controller.getTemple(req, reply));
   fastify.post('/', { preHandler: [authGuard, roleGuard([Role.ADMIN])] }, (req, reply) => controller.upsertTemple(req, reply));
   fastify.put('/', { preHandler: [authGuard, roleGuard([Role.ADMIN])] }, (req, reply) => controller.upsertTemple(req, reply));
 }

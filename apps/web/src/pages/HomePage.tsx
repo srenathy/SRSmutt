@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GopuramDivider } from '../components/GopuramMotif.js';
 import { apiClient } from '../api/client.js';
+import { MapPin, Phone, UserCheck, Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface Announcement {
   id: string;
@@ -17,6 +18,7 @@ interface Seva {
   code: string;
   amount: number;
   description?: string;
+  active?: boolean;
 }
 
 export const HomePage: React.FC = () => {
@@ -24,17 +26,19 @@ export const HomePage: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [sevas, setSevas] = useState<Seva[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'about' | 'timings' | 'sevas' | 'annadana' | 'future'>('about');
+  const [activeTab, setActiveTab] = useState<'about' | 'timings' | 'sevas' | 'annadana' | 'contact'>('about');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const [annRes, sevaRes] = await Promise.all([
           apiClient.get('/announcements/public'),
           apiClient.get('/sevas')
         ]);
         setAnnouncements(annRes.data.data || []);
-        setSevas((sevaRes.data.data || []).slice(0, 6));
+        const rawSevas = sevaRes.data.data || sevaRes.data || [];
+        setSevas(Array.isArray(rawSevas) ? rawSevas.filter((s: Seva) => s.active !== false) : []);
       } catch (err) {
         console.error('Failed to fetch public homepage data:', err);
       } finally {
@@ -45,19 +49,19 @@ export const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-ivory-light text-textInk flex flex-col font-sans selection:bg-turmeric selection:text-white">
       {/* Top Banner Navigation */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-amber-900/30 px-6 py-4 flex items-center justify-between shadow-2xl">
+      <header className="sticky top-0 z-40 bg-white backdrop-blur-md border-b border-turmeric/20 shadow-sm px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-400 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg shadow-amber-500/20">
+          <div className="w-10 h-10 rounded-full bg-kumkum/10 border border-kumkum/30 flex items-center justify-center text-kumkum font-bold text-xl shadow-xs">
             🕉️
           </div>
           <div>
-            <h1 className="font-serif text-lg md:text-xl font-bold bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
-              Sri Raghavendra Swamy Matha
+            <h1 className="font-display text-kumkum text-lg md:text-xl font-bold leading-tight">
+              Mulabagala Sri Sripadaraja Matha
             </h1>
-            <p className="text-xs text-amber-300/70 font-sans tracking-wide">
-              Mantralayam Kshetra • Official Devotee Portal
+            <p className="text-xs text-textInk/60 font-sans tracking-wide">
+              Shri Raghavendra Swamy Brindavana Sannidhana – Rajajinagar, Bengaluru
             </p>
           </div>
         </div>
@@ -65,13 +69,13 @@ export const HomePage: React.FC = () => {
         <div className="flex items-center space-x-3">
           <Link
             to="/devotee-register"
-            className="hidden sm:inline-flex px-4 py-2 text-xs font-semibold text-amber-300 border border-amber-500/40 rounded-lg hover:bg-amber-500/10 transition"
+            className="hidden sm:inline-flex px-4 py-2 text-xs font-semibold text-kumkum border border-kumkum/30 rounded-lg hover:bg-kumkum/5 transition"
           >
             Devotee Signup
           </Link>
           <Link
             to="/login"
-            className="px-5 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-lg shadow-md hover:shadow-amber-500/30 transition transform hover:-translate-y-0.5"
+            className="px-5 py-2 text-xs font-bold text-ivory bg-kumkum hover:bg-kumkum-light shadow-md rounded-lg transition transform hover:-translate-y-0.5"
           >
             Portal Login
           </Link>
@@ -79,55 +83,62 @@ export const HomePage: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-20 px-6 text-center bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 border-b border-amber-900/20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent pointer-events-none"></div>
+      <section className="relative overflow-hidden pt-12 pb-16 px-6 text-center bg-gradient-to-b from-ivory to-ivory-light border-b border-turmeric/20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-turmeric/10 via-transparent to-transparent pointer-events-none"></div>
 
         <div className="max-w-4xl mx-auto relative z-10">
-          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider text-amber-300 bg-amber-950/60 border border-amber-800/40 mb-6 shadow-inner">
+          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold tracking-widest text-turmeric-dark bg-turmeric/10 border border-turmeric/30 mb-6 shadow-xs">
             || SRI GURU RAGHAVENDRO VIJAYATE ||
           </span>
 
-          <h2 className="font-serif text-3xl md:text-5xl font-extrabold text-slate-100 tracking-tight leading-tight mb-6">
-            Holy Abode of <br className="hidden md:inline" />
-            <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
-              Sri Raghavendra Swamiji
-            </span>
+          <h2 className="font-display text-3xl md:text-5xl font-extrabold text-ink tracking-tight leading-tight mb-3">
+            Shri Raghavendra Swamy Brindavana Sannidhana
           </h2>
 
-          <p className="text-sm md:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
-            Experience divine blessings, explore authentic Mutt history, sponsor sacred Annadana meals, and manage your family Seva receipts online with our unified Devotee Portal.
+          <p className="font-display text-lg md:text-xl font-bold text-kumkum mb-6">
+            Mulabagala Sri Sripadaraja Matha — Rajajinagar Branch
+          </p>
+
+          <p className="text-sm md:text-base text-textInk/80 max-w-3xl mx-auto leading-relaxed mb-8">
+            Experience divine blessings at our Rajajinagar branch housing the sacred Mrittika Brindavana of Sri Raghavendra Swamy under the holy lineage of Sri Sripadaraja Swamiji. Book Sevas online, view daily Darshan timings, and sponsor Nitya Annadana.
           </p>
 
           {/* Action CTAs */}
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               to="/devotee-register"
-              className="px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105 transition transform"
+              className="px-6 py-3 rounded-xl font-bold text-sm bg-kumkum text-ivory shadow-lg shadow-kumkum/20 hover:bg-kumkum-light hover:shadow-kumkum/30 hover:scale-105 transition transform flex items-center gap-2"
             >
               🚩 Devotee Registration
             </Link>
             <button
               onClick={() => setActiveTab('sevas')}
-              className="px-6 py-3 rounded-xl font-bold text-sm bg-slate-900 text-amber-300 border border-amber-500/40 hover:bg-slate-800 hover:border-amber-400 transition"
+              className="px-6 py-3 rounded-xl font-bold text-sm bg-white text-kumkum border border-kumkum/30 hover:bg-kumkum/5 transition flex items-center gap-2"
             >
-              🕉️ View Seva Offerings
+              🌸 View Seva Offerings
             </button>
             <button
               onClick={() => setActiveTab('timings')}
-              className="px-6 py-3 rounded-xl font-semibold text-sm bg-slate-900/60 text-slate-300 border border-slate-700 hover:bg-slate-800 transition"
+              className="px-6 py-3 rounded-xl font-semibold text-sm bg-ivory text-textInk/80 border border-turmeric/30 hover:bg-ivory-dark transition flex items-center gap-2"
             >
-              📜 Darshan & Pooja Timings
+              ⏰ Darshan & Pooja Timings
+            </button>
+            <button
+              onClick={() => setActiveTab('contact')}
+              className="px-6 py-3 rounded-xl font-semibold text-sm bg-white text-turmeric-dark border border-turmeric/30 hover:bg-ivory transition flex items-center gap-2"
+            >
+              📍 Branch Address & Info
             </button>
           </div>
         </div>
 
         {/* Live News Ticker */}
         {announcements.length > 0 && (
-          <div className="max-w-4xl mx-auto mt-12 bg-amber-950/30 border border-amber-800/40 rounded-xl p-4 flex items-center space-x-3 text-left">
-            <span className="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-amber-500 text-slate-950 rounded uppercase shrink-0">
+          <div className="max-w-4xl mx-auto mt-10 bg-turmeric/10 border border-turmeric/30 rounded-xl p-4 flex items-center space-x-3 text-left">
+            <span className="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-kumkum text-ivory rounded uppercase shrink-0">
               NEWS
             </span>
-            <div className="overflow-hidden text-xs text-amber-200 truncate">
+            <div className="overflow-hidden text-xs text-textInk/80 truncate">
               <strong>{announcements[0].title}:</strong> {announcements[0].content}
             </div>
           </div>
@@ -137,25 +148,25 @@ export const HomePage: React.FC = () => {
       <GopuramDivider />
 
       {/* Main Interactive Tabbed Content Section */}
-      <main className="max-w-6xl mx-auto px-6 py-12 flex-1 w-full">
+      <main className="max-w-6xl mx-auto px-6 py-10 flex-1 w-full">
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-10 border-b border-slate-800 pb-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-10 border-b border-turmeric/20 pb-4">
           <button
             onClick={() => setActiveTab('about')}
             className={`px-5 py-2.5 rounded-lg font-semibold text-xs md:text-sm transition ${
               activeTab === 'about'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
-                : 'text-slate-400 hover:text-amber-300 hover:bg-slate-900'
+                ? 'bg-kumkum text-ivory shadow-md font-bold'
+                : 'text-textInk/60 hover:text-kumkum hover:bg-kumkum/5'
             }`}
           >
-            🏛️ About the Mutt
+            🏛️ About Rajajinagar Branch
           </button>
           <button
             onClick={() => setActiveTab('timings')}
             className={`px-5 py-2.5 rounded-lg font-semibold text-xs md:text-sm transition ${
               activeTab === 'timings'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
-                : 'text-slate-400 hover:text-amber-300 hover:bg-slate-900'
+                ? 'bg-kumkum text-ivory shadow-md font-bold'
+                : 'text-textInk/60 hover:text-kumkum hover:bg-kumkum/5'
             }`}
           >
             ⏰ Darshan & Pooja Timings
@@ -164,8 +175,8 @@ export const HomePage: React.FC = () => {
             onClick={() => setActiveTab('sevas')}
             className={`px-5 py-2.5 rounded-lg font-semibold text-xs md:text-sm transition ${
               activeTab === 'sevas'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
-                : 'text-slate-400 hover:text-amber-300 hover:bg-slate-900'
+                ? 'bg-kumkum text-ivory shadow-md font-bold'
+                : 'text-textInk/60 hover:text-kumkum hover:bg-kumkum/5'
             }`}
           >
             🌸 Sevas & Offerings
@@ -174,120 +185,111 @@ export const HomePage: React.FC = () => {
             onClick={() => setActiveTab('annadana')}
             className={`px-5 py-2.5 rounded-lg font-semibold text-xs md:text-sm transition ${
               activeTab === 'annadana'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
-                : 'text-slate-400 hover:text-amber-300 hover:bg-slate-900'
+                ? 'bg-kumkum text-ivory shadow-md font-bold'
+                : 'text-textInk/60 hover:text-kumkum hover:bg-kumkum/5'
             }`}
           >
             🍚 Nitya Annadana Seva
           </button>
           <button
-            onClick={() => setActiveTab('future')}
+            onClick={() => setActiveTab('contact')}
             className={`px-5 py-2.5 rounded-lg font-semibold text-xs md:text-sm transition ${
-              activeTab === 'future'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
-                : 'text-slate-400 hover:text-amber-300 hover:bg-slate-900'
+              activeTab === 'contact'
+                ? 'bg-kumkum text-ivory shadow-md font-bold'
+                : 'text-textInk/60 hover:text-kumkum hover:bg-kumkum/5'
             }`}
           >
-            🚀 Future Portal Additions
+            📍 Location & Contacts
           </button>
         </div>
 
-        {/* Tab 1: About the Mutt */}
+        {/* Tab 1: About Rajajinagar Branch */}
         {activeTab === 'about' && (
           <div className="space-y-8 animate-fadeIn">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 shadow-xl">
-              <h3 className="font-serif text-2xl font-bold text-amber-300 mb-4">
-                The Heritage & Significance of Sri Raghavendra Swamy Matha
+            <div className="bg-white border border-turmeric/20 rounded-2xl p-8 shadow-sm">
+              <h3 className="font-display text-2xl font-bold text-kumkum mb-4">
+                Mulabagala Sri Sripadaraja Matha — Rajajinagar Branch, Bengaluru
               </h3>
-              <p className="text-slate-300 leading-relaxed text-sm mb-4">
-                Sri Raghavendra Swamy (1595–1671 AD) was a revered Madhwa saint, philosopher, and exponent of Dwaitha Vedanta. He entered Brindavan Pravesha alive at Mantralayam in 1671 AD, promising to bestow grace upon devotees for 700 years from his sacred Samadhi.
+              <p className="text-textInk/80 leading-relaxed text-sm mb-4">
+                The Rajajinagar branch of Mulabagala Sri Sripadaraja Matha houses the sanctified Mrittika Brindavana of Sri Raghavendra Swamy, established under the divine guidance of the Matha. Devotees from all over Bengaluru visit this holy Sannidhana for daily worship, Sevas, and spiritual solace.
               </p>
-              <p className="text-slate-300 leading-relaxed text-sm">
-                Mantralayam is situated on the holy banks of the Tungabhadra River in Andhra Pradesh. Millions of devotees visit annually seeking peace, health, and spiritual enlightenment.
+              <p className="text-textInk/80 leading-relaxed text-sm">
+                Under the holy tradition of Jagadguru Sri Madhvacharya and Sri Sripadaraja Swamiji, daily rituals including Panchamrutha Abhisheka, Hastodaka, Mahamangalarathi, and Nitya Annadana (Teertha Prasada) are conducted with utmost devotion.
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-slate-900/40 border border-amber-900/30 rounded-xl p-6">
+              <div className="bg-ivory border border-turmeric/20 rounded-xl p-6">
+                <div className="text-3xl mb-3">🛕</div>
+                <h4 className="font-bold text-kumkum text-base mb-2">Sacred Mrittika Brindavana</h4>
+                <p className="text-xs text-textInk/60 leading-relaxed">
+                  Consecrated Mrittika from Mantralayam Kshetra, bestowing divine peace and blessings upon all visiting devotees.
+                </p>
+              </div>
+
+              <div className="bg-ivory border border-turmeric/20 rounded-xl p-6">
                 <div className="text-3xl mb-3">📜</div>
-                <h4 className="font-bold text-amber-200 text-base mb-2">Guru Parampara</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Tracing back through Jagadguru Sri Madhvacharya, Sri Jayateertha, Sri Vyasateertha, and Sri Vijayendra Teertha.
+                <h4 className="font-bold text-kumkum text-base mb-2">Sri Sripadaraja Lineage</h4>
+                <p className="text-xs text-textInk/60 leading-relaxed">
+                  Preserving the rich Dwaitha Vedanta tradition, Haridasa Sahitya, and authentic Madhwa pooja vidhi.
                 </p>
               </div>
 
-              <div className="bg-slate-900/40 border border-amber-900/30 rounded-xl p-6">
-                <div className="text-3xl mb-3">🔱</div>
-                <h4 className="font-bold text-amber-200 text-base mb-2">Mula Rama Devara Pooja</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Daily worship of Sri Mula Rama and Sri Sita Devi idols consecrated by Chaturmukha Brahma and handed down through generations.
-                </p>
-              </div>
-
-              <div className="bg-slate-900/40 border border-amber-900/30 rounded-xl p-6">
-                <div className="text-3xl mb-3">🌊</div>
-                <h4 className="font-bold text-amber-200 text-base mb-2">Sacred Tungabhadra</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Holy river dip before entering the Mutt premises cleanses spiritual obstacles and prepares the mind for Darshan.
+              <div className="bg-ivory border border-turmeric/20 rounded-xl p-6">
+                <div className="text-3xl mb-3">🍚</div>
+                <h4 className="font-bold text-kumkum text-base mb-2">Nitya Teertha Prasada</h4>
+                <p className="text-xs text-textInk/60 leading-relaxed">
+                  Daily sanctified meal distribution (Annadana) served to visiting pilgrims after afternoon Mahamangalarathi.
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Tab 2: Darshan & Pooja Timings */}
+        {/* Tab 2: Verified Darshan & Pooja Timings */}
         {activeTab === 'timings' && (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 shadow-xl animate-fadeIn">
-            <h3 className="font-serif text-2xl font-bold text-amber-300 mb-6 flex items-center space-x-2">
-              <span>⏰</span>
-              <span>Daily Shrine Schedule & Darshan Timings</span>
-            </h3>
+          <div className="bg-white border border-turmeric/20 rounded-2xl p-8 shadow-sm animate-fadeIn space-y-6">
+            <div className="border-b border-turmeric/20 pb-4">
+              <h3 className="font-display text-2xl font-bold text-kumkum flex items-center space-x-2">
+                <span>⏰</span>
+                <span>Branch Darshan & Pooja Schedule</span>
+              </h3>
+              <p className="text-xs text-textInk/60 mt-1">Verified daily timings for Rajajinagar Branch Sannidhana</p>
+            </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-slate-950 p-6 rounded-xl border border-amber-900/40 space-y-4">
-                <h4 className="text-amber-400 font-bold text-base border-b border-amber-900/40 pb-2">
-                  Morning Sevas & Darshan
+              <div className="bg-ivory p-6 rounded-xl border border-turmeric/20 space-y-4">
+                <h4 className="text-kumkum font-bold text-base border-b border-turmeric/20 pb-2 flex items-center gap-2">
+                  <span>🌅</span> Morning Schedule
                 </h4>
-                <ul className="space-y-3 text-xs text-slate-300">
-                  <li className="flex justify-between border-b border-slate-800/60 pb-1.5">
-                    <span className="font-semibold text-slate-200">Suprabhatha & Nirmalya Visarjana</span>
-                    <span className="text-amber-300 font-mono">06:00 AM - 07:00 AM</span>
+                <ul className="space-y-3 text-xs text-textInk/80">
+                  <li className="flex justify-between border-b border-turmeric/10 pb-2">
+                    <span className="font-semibold text-textInk">Morning Darshan & Pooja</span>
+                    <span className="text-turmeric-dark font-mono font-bold">7:00 AM – 12:30 PM</span>
                   </li>
-                  <li className="flex justify-between border-b border-slate-800/60 pb-1.5">
-                    <span className="font-semibold text-slate-200">Panchamrutha Abhisheka</span>
-                    <span className="text-amber-300 font-mono">08:00 AM - 11:30 AM</span>
+                  <li className="flex justify-between border-b border-turmeric/10 pb-2">
+                    <span className="font-semibold text-textInk">Daily Mahamangalarathi</span>
+                    <span className="text-turmeric-dark font-mono font-bold">12:00 PM – 12:30 PM</span>
                   </li>
-                  <li className="flex justify-between border-b border-slate-800/60 pb-1.5">
-                    <span className="font-semibold text-slate-200">Mula Rama Devara Pooja & Hastodaka</span>
-                    <span className="text-amber-300 font-mono">11:30 AM - 01:00 PM</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="font-semibold text-slate-200">Mahamangalarathi & Teertha Prasada</span>
-                    <span className="text-amber-300 font-mono">01:00 PM - 02:00 PM</span>
+                  <li className="flex justify-between pb-1">
+                    <span className="font-semibold text-textInk">Teertha Prasada (Nitya Annadana)</span>
+                    <span className="text-turmeric-dark font-mono font-bold">12:30 PM – 2:00 PM</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="bg-slate-950 p-6 rounded-xl border border-amber-900/40 space-y-4">
-                <h4 className="text-amber-400 font-bold text-base border-b border-amber-900/40 pb-2">
-                  Evening Sevas & Darshan
+              <div className="bg-ivory p-6 rounded-xl border border-turmeric/20 space-y-4">
+                <h4 className="text-kumkum font-bold text-base border-b border-turmeric/20 pb-2 flex items-center gap-2">
+                  <span>🌆</span> Evening Schedule
                 </h4>
-                <ul className="space-y-3 text-xs text-slate-300">
-                  <li className="flex justify-between border-b border-slate-800/60 pb-1.5">
-                    <span className="font-semibold text-slate-200">Evening General Darshan</span>
-                    <span className="text-amber-300 font-mono">04:00 PM - 07:00 PM</span>
+                <ul className="space-y-3 text-xs text-textInk/80">
+                  <li className="flex justify-between border-b border-turmeric/10 pb-2">
+                    <span className="font-semibold text-textInk">Evening Darshan & Pooja</span>
+                    <span className="text-turmeric-dark font-mono font-bold">5:30 PM – 8:30 PM</span>
                   </li>
-                  <li className="flex justify-between border-b border-slate-800/60 pb-1.5">
-                    <span className="font-semibold text-slate-200">Unjal Seva & Chariot Procession</span>
-                    <span className="text-amber-300 font-mono">07:00 PM - 08:30 PM</span>
-                  </li>
-                  <li className="flex justify-between border-b border-slate-800/60 pb-1.5">
-                    <span className="font-semibold text-slate-200">Night Mangalarathi</span>
-                    <span className="text-amber-300 font-mono">08:30 PM - 09:00 PM</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="font-semibold text-slate-200">Mahadwara Closure</span>
-                    <span className="text-amber-300 font-mono">09:00 PM</span>
+                  <li className="flex justify-between pb-1">
+                    <span className="font-semibold text-textInk">Evening Mahamangalarathi</span>
+                    <span className="text-turmeric-dark font-mono font-bold">8:00 PM – 8:30 PM</span>
                   </li>
                 </ul>
               </div>
@@ -295,68 +297,104 @@ export const HomePage: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 3: Sevas & Offerings */}
+        {/* Tab 3: Dynamic Seva Integration (Backend API Wiring) */}
         {activeTab === 'sevas' && (
           <div className="space-y-6 animate-fadeIn">
             <div className="text-center max-w-2xl mx-auto mb-6">
-              <h3 className="font-serif text-2xl font-bold text-amber-300">Available Sacred Sevas</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Participate in daily poojas and receive divine prasada for your family's health & prosperity.
+              <h3 className="font-display text-2xl font-bold text-kumkum">Sacred Sevas & Offerings</h3>
+              <p className="text-xs text-textInk/60 mt-1">
+                Book Sevas online or at our Rajajinagar billing counter to receive divine Prasada.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {sevas.map((s) => (
-                <div key={s.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 flex flex-col justify-between hover:border-amber-500/40 transition">
-                  <div>
-                    <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800/50">
-                      {s.code}
-                    </span>
-                    <h4 className="font-bold text-slate-100 text-base mt-2">{s.name}</h4>
-                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">{s.description || 'Sacred temple seva offering.'}</p>
+            {loading ? (
+              /* Loading Skeleton */
+              <div className="grid md:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-white border border-turmeric/20 rounded-xl p-6 animate-pulse space-y-4">
+                    <div className="h-4 w-16 bg-ivory rounded" />
+                    <div className="h-6 w-3/4 bg-ivory rounded" />
+                    <div className="h-3 w-full bg-ivory rounded" />
+                    <div className="h-8 w-full bg-ivory rounded" />
                   </div>
+                ))}
+              </div>
+            ) : sevas.length === 0 ? (
+              /* Empty State Fallback */
+              <div className="bg-white border border-turmeric/20 rounded-2xl p-12 text-center text-xs text-textInk/60 space-y-3">
+                <p className="font-bold text-sm text-kumkum">No active Sevas currently published.</p>
+                <p>Please contact temple counter at +91 89046 74124 / +91 98800 54620 for Seva details.</p>
+              </div>
+            ) : (
+              /* Dynamic Seva Cards */
+              <div className="grid md:grid-cols-3 gap-6">
+                {sevas.map((s) => (
+                  <div
+                    key={s.id}
+                    className="bg-white border border-turmeric/20 rounded-xl p-6 flex flex-col justify-between hover:border-kumkum/40 transition shadow-sm"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-turmeric/10 text-turmeric-dark border border-turmeric/30">
+                          {s.code}
+                        </span>
+                        <span className="text-[10px] text-green-700 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200">
+                          ACTIVE SEVA
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-ink text-base mt-3">{s.name}</h4>
+                      <p className="text-xs text-textInk/60 mt-2 leading-relaxed">
+                        {s.description || 'Sacred ritual offering at Rajajinagar Sannidhana.'}
+                      </p>
+                    </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between">
-                    <span className="text-lg font-bold text-amber-400 font-mono">₹{Number(s.amount).toLocaleString('en-IN')}</span>
-                    <Link
-                      to="/login"
-                      className="px-3.5 py-1.5 text-xs font-bold bg-amber-500 text-slate-950 rounded hover:bg-amber-400 transition"
-                    >
-                      Book Seva
-                    </Link>
+                    <div className="mt-6 pt-4 border-t border-turmeric/10 flex items-center justify-between">
+                      <div>
+                        <span className="text-xs text-textInk/50 block text-[10px]">SEVA AMOUNT</span>
+                        <span className="text-lg font-bold text-turmeric-dark font-mono">
+                          ₹{Number(s.amount).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <Link
+                        to="/login"
+                        className="px-4 py-2 text-xs font-bold bg-kumkum text-ivory rounded-lg hover:bg-kumkum-light transition shadow-xs"
+                      >
+                        Book Seva
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Tab 4: Nitya Annadana Seva */}
         {activeTab === 'annadana' && (
-          <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-800/40 rounded-2xl p-8 shadow-xl animate-fadeIn">
+          <div className="bg-white border border-turmeric/20 rounded-2xl p-8 shadow-sm animate-fadeIn">
             <div className="max-w-3xl">
-              <span className="text-xs font-bold text-amber-400 tracking-widest uppercase">Sacred Food Distribution</span>
-              <h3 className="font-serif text-2xl font-bold text-slate-100 mt-2 mb-4">
-                Nitya Annadana — Serving Thousands Daily
+              <span className="text-xs font-bold text-turmeric-dark tracking-widest uppercase">Sacred Food Distribution</span>
+              <h3 className="font-display text-2xl font-bold text-kumkum mt-2 mb-4">
+                Nitya Annadana — Teertha Prasada Daily
               </h3>
-              <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                Annadana is considered the highest form of charity (*Annam Brahma*). At Sri Raghavendra Swamy Matha, over 10,000 pilgrims are served hot, sanctified meals every day in the huge Annadana Hall (*Sri Susheendra Prarthana Mandiram*).
+              <p className="text-textInk/80 text-sm leading-relaxed mb-6">
+                Annadana is considered the highest form of charity (*Annam Brahma*). At our Rajajinagar Branch, hot sanctified meals (Teertha Prasada) are served daily to pilgrims from 12:30 PM to 2:00 PM following afternoon Mahamangalarathi.
               </p>
 
               <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
-                  <h4 className="font-bold text-amber-300 text-sm">One Day Meal Sponsorship</h4>
-                  <p className="text-xs text-slate-400 mt-1">Sponsor full day meals for thousands of visiting pilgrims on your special occasion.</p>
+                <div className="bg-ivory p-4 rounded-xl border border-turmeric/20">
+                  <h4 className="font-bold text-kumkum text-sm">One Day Meal Sponsorship</h4>
+                  <p className="text-xs text-textInk/60 mt-1">Sponsor meals for visiting pilgrims on your special family occasion.</p>
                 </div>
-                <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800">
-                  <h4 className="font-bold text-amber-300 text-sm">Shashwata Annadana Scheme</h4>
-                  <p className="text-xs text-slate-400 mt-1">Perpetual annual meal sponsorship on your family birthday or anniversary date for 50 years.</p>
+                <div className="bg-ivory p-4 rounded-xl border border-turmeric/20">
+                  <h4 className="font-bold text-kumkum text-sm">Shashwata Annadana Scheme</h4>
+                  <p className="text-xs text-textInk/60 mt-1">Perpetual annual meal sponsorship on your birthday or anniversary date.</p>
                 </div>
               </div>
 
               <Link
                 to="/devotee-register"
-                className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl font-bold text-xs bg-amber-500 text-slate-950 shadow-md hover:bg-amber-400 transition"
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl font-bold text-xs bg-kumkum text-ivory shadow-md hover:bg-kumkum-light transition"
               >
                 <span>Sponsor Annadana Online</span>
                 <span>→</span>
@@ -365,63 +403,69 @@ export const HomePage: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 5: Future Portal Additions */}
-        {activeTab === 'future' && (
+        {/* Tab 5: Branch Location & Contact Info */}
+        {activeTab === 'contact' && (
           <div className="space-y-6 animate-fadeIn">
-            <div className="text-center max-w-2xl mx-auto mb-6">
-              <h3 className="font-serif text-2xl font-bold text-amber-300">Upcoming Portal Additions & Modules</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                We are constantly enhancing the SRSmutt Devotee Portal to bring sacred services directly to your smartphone.
-              </p>
-            </div>
+            <div className="bg-white border border-turmeric/20 rounded-2xl p-8 shadow-sm">
+              <h3 className="font-display text-2xl font-bold text-kumkum mb-6 flex items-center gap-2">
+                <MapPin className="w-6 h-6 text-kumkum" />
+                <span>Rajajinagar Branch Contact & Location</span>
+              </h3>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 hover:border-amber-500/30 transition">
-                <div className="text-3xl mb-3">🏨</div>
-                <h4 className="font-bold text-slate-100 text-sm mb-2">Online Room Booking</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Book Mutt choultries & cottages in Mantralayam ahead of your pilgrimage visit.
-                </p>
-              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-ivory p-6 rounded-xl border border-turmeric/20 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-kumkum shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-ink text-sm">Branch Address</h4>
+                      <p className="text-xs text-textInk/80 mt-1 leading-relaxed">
+                        541, 63rd Cross Rd, 5th Block,<br />
+                        Rajajinagar, Bengaluru,<br />
+                        Karnataka 560010
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 hover:border-amber-500/30 transition">
-                <div className="text-3xl mb-3">📅</div>
-                <h4 className="font-bold text-slate-100 text-sm mb-2">Panchanga & Festival Calendar</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Track Ekadashi, Aradhana dates, Tithis, and astrological timings with automatic SMS alerts.
-                </p>
-              </div>
+                  <div className="border-t border-turmeric/20 pt-4 flex items-start gap-3">
+                    <Phone className="w-5 h-5 text-kumkum shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-ink text-sm">Phone Numbers</h4>
+                      <p className="text-xs text-textInk/80 mt-1 font-mono font-semibold">
+                        +91 89046 74124 / +91 98800 54620
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 hover:border-amber-500/30 transition">
-                <div className="text-3xl mb-3">📚</div>
-                <h4 className="font-bold text-slate-100 text-sm mb-2">Digital Library & Stotras</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Access authentic Rayara Stotra, Dwaitha texts, audio chants, and Mutt publications in multiple languages.
-                </p>
-              </div>
+                  <div className="border-t border-turmeric/20 pt-4 flex items-start gap-3">
+                    <UserCheck className="w-5 h-5 text-kumkum shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-bold text-ink text-sm">In-Charge Contacts</h4>
+                      <p className="text-xs text-textInk/80 mt-1 font-semibold">
+                        Sri Ashwatha Narayan / Sri Ravikiran
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 hover:border-amber-500/30 transition">
-                <div className="text-3xl mb-3">📦</div>
-                <h4 className="font-bold text-slate-100 text-sm mb-2">Prasada Courier Service</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Order consecrated Mrittika Prasada & Mantrakshate directly to your home address via speed post.
-                </p>
-              </div>
-
-              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 hover:border-amber-500/30 transition">
-                <div className="text-3xl mb-3">🎥</div>
-                <h4 className="font-bold text-slate-100 text-sm mb-2">Live Darshan Streaming</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Watch live morning Abhisheka and evening Rathotsava from Mantralayam.
-                </p>
-              </div>
-
-              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 hover:border-amber-500/30 transition">
-                <div className="text-3xl mb-3">💳</div>
-                <h4 className="font-bold text-slate-100 text-sm mb-2">80G Tax Exemption Certificates</h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Download instant 80G tax receipt certificates for all donations & sponsorships.
-                </p>
+                <div className="bg-ivory p-6 rounded-xl border border-turmeric/20 space-y-4">
+                  <h4 className="font-bold text-kumkum text-base border-b border-turmeric/20 pb-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Available Branch Facilities
+                  </h4>
+                  <ul className="space-y-3 text-xs text-textInk/80">
+                    <li className="flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-green-700 shrink-0" />
+                      <span className="font-semibold">Pooja Facility</span> — Daily Archana, Abhisheka, & Special Sevas
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-green-700 shrink-0" />
+                      <span className="font-semibold">Teertha Prasada</span> — Daily afternoon Annadana (12:30 PM - 2:00 PM)
+                    </li>
+                    <li className="flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-green-700 shrink-0" />
+                      <span className="font-semibold">Shrardh Facility</span> — Traditional ancestral ritual facility
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -429,10 +473,12 @@ export const HomePage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 px-6 py-8 text-center text-xs text-slate-400">
-        <p className="font-serif text-slate-300 font-semibold mb-1">Sri Raghavendra Swamy Matha • Mantralayam</p>
-        <p className="text-[11px] text-slate-500">
-          Official Temple Seva Billing & Devotee Portal • Built with React & Fastify
+      <footer className="bg-ink border-t border-turmeric/20 px-6 py-8 text-center text-xs text-ivory/60">
+        <p className="font-display text-ivory font-semibold mb-1">
+          Mulabagala Sri Sripadaraja Matha • Rajajinagar Branch, Bengaluru | Official Devotee Portal
+        </p>
+        <p className="text-[11px] text-ivory/40">
+          Shri Raghavendra Swamy Brindavana Sannidhana • 541, 63rd Cross Rd, 5th Block, Rajajinagar
         </p>
       </footer>
     </div>

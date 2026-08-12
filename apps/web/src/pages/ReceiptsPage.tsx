@@ -137,12 +137,13 @@ export const ReceiptsPage: React.FC = () => {
                 <th className="p-4">Kind</th>
                 <th className="p-4">Payment</th>
                 <th className="p-4 text-right">Total (₹)</th>
+                <th className="p-4 text-right">Actions / Print</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ivory-dark/60">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-textInk/50">
+                  <td colSpan={7} className="p-8 text-center text-textInk/50">
                     <div className="flex justify-center items-center gap-2">
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />
                       Loading receipts...
@@ -151,21 +152,21 @@ export const ReceiptsPage: React.FC = () => {
                 </tr>
               ) : data?.data?.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-textInk/50">
+                  <td colSpan={7} className="p-8 text-center text-textInk/50">
                     No receipts found matching the filter criteria.
                   </td>
                 </tr>
               ) : (
                 data?.data?.map((r: any) => (
-                  <tr key={r.id} className="hover:bg-ivory/30">
+                  <tr key={r.id} className="hover:bg-ivory/30 transition-colors">
                     <td className="p-4 font-mono font-bold text-kumkum">{r.receiptNumber}</td>
                     <td className="p-4 text-textInk/70">{new Date(r.createdAt).toLocaleString()}</td>
                     <td className="p-4 font-semibold text-textInk">
-                      {r.devotee?.name} <span className="text-[10px] text-textInk/50 font-normal">({r.devotee?.phone})</span>
+                      {r.devotee?.name || 'Walk-in Devotee'} <span className="text-[10px] text-textInk/50 font-normal">({r.devotee?.phone || 'No phone'})</span>
                     </td>
                     <td className="p-4">
                       <span className="bg-ivory px-2 py-1 rounded border border-turmeric/30 text-[10px] font-semibold">
-                        {r.kind}
+                        {r.kind?.replace('_', ' ')}
                       </span>
                     </td>
                     <td className="p-4 font-semibold text-textInk">
@@ -176,6 +177,16 @@ export const ReceiptsPage: React.FC = () => {
                     </td>
                     <td className="p-4 text-right font-mono font-bold text-kumkum">
                       ₹{Number(r.totalAmount).toFixed(2)}
+                    </td>
+                    <td className="p-4 text-right shrink-0 whitespace-nowrap">
+                      <button
+                        onClick={() => handleReprintThermal(r.id)}
+                        className="px-3 py-1.5 text-xs font-bold bg-kumkum/10 text-kumkum border border-kumkum/30 rounded-lg hover:bg-kumkum hover:text-ivory transition-all inline-flex items-center gap-1.5 shadow-xs"
+                        title="Print 80mm Thermal Receipt"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        Reprint POS
+                      </button>
                     </td>
                   </tr>
                 ))

@@ -23,6 +23,14 @@ export class UserController {
         canAccessMasters: true,
         canApproveExpenses: true,
         expenditureLimit: true,
+        devoteeId: true,
+        devotee: {
+          select: {
+            name: true,
+            phone: true,
+            city: true
+          }
+        },
         createdAt: true,
         updatedAt: true
       },

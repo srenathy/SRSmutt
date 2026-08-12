@@ -1,5 +1,7 @@
 import React from 'react';
 import { X, Printer } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../api/client.js';
 
 interface ThermalReceiptModalProps {
   receipt: any;
@@ -14,22 +16,44 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const { data: fetchedTemple } = useQuery({
+    queryKey: ['temple-info-modal'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get('/temple/public');
+        return res.data?.data;
+      } catch (e) {
+        try {
+          const res = await apiClient.get('/temple');
+          return res.data?.data;
+        } catch (e2) {
+          return null;
+        }
+      }
+    },
+    enabled: isOpen
+  });
+
   if (!isOpen || !receipt) return null;
 
   const handlePrint = () => {
     window.print();
   };
 
-  const templeInfo = temple || {
+  const templeInfo = temple || fetchedTemple || {
     name: 'Sri Raghavendra Swamy Matha',
     deity: 'Sri Guru Raghavendra Swamy',
-    address: 'Main Bazaar Road, Mantralayam',
+    address: 'Main Bazaar Road',
     city: 'Mantralayam',
-    phone: '+91 8512 279400'
+    phone: '',
+    receiptHeader: 'Om Sri Raghavendraya Namaha',
+    receiptFooter: 'Thank you for your devotion & offerings.'
   };
 
+  const addressLine = [templeInfo.address, templeInfo.city, templeInfo.state, templeInfo.pincode].filter(Boolean).join(', ');
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/60 backdrop-blur-sm flex justify-center items-start p-4 sm:p-10">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/60 backdrop-blur-xs flex justify-center items-start p-4 sm:p-10">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-turmeric/30 flex flex-col">
         {/* Top Control Bar (Hidden during print) */}
         <div className="no-print p-4 bg-ivory border-b border-ivory-dark flex items-center justify-between">
@@ -55,10 +79,13 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
         <div className="p-6 overflow-y-auto font-mono text-xs text-black thermal-receipt-print">
           {/* Header */}
           <div className="text-center pb-3 border-b border-dashed border-black/40 space-y-1">
+            {templeInfo.receiptHeader && (
+              <p className="text-[10px] font-bold text-center italic">{templeInfo.receiptHeader}</p>
+            )}
             <h1 className="font-bold text-sm uppercase tracking-wide">{templeInfo.name}</h1>
-            <p className="text-[10px]">{templeInfo.deity}</p>
-            <p className="text-[10px]">{templeInfo.address}, {templeInfo.city}</p>
-            <p className="text-[10px]">Ph: {templeInfo.phone}</p>
+            {templeInfo.deity && <p className="text-[10px]">{templeInfo.deity}</p>}
+            {addressLine && <p className="text-[10px]">{addressLine}</p>}
+            {templeInfo.phone && <p className="text-[10px]">Ph: {templeInfo.phone}</p>}
           </div>
 
           {/* Receipt Details */}
@@ -95,10 +122,10 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                 <span>Phone:</span>
                 <span>{receipt.devotee.phone}</span>
               </div>
-              {receipt.devotee.gotra && (
+              {(receipt.devotee.gotra || receipt.devotee.nakshatra) && (
                 <div className="flex justify-between">
                   <span>Gotra / Nakshatra:</span>
-                  <span>{receipt.devotee.gotra} / {receipt.devotee.nakshatra || '-'}</span>
+                  <span>{receipt.devotee.gotra || '-'} / {receipt.devotee.nakshatra || '-'}</span>
                 </div>
               )}
             </div>
@@ -138,7 +165,9 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
           {/* Footer */}
           <div className="pt-4 text-center text-[10px] space-y-1">
             <p className="font-bold">|| Sri Krishnarpanamastu ||</p>
-            <p>Thank you for your devotion & offerings.</p>
+            {templeInfo.receiptFooter && (
+              <p className="text-[9px] text-gray-700 font-medium">{templeInfo.receiptFooter}</p>
+            )}
             <p className="text-[8px] text-gray-500">Issued by: {receipt.createdByUser?.fullName || 'Cashier'}</p>
           </div>
         </div>

@@ -1,5 +1,7 @@
 import React from 'react';
 import { X, Printer } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '../api/client.js';
 
 interface SankalpaModalProps {
   receipt: any;
@@ -14,13 +16,31 @@ export const SankalpaModal: React.FC<SankalpaModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const { data: fetchedTemple } = useQuery({
+    queryKey: ['temple-info-modal'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get('/temple/public');
+        return res.data?.data;
+      } catch (e) {
+        try {
+          const res = await apiClient.get('/temple');
+          return res.data?.data;
+        } catch (e2) {
+          return null;
+        }
+      }
+    },
+    enabled: isOpen
+  });
+
   if (!isOpen || !receipt) return null;
 
   const handlePrint = () => {
     window.print();
   };
 
-  const templeInfo = temple || {
+  const templeInfo = temple || fetchedTemple || {
     name: 'Sri Raghavendra Swamy Matha',
     deity: 'Sri Guru Raghavendra Swamy'
   };

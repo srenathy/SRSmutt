@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use relative /api URL to work seamlessly whether served from single Fastify server or via proxy
-const apiBaseUrl = '/api';
+// Use VITE_API_URL environment variable if set, otherwise fallback to relative /api
+const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,

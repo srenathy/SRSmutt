@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.js';
-import { UserPlus, Shield, Key, CheckCircle, Edit, Trash2 } from 'lucide-react';
+import { UserPlus, Search, Shield, UserCheck, Users, Edit, Trash2 } from 'lucide-react';
 
 export const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roleFilter, setRoleFilter] = useState<'ALL' | 'STAFF_ADMIN' | 'DEVOTEE'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
@@ -100,14 +102,31 @@ export const UsersPage: React.FC = () => {
     }
   };
 
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
+      u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.devotee?.phone && u.devotee.phone.includes(searchQuery));
+
+    if (!matchesSearch) return false;
+
+    if (roleFilter === 'DEVOTEE') {
+      return u.role === 'DEVOTEE';
+    }
+    if (roleFilter === 'STAFF_ADMIN') {
+      return u.role !== 'DEVOTEE';
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-bold text-kumkum">User Management & Access Control</h2>
+          <h2 className="font-display text-2xl font-bold text-kumkum">User & Access Control</h2>
           <p className="text-xs text-textInk/60 mt-1">
-            Create sub-users (Counter Staff, Accountant, Priest, Admin) and set modular permissions.
+            Real-time directory of all user accounts created (Admin, Staff, Accountants, and Registered Devotees).
           </p>
         </div>
 
@@ -116,8 +135,51 @@ export const UsersPage: React.FC = () => {
           className="px-4 py-2.5 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all flex items-center gap-2 self-start"
         >
           <UserPlus className="w-4 h-4" />
-          Create Sub-User
+          Create Staff User
         </button>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-turmeric/20 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setRoleFilter('ALL')}
+            className={`px-3.5 py-1.5 rounded-xl font-bold transition ${
+              roleFilter === 'ALL' ? 'bg-kumkum text-ivory shadow-xs' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+            }`}
+          >
+            All Accounts ({users.length})
+          </button>
+
+          <button
+            onClick={() => setRoleFilter('STAFF_ADMIN')}
+            className={`px-3.5 py-1.5 rounded-xl font-bold transition ${
+              roleFilter === 'STAFF_ADMIN' ? 'bg-kumkum text-ivory shadow-xs' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+            }`}
+          >
+            Staff & Admins ({users.filter((u) => u.role !== 'DEVOTEE').length})
+          </button>
+
+          <button
+            onClick={() => setRoleFilter('DEVOTEE')}
+            className={`px-3.5 py-1.5 rounded-xl font-bold transition ${
+              roleFilter === 'DEVOTEE' ? 'bg-kumkum text-ivory shadow-xs' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+            }`}
+          >
+            Registered Devotees ({users.filter((u) => u.role === 'DEVOTEE').length})
+          </button>
+        </div>
+
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-textInk/40" />
+          <input
+            type="text"
+            placeholder="Search username, name, or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+          />
+        </div>
       </div>
 
       {/* Users Table */}
@@ -125,7 +187,7 @@ export const UsersPage: React.FC = () => {
         {loading ? (
           <div className="p-12 text-center text-kumkum font-semibold flex items-center justify-center gap-2">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />
-            Loading user accounts...
+            Loading user directory...
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -134,60 +196,81 @@ export const UsersPage: React.FC = () => {
                 <tr>
                   <th className="p-4">Username</th>
                   <th className="p-4">Full Name</th>
-                  <th className="p-4">Role</th>
+                  <th className="p-4">Type / Role</th>
                   <th className="p-4">Billing</th>
                   <th className="p-4">Expenses</th>
                   <th className="p-4">Reports</th>
                   <th className="p-4">Masters</th>
                   <th className="p-4">Approval Rights</th>
-                  <th className="p-4">Expense Limit</th>
+                  <th className="p-4">Created Date</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-turmeric/10 font-medium text-textInk">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-ivory/40 transition-colors">
-                    <td className="p-4 font-mono font-bold text-kumkum">{u.username}</td>
-                    <td className="p-4 font-semibold">{u.fullName}</td>
-                    <td className="p-4">
-                      <span className="px-2.5 py-1 rounded-full bg-turmeric/20 text-textInk font-bold text-[10px]">
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="p-4">{u.canAccessBilling ? '✅' : '❌'}</td>
-                    <td className="p-4">{u.canAccessExpenses ? '✅' : '❌'}</td>
-                    <td className="p-4">{u.canAccessReports ? '✅' : '❌'}</td>
-                    <td className="p-4">{u.canAccessMasters ? '✅' : '❌'}</td>
-                    <td className="p-4">
-                      {u.canApproveExpenses ? (
-                        <span className="text-emerald-700 font-bold">YES</span>
-                      ) : (
-                        <span className="text-textInk/40">NO</span>
-                      )}
-                    </td>
-                    <td className="p-4 font-mono font-bold">
-                      ₹{Number(u.expenditureLimit ?? 2000).toLocaleString('en-IN')}
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenModal(u)}
-                          className="p-1.5 text-textInk/60 hover:text-kumkum transition-colors"
-                          title="Edit User Permissions"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(u.id, u.username)}
-                          className="p-1.5 text-textInk/40 hover:text-red-700 transition-colors"
-                          title="Delete Account"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="p-8 text-center text-textInk/50">
+                      No user accounts found matching current filter.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-ivory/40 transition-colors">
+                      <td className="p-4 font-mono font-bold text-kumkum">
+                        {u.username}
+                        {u.devotee && (
+                          <div className="text-[10px] text-textInk/50 font-normal font-sans">
+                            📱 {u.devotee.phone}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-4 font-semibold">{u.fullName}</td>
+                      <td className="p-4">
+                        {u.role === 'DEVOTEE' ? (
+                          <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] inline-flex items-center gap-1">
+                            🕉️ DEVOTEE
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full bg-turmeric/20 text-textInk font-bold text-[10px] inline-flex items-center gap-1">
+                            🛡️ {u.role}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4">{u.canAccessBilling ? '✅' : '❌'}</td>
+                      <td className="p-4">{u.canAccessExpenses ? '✅' : '❌'}</td>
+                      <td className="p-4">{u.canAccessReports ? '✅' : '❌'}</td>
+                      <td className="p-4">{u.canAccessMasters ? '✅' : '❌'}</td>
+                      <td className="p-4">
+                        {u.canApproveExpenses ? (
+                          <span className="text-emerald-700 font-bold">YES</span>
+                        ) : (
+                          <span className="text-textInk/40">NO</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-textInk/60 font-mono text-[11px]">
+                        {new Date(u.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleOpenModal(u)}
+                            className="p-1.5 text-textInk/60 hover:text-kumkum transition-colors"
+                            title="Edit User Permissions"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u.id, u.username)}
+                            className="p-1.5 text-textInk/40 hover:text-red-700 transition-colors"
+                            title="Delete Account"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

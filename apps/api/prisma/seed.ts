@@ -53,21 +53,21 @@ async function main() {
 
   // 3. Create or Update Temple Master Record with exact user details
   const templeData = {
-    name: 'Shri Raghavendra Swamy Brindavana Sannidhana - Mulabagala Sri Sripadaraja Matha',
-    deity: 'Sri Guru Raghavendra Swamy & Sri Sripadaraja Swamy',
-    address: '541, 63rd Cross Rd, 5th Block, Rajajinagar, Bengaluru, Karnataka 560010',
+    name: 'Mulabagala Sri Sripadaraja Matha (Rajajinagar Branch)',
+    deity: 'Shri Raghavendra Swamy Brindavana Sannidhana',
+    address: '541, 63rd Cross Rd, 5th Block, Rajajinagar',
     city: 'Bengaluru',
     state: 'Karnataka',
     pincode: '560010',
-    phone: '+91 98888 77777',
+    phone: '+91 89046 74124 / +91 98800 54620',
     email: 'contact@sripadarajamath.org',
-    registrationNumber: 'MATHA/BLR/2024/099',
-    upiId: 'raghavendra@upi',
-    defaultPriest: 'Sri Raghavacharya',
+    registrationNumber: 'MATHA/BLR/RAJ/001',
+    upiId: 'sripadarajamath@upi',
+    defaultPriest: 'Sri Ashwatha Narayan / Sri Ravikiran',
     receiptHeader: 'Om Sri Raghavendraya Namaha | Mulabagala Sri Sripadaraja Matha',
-    receiptFooter: 'Sri Sripadaraja Arpanamastu. Receipts are computer generated.',
-    expenseApprovalThreshold: 5000.00,
-    monthlyExpenseBudget: 5000.00
+    receiptFooter: 'Shri Raghavendra Swamy Brindavana Sannidhana, Rajajinagar, Bengaluru.',
+    expenseApprovalThreshold: 2000.00,
+    monthlyExpenseBudget: 10000.00
   };
 
   const existingTemple = await prisma.temple.findFirst();

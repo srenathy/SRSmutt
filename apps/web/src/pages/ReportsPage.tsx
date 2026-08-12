@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Printer, Calendar } from 'lucide-react';
+import { Printer, Calendar, Download, TrendingUp, DollarSign, Award, Layers } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
   const [reportType, setReportType] = useState<'daily' | 'monthly'>('daily');
@@ -36,43 +36,127 @@ export const ReportsPage: React.FC = () => {
   const reportData = reportType === 'daily' ? dailyQuery.data : monthlyQuery.data;
   const isLoading = reportType === 'daily' ? dailyQuery.isLoading : monthlyQuery.isLoading;
 
+  const setPresetDate = (type: 'today' | 'yesterday' | 'thisMonth') => {
+    const today = new Date();
+    if (type === 'today') {
+      setReportType('daily');
+      setSelectedDate(today.toISOString().split('T')[0]);
+    } else if (type === 'yesterday') {
+      setReportType('daily');
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      setSelectedDate(yesterday.toISOString().split('T')[0]);
+    } else if (type === 'thisMonth') {
+      setReportType('monthly');
+      setSelectedYear(today.getFullYear());
+      setSelectedMonth(today.getMonth() + 1);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!reportData) return;
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += `Collection Report - ${reportType.toUpperCase()}\n`;
+    csvContent += `Date/Period,${reportType === 'daily' ? selectedDate : `${selectedYear}-${selectedMonth}`}\n`;
+    csvContent += `Total Receipts,${reportData.totalReceipts}\n`;
+    csvContent += `Grand Total (INR),${reportData.grandTotal}\n\n`;
+    
+    csvContent += "Payment Mode,Receipt Count,Total Amount (INR)\n";
+    Object.entries(reportData.byPaymentMode || {}).forEach(([mode, d]: [string, any]) => {
+      csvContent += `${mode},${d.count},${d.amount}\n`;
+    });
+
+    if (reportType === 'monthly' && reportData.dailyBreakdown) {
+      csvContent += "\nDaily Breakdown Date,Total Amount (INR)\n";
+      reportData.dailyBreakdown.forEach((row: any) => {
+        csvContent += `${row.date},${row.totalAmount}\n`;
+      });
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `temple_collection_report_${reportType}_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       {/* Title & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-bold text-kumkum">Collection Reports</h2>
-          <p className="text-xs text-textInk/60 mt-1">Audit report breakdowns by payment mode and seva offering kind.</p>
+          <h2 className="font-display text-2xl font-bold text-kumkum">Collection Reports & Financial Insights</h2>
+          <p className="text-xs text-textInk/60 mt-1">
+            Comprehensive audit report breakdown by payment mode, date period, and revenue share.
+          </p>
         </div>
 
-        <button
-          onClick={handlePrintReport}
-          className="no-print bg-kumkum hover:bg-kumkum-light text-ivory font-semibold px-4 py-2 rounded-xl text-sm transition-colors flex items-center gap-2 self-start sm:self-auto"
-        >
-          <Printer className="w-4 h-4" />
-          Print Report
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto no-print">
+          <button
+            onClick={handleExportCSV}
+            disabled={!reportData || isLoading}
+            className="bg-white border border-turmeric/30 text-kumkum font-semibold px-3.5 py-2 rounded-xl text-xs hover:bg-kumkum/5 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-40"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+
+          <button
+            onClick={handlePrintReport}
+            className="bg-kumkum hover:bg-kumkum-light text-ivory font-bold px-4 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-md"
+          >
+            <Printer className="w-4 h-4" />
+            Print Report
+          </button>
+        </div>
       </div>
 
-      {/* Selector Tabs */}
-      <div className="no-print bg-white p-4 rounded-2xl border border-turmeric/20 shadow-sm flex flex-wrap items-center gap-4 text-xs">
-        <div className="flex items-center gap-2 border-r border-turmeric/20 pr-4">
-          <button
-            onClick={() => setReportType('daily')}
-            className={`px-4 py-2 rounded-xl font-bold transition-all ${
-              reportType === 'daily' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70'
-            }`}
-          >
-            Daily Report
-          </button>
-          <button
-            onClick={() => setReportType('monthly')}
-            className={`px-4 py-2 rounded-xl font-bold transition-all ${
-              reportType === 'monthly' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70'
-            }`}
-          >
-            Monthly Report
-          </button>
+      {/* Selector Tabs & Presets */}
+      <div className="no-print bg-white p-4 rounded-2xl border border-turmeric/20 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 border-r border-turmeric/20 pr-4">
+            <button
+              onClick={() => setReportType('daily')}
+              className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                reportType === 'daily' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+              }`}
+            >
+              Daily Report
+            </button>
+            <button
+              onClick={() => setReportType('monthly')}
+              className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                reportType === 'monthly' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+              }`}
+            >
+              Monthly Report
+            </button>
+          </div>
+
+          {/* Quick Filter Presets */}
+          <div className="hidden md:flex items-center gap-1.5 pl-2">
+            <span className="text-[11px] font-semibold text-textInk/50 mr-1">Quick Presets:</span>
+            <button
+              onClick={() => setPresetDate('today')}
+              className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setPresetDate('yesterday')}
+              className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
+            >
+              Yesterday
+            </button>
+            <button
+              onClick={() => setPresetDate('thisMonth')}
+              className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
+            >
+              This Month
+            </button>
+          </div>
         </div>
 
         {reportType === 'daily' ? (
@@ -83,7 +167,7 @@ export const ReportsPage: React.FC = () => {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs"
+              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
             />
           </div>
         ) : (
@@ -93,7 +177,7 @@ export const ReportsPage: React.FC = () => {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs"
+              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none"
             >
               <option value={2025}>2025</option>
               <option value={2026}>2026</option>
@@ -102,7 +186,7 @@ export const ReportsPage: React.FC = () => {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs"
+              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none"
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -116,66 +200,118 @@ export const ReportsPage: React.FC = () => {
 
       {/* Report Summary Cards */}
       {isLoading ? (
-        <div className="p-12 text-center text-kumkum font-semibold flex items-center justify-center gap-2">
+        <div className="p-12 text-center text-kumkum font-semibold flex items-center justify-center gap-2 bg-white rounded-2xl border border-turmeric/20">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />
-          Generating collection report...
+          Generating collection audit report...
         </div>
       ) : reportData ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm">
-              <p className="text-xs font-semibold text-textInk/60">Total Receipts Issued</p>
-              <h3 className="font-mono text-3xl font-bold text-kumkum mt-1">{reportData.totalReceipts}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-textInk/60">Total Receipts Issued</p>
+                <h3 className="font-mono text-3xl font-bold text-kumkum mt-1">{reportData.totalReceipts}</h3>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-kumkum/10 border border-kumkum/20 flex items-center justify-center text-kumkum">
+                <Award className="w-6 h-6" />
+              </div>
             </div>
-            <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm">
-              <p className="text-xs font-semibold text-textInk/60">Grand Total Collection (₹)</p>
-              <h3 className="font-mono text-3xl font-bold text-kumkum mt-1">
-                ₹{Number(reportData.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </h3>
+
+            <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-textInk/60">Grand Total Collection (₹)</p>
+                <h3 className="font-mono text-3xl font-bold text-kumkum mt-1">
+                  ₹{Number(reportData.grandTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </h3>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-turmeric/10 border border-turmeric/30 flex items-center justify-center text-turmeric-dark">
+                <DollarSign className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm sm:col-span-2 lg:col-span-1 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-textInk/60">Average Receipt Value</p>
+                <h3 className="font-mono text-3xl font-bold text-ink mt-1">
+                  ₹{reportData.totalReceipts > 0 ? (Number(reportData.grandTotal) / reportData.totalReceipts).toFixed(2) : '0.00'}
+                </h3>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-ivory border border-turmeric/20 flex items-center justify-center text-textInk/70">
+                <TrendingUp className="w-6 h-6" />
+              </div>
             </div>
           </div>
 
-          {/* Payment Mode Table */}
-          <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6">
-            <h3 className="font-display text-base font-bold text-kumkum mb-4">Collection by Payment Mode</h3>
+          {/* Payment Mode Table & Distribution Bars */}
+          <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
+              <h3 className="font-display text-base font-bold text-kumkum">Collection Breakdown by Payment Mode</h3>
+              <span className="text-xs text-textInk/50 font-mono">
+                {reportType === 'daily' ? `Date: ${selectedDate}` : `Period: ${selectedYear}-${String(selectedMonth).padStart(2, '0')}`}
+              </span>
+            </div>
+
             <table className="w-full text-left text-xs">
               <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
                 <tr>
                   <th className="p-3">Payment Mode</th>
                   <th className="p-3 text-center">Receipt Count</th>
                   <th className="p-3 text-right">Total Amount (₹)</th>
+                  <th className="p-3 text-right">% Share</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ivory-dark/60">
-                {Object.entries(reportData.byPaymentMode || {}).map(([mode, data]: [string, any]) => (
-                  <tr key={mode}>
-                    <td className="p-3 font-bold text-textInk">{mode}</td>
-                    <td className="p-3 text-center">{data.count}</td>
-                    <td className="p-3 text-right font-mono font-bold text-kumkum">
-                      ₹{Number(data.amount).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
+                {Object.entries(reportData.byPaymentMode || {}).map(([mode, data]: [string, any]) => {
+                  const sharePct = Number(reportData.grandTotal) > 0 
+                    ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1)
+                    : '0.0';
+                  return (
+                    <tr key={mode} className="hover:bg-ivory/30">
+                      <td className="p-3 font-bold text-textInk flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-kumkum" />
+                        {mode}
+                      </td>
+                      <td className="p-3 text-center font-semibold">{data.count}</td>
+                      <td className="p-3 text-right font-mono font-bold text-kumkum">
+                        ₹{Number(data.amount).toFixed(2)}
+                      </td>
+                      <td className="p-3 text-right font-mono text-textInk/80 font-bold">
+                        <div className="flex items-center justify-end gap-2">
+                          <span>{sharePct}%</span>
+                          <div className="w-16 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20">
+                            <div className="bg-kumkum h-full rounded-full" style={{ width: `${sharePct}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Daily Breakdown for Monthly Report */}
           {reportType === 'monthly' && reportData.dailyBreakdown && (
-            <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6">
-              <h3 className="font-display text-base font-bold text-kumkum mb-4">Daily Collection Breakdown</h3>
-              <div className="max-h-64 overflow-y-auto">
+            <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
+                <h3 className="font-display text-base font-bold text-kumkum flex items-center gap-2">
+                  <Layers className="w-4 h-4" />
+                  <span>Daily Collection Breakdown ({new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} {selectedYear})</span>
+                </h3>
+              </div>
+
+              <div className="max-h-72 overflow-y-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark sticky top-0">
                     <tr>
                       <th className="p-3">Date</th>
-                      <th className="p-3 text-right">Total Collection (₹)</th>
+                      <th className="p-3 text-right">Daily Total Collection (₹)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ivory-dark/60">
                     {reportData.dailyBreakdown.map((row: any) => (
-                      <tr key={row.date}>
-                        <td className="p-3 font-mono font-semibold">{row.date}</td>
+                      <tr key={row.date} className="hover:bg-ivory/30">
+                        <td className="p-3 font-mono font-semibold text-textInk">{row.date}</td>
                         <td className="p-3 text-right font-mono font-bold text-kumkum">
                           ₹{Number(row.totalAmount).toFixed(2)}
                         </td>
@@ -188,7 +324,9 @@ export const ReportsPage: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="p-8 text-center text-textInk/50">No report data available.</div>
+        <div className="p-8 text-center text-textInk/50 bg-white rounded-2xl border border-turmeric/20">
+          No report data available for the selected range.
+        </div>
       )}
     </div>
   );
