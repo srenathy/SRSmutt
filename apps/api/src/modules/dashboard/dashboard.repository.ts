@@ -29,14 +29,14 @@ export class DashboardRepository implements IDashboardRepository {
     const [
       todaySum,
       monthSum,
-      monthExpensesSum,
+      monthExpensesList,
       pendingExpensesCount,
       totalReceiptsCount,
       todayReceiptsCount,
       paymentModeGroups,
       recentReceipts,
       allReceipts,
-      allExpenses
+      allApprovedExpenses
     ] = await Promise.all([
       this.prisma.receipt.aggregate({
         _sum: { totalAmount: true },
@@ -46,9 +46,9 @@ export class DashboardRepository implements IDashboardRepository {
         _sum: { totalAmount: true },
         where: { createdAt: { gte: startOfMonth }, cancelledAt: null }
       }),
-      this.prisma.expense.aggregate({
-        _sum: { amount: true },
-        where: { createdAt: { gte: startOfMonth }, status: 'APPROVED' }
+      this.prisma.expense.findMany({
+        where: { createdAt: { gte: startOfMonth }, status: 'APPROVED' },
+        select: { amount: true, category: true }
       }),
       this.prisma.expense.count({
         where: { status: 'PENDING' }
@@ -75,9 +75,15 @@ export class DashboardRepository implements IDashboardRepository {
       }),
       this.prisma.expense.findMany({
         where: { status: 'APPROVED' },
-        select: { createdAt: true, amount: true }
+        select: { createdAt: true, amount: true, category: true }
       })
     ]);
+
+    const isPettyCash = (cat?: string) => {
+      if (!cat) return false;
+      const lower = cat.toLowerCase();
+      return lower.includes('petty cash') || lower.includes('pettycash') || lower.includes('daily allowance');
+    };
 
     const breakdown: Record<PaymentMode, number> = {
       [PaymentMode.CASH]: 0,
@@ -112,7 +118,7 @@ export class DashboardRepository implements IDashboardRepository {
       count: trendMap[date].count
     }));
 
-    // Historic Cumulative Deficit Carry-Forward Calculation (Excludes Petty Cash)
+    // Historic Cumulative Deficit Carry-Forward Calculation (EXCLUDES PETTY CASH)
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const monthlyIncomeMap: Record<string, number> = {};
     const monthlyExpenseMap: Record<string, number> = {};
@@ -122,7 +128,8 @@ export class DashboardRepository implements IDashboardRepository {
       monthlyIncomeMap[key] = (monthlyIncomeMap[key] || 0) + Number(r.totalAmount || 0);
     }
 
-    for (const e of allExpenses) {
+    for (const e of allApprovedExpenses) {
+      if (isPettyCash(e.category)) continue; // STRICTLY EXCLUDE PETTY CASH ALLOWANCES
       const key = `${e.createdAt.getFullYear()}-${String(e.createdAt.getMonth() + 1).padStart(2, '0')}`;
       monthlyExpenseMap[key] = (monthlyExpenseMap[key] || 0) + Number(e.amount || 0);
     }
@@ -142,7 +149,12 @@ export class DashboardRepository implements IDashboardRepository {
 
     const previousCarriedDeficit = accumulatedNetBalance < 0 ? Math.abs(accumulatedNetBalance) : 0;
     const totalIncome = Number(monthSum._sum.totalAmount || 0);
-    const totalExpenses = Number(monthExpensesSum._sum.amount || 0);
+
+    // Sum month expenses excluding Petty Cash
+    const totalExpenses = monthExpensesList
+      .filter((e) => !isPettyCash(e.category))
+      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
     const currentMonthOperatingBalance = totalIncome - totalExpenses;
     const netEarnings = currentMonthOperatingBalance + accumulatedNetBalance;
 

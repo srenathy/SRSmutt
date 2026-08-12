@@ -289,6 +289,7 @@ export const ExpensesPage: React.FC = () => {
     'Electricity & Water Utility',
     'Annadana Provisions & Catering',
     'Temple Maintenance & Repairs',
+    'Petty Cash & Daily Outlay (Excluded from Dashboard)',
     'Special Event & Festival',
     'Miscellaneous'
   ];
