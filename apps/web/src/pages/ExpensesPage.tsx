@@ -206,7 +206,7 @@ export const ExpensesPage: React.FC = () => {
       const res = await apiClient.post('/expenses', {
         ...formData,
         amount: Number(formData.amount),
-        attachment: attachment
+        attachment: attachment || null
       });
       alert(
         res.data.data.status === 'PENDING'

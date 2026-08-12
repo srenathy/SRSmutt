@@ -7,7 +7,8 @@ export const expenseSchema = z.object({
   payee: z.string().optional().or(z.literal('')),
   paymentMode: z.string().default('CASH'),
   description: z.string().optional().or(z.literal('')),
-  attachment: z.string().min(1, 'Bill copy or voucher attachment is mandatory for all expenditure entries')
+  attachment: z.string().optional().nullable().or(z.literal(''))
 });
 
 export type ExpenseInput = z.infer<typeof expenseSchema>;
+
