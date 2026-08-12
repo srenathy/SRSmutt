@@ -26,9 +26,15 @@ export class UserController {
         devoteeId: true,
         devotee: {
           select: {
+            id: true,
             name: true,
             phone: true,
-            city: true
+            email: true,
+            address: true,
+            city: true,
+            gotra: true,
+            nakshatra: true,
+            rashi: true
           }
         },
         createdAt: true,
@@ -36,7 +42,34 @@ export class UserController {
       },
       orderBy: { createdAt: 'desc' }
     });
-    return reply.send({ data: users });
+
+    const devotees = await this.prisma.devotee.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const linkedDevoteeIds = new Set(users.map((u) => u.devoteeId).filter(Boolean));
+
+    const unlinkedDevoteeUsers = devotees
+      .filter((d) => d.phone !== '0000000000' && !d.name?.toLowerCase().includes('general temple income') && !d.name?.toLowerCase().includes('hundi'))
+      .filter((d) => !linkedDevoteeIds.has(d.id))
+      .map((d) => ({
+        id: `devotee-${d.id}`,
+        username: d.phone ? `dev_${d.phone.replace(/\D/g, '')}` : `dev_${d.id.slice(0, 6)}`,
+        fullName: d.name,
+        role: 'DEVOTEE',
+        canAccessBilling: false,
+        canAccessExpenses: false,
+        canAccessReports: false,
+        canAccessMasters: false,
+        canApproveExpenses: false,
+        expenditureLimit: 0,
+        devoteeId: d.id,
+        devotee: d,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt
+      }));
+
+    return reply.send({ data: [...users, ...unlinkedDevoteeUsers] });
   }
 
   async createUser(request: FastifyRequest, reply: FastifyReply) {
@@ -76,7 +109,50 @@ export class UserController {
   }
 
   async updateUser(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
-    const input = updateUserSchema.parse({ ...(request.body as any), id: request.params.id });
+    const rawId = request.params.id;
+    const body = request.body as any;
+
+    // Check if updating a Devotee user profile
+    if (rawId.startsWith('devotee-') || body.role === 'DEVOTEE' || body.devoteeId || body.isDevotee) {
+      const devoteeId = body.devoteeId || (rawId.startsWith('devotee-') ? rawId.replace('devotee-', '') : null);
+
+      if (devoteeId) {
+        const updatedDevotee = await this.prisma.devotee.update({
+          where: { id: devoteeId },
+          data: {
+            name: body.fullName || body.name,
+            phone: body.phone,
+            email: body.email || undefined,
+            gotra: body.gotra || undefined,
+            nakshatra: body.nakshatra || undefined,
+            rashi: body.rashi || undefined,
+            city: body.city || undefined,
+            address: body.address || undefined
+          }
+        });
+
+        // Also update User record if present
+        if (!rawId.startsWith('devotee-')) {
+          await this.prisma.user.update({
+            where: { id: rawId },
+            data: { fullName: updatedDevotee.name }
+          });
+        }
+
+        await this.auditLogger.log(request.user.id, AuditAction.UPDATE, 'Devotee', devoteeId, undefined, updatedDevotee);
+        return reply.send({
+          data: {
+            id: rawId,
+            fullName: updatedDevotee.name,
+            role: 'DEVOTEE',
+            devoteeId: updatedDevotee.id,
+            devotee: updatedDevotee
+          }
+        });
+      }
+    }
+
+    const input = updateUserSchema.parse({ ...body, id: rawId });
 
     const updateData: any = {
       fullName: input.fullName,
@@ -94,7 +170,7 @@ export class UserController {
     }
 
     const updated = await this.prisma.user.update({
-      where: { id: request.params.id },
+      where: { id: rawId },
       data: updateData,
       select: {
         id: true,
@@ -118,6 +194,13 @@ export class UserController {
   async deleteUser(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     if (request.params.id === request.user.id) {
       return reply.status(400).send({ message: 'Cannot delete your own active user account' });
+    }
+
+    if (request.params.id.startsWith('devotee-')) {
+      const devId = request.params.id.replace('devotee-', '');
+      await this.prisma.devotee.delete({ where: { id: devId } });
+      await this.auditLogger.log(request.user.id, AuditAction.DELETE, 'Devotee', devId, undefined, undefined);
+      return reply.send({ message: 'Devotee profile deleted successfully' });
     }
 
     await this.prisma.user.delete({ where: { id: request.params.id } });

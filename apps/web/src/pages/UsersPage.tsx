@@ -17,6 +17,13 @@ export const UsersPage: React.FC = () => {
     password: '',
     fullName: '',
     role: 'STAFF',
+    phone: '',
+    email: '',
+    gotra: '',
+    nakshatra: '',
+    rashi: '',
+    city: '',
+    address: '',
     canAccessBilling: true,
     canAccessExpenses: true,
     canAccessReports: true,
@@ -44,11 +51,19 @@ export const UsersPage: React.FC = () => {
   const handleOpenModal = (u?: any) => {
     if (u) {
       setEditingUser(u);
+      const isDev = u.role === 'DEVOTEE' || u.devoteeId;
       setFormData({
-        username: u.username,
+        username: u.username || '',
         password: '',
-        fullName: u.fullName,
-        role: u.role,
+        fullName: u.fullName || u.devotee?.name || '',
+        role: u.role || (isDev ? 'DEVOTEE' : 'STAFF'),
+        phone: u.devotee?.phone || '',
+        email: u.devotee?.email || '',
+        gotra: u.devotee?.gotra || '',
+        nakshatra: u.devotee?.nakshatra || '',
+        rashi: u.devotee?.rashi || '',
+        city: u.devotee?.city || '',
+        address: u.devotee?.address || '',
         canAccessBilling: u.canAccessBilling ?? true,
         canAccessExpenses: u.canAccessExpenses ?? true,
         canAccessReports: u.canAccessReports ?? true,
@@ -63,6 +78,13 @@ export const UsersPage: React.FC = () => {
         password: '',
         fullName: '',
         role: 'STAFF',
+        phone: '',
+        email: '',
+        gotra: '',
+        nakshatra: '',
+        rashi: '',
+        city: '',
+        address: '',
         canAccessBilling: true,
         canAccessExpenses: true,
         canAccessReports: true,
@@ -280,134 +302,240 @@ export const UsersPage: React.FC = () => {
       {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4">
-          <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-display font-bold text-lg text-kumkum">
-              {editingUser ? `Edit Sub-User (${editingUser.username})` : 'Create Sub-User Account'}
+              {editingUser?.role === 'DEVOTEE' || formData.role === 'DEVOTEE'
+                ? `Edit Devotee Profile (${editingUser?.fullName || formData.fullName})`
+                : editingUser
+                ? `Edit Sub-User (${editingUser.username})`
+                : 'Create Sub-User Account'}
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Username</label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  required
-                  disabled={!!editingUser}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 disabled:bg-ivory"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  required
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">
-                  {editingUser ? 'New Password (leave blank to keep current)' : 'Password'}
-                </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required={!editingUser}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Role Designation</label>
-                <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 bg-white"
-                >
-                  <option value="STAFF">COUNTER STAFF</option>
-                  <option value="ACCOUNTANT">ACCOUNTANT</option>
-                  <option value="MANAGER">TEMPLE MANAGER</option>
-                  <option value="ADMIN">SYSTEM ADMIN</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">
-                  Auto-Approval Expenditure Limit (₹)
-                </label>
-                <input
-                  type="number"
-                  value={formData.expenditureLimit}
-                  onChange={(e) => setFormData({ ...formData, expenditureLimit: Number(e.target.value) })}
-                  required
-                  min={0}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-mono font-bold"
-                />
-                <p className="text-[10px] text-textInk/50 mt-1">
-                  Expenditure vouchers logged by this user up to this amount will be auto-approved. Greater amounts will go to Admin review.
-                </p>
-              </div>
-
-              {/* Module Access Rights Checkboxes */}
-              <div className="border-t border-turmeric/20 pt-3 space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-kumkum">
-                  Module Access Permissions
-                </label>
-
-                <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-textInk">
-                  <label className="flex items-center gap-2">
+              {editingUser?.role === 'DEVOTEE' || formData.role === 'DEVOTEE' ? (
+                /* DEVOTEE PROFILE FORM (Fields matching Quick Register flow) */
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Devotee Full Name *</label>
                     <input
-                      type="checkbox"
-                      checked={formData.canAccessBilling}
-                      onChange={(e) => setFormData({ ...formData, canAccessBilling: e.target.checked })}
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      required
+                      placeholder="e.g. Srinivas Rao"
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
                     />
-                    Billing Counter Access
-                  </label>
+                  </div>
 
-                  <label className="flex items-center gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Phone Number *</label>
                     <input
-                      type="checkbox"
-                      checked={formData.canAccessExpenses}
-                      onChange={(e) => setFormData({ ...formData, canAccessExpenses: e.target.checked })}
+                      type="text"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      required
+                      placeholder="10-digit mobile number"
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-mono font-medium"
                     />
-                    Expenditures Access
-                  </label>
+                  </div>
 
-                  <label className="flex items-center gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Email Address (Optional)</label>
                     <input
-                      type="checkbox"
-                      checked={formData.canAccessReports}
-                      onChange={(e) => setFormData({ ...formData, canAccessReports: e.target.checked })}
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="e.g. devotee@gmail.com"
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
                     />
-                    Reports Access
-                  </label>
+                  </div>
 
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.canAccessMasters}
-                      onChange={(e) => setFormData({ ...formData, canAccessMasters: e.target.checked })}
-                    />
-                    Masters Editing
-                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-textInk mb-1">Gotra</label>
+                      <input
+                        type="text"
+                        value={formData.gotra}
+                        onChange={(e) => setFormData({ ...formData, gotra: e.target.value })}
+                        placeholder="e.g. Kashyapa"
+                        className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
+                      />
+                    </div>
 
-                  <label className="flex items-center gap-2 col-span-2 text-kumkum font-bold pt-1">
+                    <div>
+                      <label className="block text-xs font-semibold text-textInk mb-1">Nakshatra</label>
+                      <input
+                        type="text"
+                        value={formData.nakshatra}
+                        onChange={(e) => setFormData({ ...formData, nakshatra: e.target.value })}
+                        placeholder="e.g. Uttara Bhadrapada"
+                        className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-textInk mb-1">Rashi</label>
+                      <input
+                        type="text"
+                        value={formData.rashi}
+                        onChange={(e) => setFormData({ ...formData, rashi: e.target.value })}
+                        placeholder="e.g. Meena"
+                        className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-textInk mb-1">City</label>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        placeholder="e.g. Bengaluru"
+                        className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Residential Address (Optional)</label>
                     <input
-                      type="checkbox"
-                      checked={formData.canApproveExpenses}
-                      onChange={(e) => setFormData({ ...formData, canApproveExpenses: e.target.checked })}
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Street, area, pincode..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
                     />
-                    Can Approve High-Threshold Expenses
-                  </label>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* STAFF ACCOUNT FORM */
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Username</label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      required
+                      disabled={!!editingUser}
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 disabled:bg-ivory"
+                    />
+                  </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      required
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">
+                      {editingUser ? 'New Password (leave blank to keep current)' : 'Password'}
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required={!editingUser}
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Role Designation</label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 bg-white"
+                    >
+                      <option value="STAFF">COUNTER STAFF</option>
+                      <option value="ACCOUNTANT">ACCOUNTANT</option>
+                      <option value="MANAGER">TEMPLE MANAGER</option>
+                      <option value="ADMIN">SYSTEM ADMIN</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">
+                      Auto-Approval Expenditure Limit (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.expenditureLimit}
+                      onChange={(e) => setFormData({ ...formData, expenditureLimit: Number(e.target.value) })}
+                      required
+                      min={0}
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-mono font-bold"
+                    />
+                    <p className="text-[10px] text-textInk/50 mt-1">
+                      Expenditure vouchers logged by this user up to this amount will be auto-approved. Greater amounts will go to Admin review.
+                    </p>
+                  </div>
+
+                  {/* Module Access Rights Checkboxes */}
+                  <div className="border-t border-turmeric/20 pt-3 space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-kumkum">
+                      Module Access Permissions
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-textInk">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.canAccessBilling}
+                          onChange={(e) => setFormData({ ...formData, canAccessBilling: e.target.checked })}
+                        />
+                        Billing Counter Access
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.canAccessExpenses}
+                          onChange={(e) => setFormData({ ...formData, canAccessExpenses: e.target.checked })}
+                        />
+                        Expenditures Access
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.canAccessReports}
+                          onChange={(e) => setFormData({ ...formData, canAccessReports: e.target.checked })}
+                        />
+                        Reports Access
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.canAccessMasters}
+                          onChange={(e) => setFormData({ ...formData, canAccessMasters: e.target.checked })}
+                        />
+                        Masters Editing
+                      </label>
+
+                      <label className="flex items-center gap-2 col-span-2 text-kumkum font-bold pt-1">
+                        <input
+                          type="checkbox"
+                          checked={formData.canApproveExpenses}
+                          onChange={(e) => setFormData({ ...formData, canApproveExpenses: e.target.checked })}
+                        />
+                        Can Approve High-Threshold Expenses
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-turmeric/10">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
@@ -420,7 +548,7 @@ export const UsersPage: React.FC = () => {
                   disabled={submitting}
                   className="px-5 py-2 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all disabled:opacity-50"
                 >
-                  {submitting ? 'Saving...' : 'Save User Account'}
+                  {submitting ? 'Saving...' : editingUser?.role === 'DEVOTEE' || formData.role === 'DEVOTEE' ? 'Save Devotee Profile' : 'Save User Account'}
                 </button>
               </div>
             </form>
