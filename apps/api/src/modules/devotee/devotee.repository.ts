@@ -22,7 +22,11 @@ export class DevoteeRepository extends BaseRepository<Devotee> implements IDevot
       where: {
         OR: [
           { name: { contains: query } },
-          { phone: { contains: query } }
+          { phone: { contains: query } },
+          { gotra: { contains: query } },
+          { nakshatra: { contains: query } },
+          { rashi: { contains: query } },
+          { city: { contains: query } }
         ]
       },
       take: 20,

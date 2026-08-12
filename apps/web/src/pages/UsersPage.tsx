@@ -106,7 +106,7 @@ export const UsersPage: React.FC = () => {
     const matchesSearch =
       u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (u.devotee?.phone && u.devotee.phone.includes(searchQuery));
+      (u.devotee?.phone && u.devotee.phone.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (!matchesSearch) return false;
 
