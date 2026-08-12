@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.js';
 import { UserPlus, Search, Shield, UserCheck, Users, Edit, Trash2 } from 'lucide-react';
+import { VedicAutocomplete } from '../components/VedicAutocomplete.js';
+import { useVedicMasters } from '../hooks/useVedicMasters.js';
+import { Pagination } from '../components/Pagination.js';
 
 export const UsersPage: React.FC = () => {
+  const { gotras, nakshatras, rashis } = useVedicMasters();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState<'ALL' | 'STAFF_ADMIN' | 'DEVOTEE'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
@@ -141,6 +147,12 @@ export const UsersPage: React.FC = () => {
     return true;
   });
 
+  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [roleFilter, searchQuery]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -229,14 +241,14 @@ export const UsersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-turmeric/10 font-medium text-textInk">
-                {filteredUsers.length === 0 ? (
+                {paginatedUsers.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="p-8 text-center text-textInk/50">
                       No user accounts found matching current filter.
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((u) => (
+                  paginatedUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-ivory/40 transition-colors">
                       <td className="p-4 font-mono font-bold text-kumkum">
                         {u.username}
@@ -295,6 +307,14 @@ export const UsersPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              pageSize={pageSize}
+              onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+              totalItems={filteredUsers.length}
+            />
           </div>
         )}
       </div>
@@ -352,37 +372,37 @@ export const UsersPage: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-textInk mb-1">Gotra</label>
-                      <input
-                        type="text"
+                      <VedicAutocomplete
+                        label="Gotra"
+                        placeholder="Type 3+ letters to search Gotra..."
                         value={formData.gotra}
-                        onChange={(e) => setFormData({ ...formData, gotra: e.target.value })}
-                        placeholder="e.g. Kashyapa"
-                        className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
+                        onChange={(val) => setFormData({ ...formData, gotra: val })}
+                        options={gotras}
+                        minChars={3}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-textInk mb-1">Nakshatra</label>
-                      <input
-                        type="text"
+                      <VedicAutocomplete
+                        label="Nakshatra"
+                        placeholder="Type 3+ letters to search Nakshatra..."
                         value={formData.nakshatra}
-                        onChange={(e) => setFormData({ ...formData, nakshatra: e.target.value })}
-                        placeholder="e.g. Uttara Bhadrapada"
-                        className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
+                        onChange={(val) => setFormData({ ...formData, nakshatra: val })}
+                        options={nakshatras}
+                        minChars={3}
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-textInk mb-1">Rashi</label>
-                      <input
-                        type="text"
+                      <VedicAutocomplete
+                        label="Rashi"
+                        placeholder="Type 3+ letters to search Rashi..."
                         value={formData.rashi}
-                        onChange={(e) => setFormData({ ...formData, rashi: e.target.value })}
-                        placeholder="e.g. Meena"
-                        className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-medium"
+                        onChange={(val) => setFormData({ ...formData, rashi: val })}
+                        options={rashis}
+                        minChars={3}
                       />
                     </div>
 

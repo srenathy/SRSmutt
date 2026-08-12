@@ -108,6 +108,26 @@ export const DashboardLayout: React.FC = () => {
         ))}
       </nav>
 
+      {/* Language & Counter Status (moved from header) */}
+      <div className="px-4 pb-2 space-y-2">
+        <div className="flex items-center gap-1.5 bg-ivory/10 px-3 py-2 rounded-xl border border-turmeric/20">
+          <span className="text-[9px] uppercase font-bold text-ivory/50">Language:</span>
+          <select
+            value={getSelectedLanguage()}
+            onChange={(e) => changeLanguage(e.target.value)}
+            className="bg-transparent border-none font-bold text-turmeric focus:outline-none cursor-pointer text-[11px] flex-1"
+          >
+            <option value="en">English</option>
+            <option value="kn">ಕನ್ನಡ</option>
+            <option value="te">తెలుగు</option>
+          </select>
+        </div>
+        <div className="flex items-center justify-center gap-1.5 bg-emerald-900/30 px-3 py-1.5 rounded-xl border border-emerald-700/30">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Counter Online</span>
+        </div>
+      </div>
+
       {/* User Footer Panel */}
       <div className="p-4 border-t border-turmeric/20 bg-ink-dark/50 flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
@@ -178,23 +198,6 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4 text-xs font-medium text-textInk/70">
-            {/* Language Selector Dropdown */}
-            <div className="flex items-center gap-1.5 bg-ivory px-2.5 py-1.5 rounded-lg border border-turmeric/30">
-              <span className="text-[10px] uppercase font-bold text-textInk/50">Language:</span>
-              <select
-                value={getSelectedLanguage()}
-                onChange={(e) => changeLanguage(e.target.value)}
-                className="bg-transparent border-none font-bold text-kumkum focus:outline-none cursor-pointer text-xs"
-              >
-                <option value="en">English</option>
-                <option value="kn">ಕನ್ನಡ</option>
-                <option value="te">తెలుగు</option>
-              </select>
-            </div>
-
-            <span className="bg-ivory px-2.5 py-1.5 rounded-lg border border-turmeric/30 hidden sm:inline-block text-xs">
-              Counter Status: <span className="font-bold text-green-700">ONLINE</span>
-            </span>
           </div>
         </header>
 

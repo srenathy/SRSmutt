@@ -22,6 +22,7 @@ import {
   Landmark,
   PiggyBank
 } from 'lucide-react';
+import { Pagination } from '../components/Pagination.js';
 
 export const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
@@ -319,6 +320,21 @@ export const ExpensesPage: React.FC = () => {
   const operationalExpenses = expenses.filter((e) => !isPettyCashCat(e.category));
   const pettyCashExpenses = expenses.filter((e) => isPettyCashCat(e.category));
 
+  // Pagination state for each tab
+  const [opPage, setOpPage] = useState(1);
+  const [opPageSize, setOpPageSize] = useState(15);
+  const [ubPage, setUbPage] = useState(1);
+  const [ubPageSize, setUbPageSize] = useState(15);
+  const [pcPage, setPcPage] = useState(1);
+  const [pcPageSize, setPcPageSize] = useState(15);
+
+  const opTotalPages = Math.ceil(operationalExpenses.length / opPageSize);
+  const paginatedOp = operationalExpenses.slice((opPage - 1) * opPageSize, opPage * opPageSize);
+  const ubTotalPages = Math.ceil(unbilledIncomes.length / ubPageSize);
+  const paginatedUb = unbilledIncomes.slice((ubPage - 1) * ubPageSize, ubPage * ubPageSize);
+  const pcTotalPages = Math.ceil(pettyCashExpenses.length / pcPageSize);
+  const paginatedPc = pettyCashExpenses.slice((pcPage - 1) * pcPageSize, pcPage * pcPageSize);
+
   const totalSpentOperationalThisMonth = operationalExpenses
     .filter((e) => {
       const d = new Date(e.createdAt);
@@ -480,7 +496,7 @@ export const ExpensesPage: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    operationalExpenses.map((expense) => (
+                    paginatedOp.map((expense) => (
                       <tr key={expense.id} className="hover:bg-ivory/40">
                         <td className="p-4 font-mono font-bold text-kumkum">{expense.voucherNumber}</td>
                         <td className="p-4 text-textInk/70">
@@ -564,6 +580,7 @@ export const ExpensesPage: React.FC = () => {
                   )}
                 </tbody>
               </table>
+              <Pagination currentPage={opPage} totalPages={opTotalPages} onPageChange={setOpPage} pageSize={opPageSize} onPageSizeChange={(s) => { setOpPageSize(s); setOpPage(1); }} totalItems={operationalExpenses.length} />
             </div>
           </div>
         </div>
@@ -638,7 +655,7 @@ export const ExpensesPage: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    unbilledIncomes.map((inc) => (
+                    paginatedUb.map((inc) => (
                       <tr key={inc.id} className="hover:bg-ivory/40">
                         <td className="p-4 font-mono font-bold text-kumkum">{inc.receiptNumber}</td>
                         <td className="p-4 text-textInk/70">
@@ -667,6 +684,7 @@ export const ExpensesPage: React.FC = () => {
                   )}
                 </tbody>
               </table>
+              <Pagination currentPage={ubPage} totalPages={ubTotalPages} onPageChange={setUbPage} pageSize={ubPageSize} onPageSizeChange={(s) => { setUbPageSize(s); setUbPage(1); }} totalItems={unbilledIncomes.length} />
             </div>
           </div>
         </div>
@@ -771,7 +789,7 @@ export const ExpensesPage: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    pettyCashExpenses.map((expense) => (
+                    paginatedPc.map((expense) => (
                       <tr key={expense.id} className="hover:bg-ivory/40">
                         <td className="p-4 font-mono font-bold text-kumkum">{expense.voucherNumber}</td>
                         <td className="p-4 text-textInk/70">
@@ -855,6 +873,7 @@ export const ExpensesPage: React.FC = () => {
                   )}
                 </tbody>
               </table>
+              <Pagination currentPage={pcPage} totalPages={pcTotalPages} onPageChange={setPcPage} pageSize={pcPageSize} onPageSizeChange={(s) => { setPcPageSize(s); setPcPage(1); }} totalItems={pettyCashExpenses.length} />
             </div>
           </div>
         </div>

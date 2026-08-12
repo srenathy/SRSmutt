@@ -922,16 +922,10 @@ export const BillingPage: React.FC = () => {
             {createdReceipt?.devotee?.phone && createdReceipt.devotee.phone !== '0000000000' && (
               <button
                 type="button"
-                onClick={() => {
-                  const phone = createdReceipt.devotee.phone.replace(/\D/g, '');
-                  const itemsList = createdReceipt.items?.map((it: any) => `${it.description} (Devotees: ${it.devoteeCount || 1} x${it.quantity})`).join(', ') || 'Seva';
-                  const text = `Jay Sri Krishna! 🙏\n\n*Mulabagala Sri Sripadaraja Matha (Rajajinagar Branch)*\n\n*Official Receipt No:* #${createdReceipt.receiptNumber}\n*Devotee:* ${createdReceipt.devotee.name}\n*Sevas:* ${itemsList}\n*Total Paid:* ₹${(Number(createdReceipt.totalAmount) || totalAmount || 0).toFixed(2)}\n*Payment Mode:* ${createdReceipt.paymentMode || paymentMode}\n\nThank you for your devotion and divine contribution!`;
-                  const url = `https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(text)}`;
-                  window.open(url, '_blank');
-                }}
+                onClick={() => setShowThermalModal(true)}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all transform hover:-translate-y-0.5"
               >
-                <MessageCircle className="w-4 h-4" /> Share Receipt via WhatsApp
+                <MessageCircle className="w-4 h-4" /> Share Receipt PDF via WhatsApp
               </button>
             )}
 

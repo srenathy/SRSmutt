@@ -22,6 +22,159 @@ interface Seva {
   active?: boolean;
 }
 
+/* ─────── Gallery Photo Data ─────── */
+const GALLERY_PHOTOS = [
+  { src: '/gallery/brindavana-1.jpg', caption: 'Sri Raghavendra Swamy — Alankara Darshana' },
+  { src: '/gallery/brindavana-2.jpg', caption: 'Sri Raghavendra Swamy — Pushpa Alankara' },
+  { src: '/gallery/brindavana-3.jpg', caption: 'Sri Raghavendra Swamy — Vastra Alankara' },
+  { src: '/gallery/brindavana-4.jpg', caption: 'Sri Raghavendra Matha — Rajajinagar, Bengaluru' },
+];
+const GALLERY_LS_KEY = 'srsmuth_gallery_cache_v2';
+const GALLERY_MAX_PX = 600; // compress max dimension
+
+function compressImageToBase64(imgUrl: string, maxPx: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+      if (w > maxPx || h > maxPx) {
+        const ratio = Math.min(maxPx / w, maxPx / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.72));
+    };
+    img.onerror = () => reject(new Error('Failed to load image: ' + imgUrl));
+    img.src = imgUrl;
+  });
+}
+
+const PhotoGallerySection: React.FC = () => {
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  // Load & compress images, cache in localStorage
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      // Try cache first
+      try {
+        const cached = localStorage.getItem(GALLERY_LS_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length === GALLERY_PHOTOS.length) {
+            if (!cancelled) setPhotos(parsed);
+            return;
+          }
+        }
+      } catch { /* ignore parse errors */ }
+
+      // Compress and store
+      try {
+        const compressed = await Promise.all(
+          GALLERY_PHOTOS.map((p) => compressImageToBase64(p.src, GALLERY_MAX_PX))
+        );
+        if (!cancelled) {
+          setPhotos(compressed);
+          try { localStorage.setItem(GALLERY_LS_KEY, JSON.stringify(compressed)); } catch { /* quota */ }
+        }
+      } catch (err) {
+        console.warn('Gallery compression failed, using originals', err);
+        if (!cancelled) setPhotos(GALLERY_PHOTOS.map((p) => p.src));
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Auto-scroll every 4 seconds
+  useEffect(() => {
+    if (photos.length === 0) return;
+    const timer = setInterval(() => {
+      setActiveIdx((prev) => (prev + 1) % photos.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [photos.length]);
+
+  if (photos.length === 0) return null;
+
+  return (
+    <section className="py-10 bg-gradient-to-b from-ivory to-ivory-light">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="text-center mb-6">
+          <span className="text-xs font-bold text-kumkum tracking-[0.25em] uppercase">📸 Sacred Glimpses</span>
+          <h3 className="font-display text-2xl md:text-3xl font-bold text-kumkum mt-1">
+            Photo Gallery — Sri Raghavendra Brindavana
+          </h3>
+          <p className="text-xs text-textInk/60 mt-1">Daily Alankara Darshana from our Rajajinagar Sannidhana</p>
+        </div>
+
+        {/* Carousel Container */}
+        <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-turmeric/30 bg-ink/5">
+          <div className="relative w-full" style={{ paddingBottom: '60%' }}>
+            {photos.map((src, idx) => (
+              <img
+                key={idx}
+                src={src}
+                alt={GALLERY_PHOTOS[idx]?.caption || `Gallery photo ${idx + 1}`}
+                className={`absolute inset-0 w-full h-full object-contain bg-black/90 transition-opacity duration-700 ease-in-out ${
+                  idx === activeIdx ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
+              />
+            ))}
+
+            {/* Caption Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-6 py-5">
+              <p className="text-ivory text-sm md:text-base font-display font-semibold drop-shadow-lg">
+                {GALLERY_PHOTOS[activeIdx]?.caption}
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation Arrows */}
+          <button
+            onClick={() => setActiveIdx((prev) => (prev - 1 + photos.length) % photos.length)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-ivory/80 hover:bg-ivory text-kumkum flex items-center justify-center shadow-lg transition-all border border-turmeric/30"
+            aria-label="Previous photo"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setActiveIdx((prev) => (prev + 1) % photos.length)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-ivory/80 hover:bg-ivory text-kumkum flex items-center justify-center shadow-lg transition-all border border-turmeric/30"
+            aria-label="Next photo"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Dot Indicators */}
+        <div className="flex items-center justify-center gap-2.5 mt-5">
+          {photos.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveIdx(idx)}
+              className={`rounded-full transition-all duration-300 ${
+                idx === activeIdx
+                  ? 'w-8 h-2.5 bg-kumkum shadow-md'
+                  : 'w-2.5 h-2.5 bg-turmeric/40 hover:bg-turmeric/70'
+              }`}
+              aria-label={`Go to photo ${idx + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -112,7 +265,7 @@ export const HomePage: React.FC = () => {
           </p>
 
           <p className="text-sm md:text-base text-textInk/80 max-w-3xl mx-auto leading-relaxed">
-            Experience divine blessings at our Rajajinagar branch housing the sacred Mrittika Brindavana of Sri Raghavendra Swamy under the holy lineage of Sri Sripadaraja Swamiji. View daily Darshan timings, Seva offerings, and sponsor Nitya Annadana.
+            Experience divine blessings at our Rajajinagar branch housing the sacred Mrittika Brindavana of Sri Raghavendra Swamy under the holy lineage of Sri Sripadaraja Swamiji. View daily Darshan timings, Seva offerings, and sponsor Teertha Prasada.
           </p>
         </div>
 
@@ -134,6 +287,9 @@ export const HomePage: React.FC = () => {
           );
         })()}
       </section>
+
+      {/* ── Photo Gallery Auto-Scroll Section ── */}
+      <PhotoGallerySection />
 
       <GopuramDivider />
 
@@ -204,7 +360,7 @@ export const HomePage: React.FC = () => {
                 The Rajajinagar branch of Mulabagala Sri Sripadaraja Matha houses the sanctified Mrittika Brindavana of Sri Raghavendra Swamy, established under the divine guidance of the Matha. Devotees from all over Bengaluru visit this holy Sannidhana for daily worship, Sevas, and spiritual solace.
               </p>
               <p className="text-textInk/80 leading-relaxed text-sm">
-                Under the holy tradition of Jagadguru Sri Madhvacharya and Sri Sripadaraja Swamiji, daily rituals including Panchamrutha Abhisheka, Hastodaka, Mahamangalarathi, and Nitya Annadana (Teertha Prasada) are conducted with utmost devotion.
+                Under the holy tradition of Jagadguru Sri Madhvacharya and Sri Sripadaraja Swamiji, daily rituals including Panchamrutha Abhisheka, Hastodaka, Mahamangalarathi, and Teertha Prasada are conducted with utmost devotion.
               </p>
             </div>
 
@@ -372,7 +528,7 @@ export const HomePage: React.FC = () => {
                     <span className="text-turmeric-dark font-mono font-bold">12:00 PM – 12:30 PM</span>
                   </li>
                   <li className="flex justify-between pb-1">
-                    <span className="font-semibold text-textInk">Teertha Prasada (Nitya Annadana)</span>
+                    <span className="font-semibold text-textInk">Teertha Prasada</span>
                     <span className="text-turmeric-dark font-mono font-bold">12:30 PM</span>
                   </li>
                 </ul>

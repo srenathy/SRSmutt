@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { Search, Printer, Calendar, Filter, RefreshCw, Scroll } from 'lucide-react';
+import { Pagination } from '../components/Pagination';
 
 export const SankalpaPage: React.FC = () => {
   // Get today's local date in YYYY-MM-DD format
@@ -9,6 +10,8 @@ export const SankalpaPage: React.FC = () => {
   const [dateFilter, setDateFilter] = useState(todayStr);
   const [sevaFilter, setSevaFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
 
   // Fetch active sevas for the filter dropdown
   const { data: sevas } = useQuery({
@@ -61,6 +64,11 @@ export const SankalpaPage: React.FC = () => {
       sevaName.includes(search)
     );
   }) || [];
+
+  const totalPages = Math.ceil(filteredList.length / pageSize);
+  const paginatedList = filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => { setCurrentPage(1); }, [dateFilter, sevaFilter, searchTerm]);
 
   const handlePrint = () => {
     window.print();
@@ -242,7 +250,7 @@ export const SankalpaPage: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredList.map((item: any, idx: number) => {
+                paginatedList.map((item: any, idx: number) => {
                   const devotee = item.receipt?.devotee || {};
                   return (
                     <tr
@@ -282,6 +290,14 @@ export const SankalpaPage: React.FC = () => {
               )}
             </tbody>
           </table>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            pageSize={pageSize}
+            onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+            totalItems={filteredList.length}
+          />
         </div>
       </div>
 

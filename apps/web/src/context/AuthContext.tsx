@@ -7,7 +7,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (input: LoginInput) => Promise<void>;
+  login: (input: LoginInput) => Promise<any>;
   logout: () => void;
 }
 
@@ -41,14 +41,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchCurrentUser();
   }, [token]);
 
-  const login = async (input: LoginInput) => {
+  const login = async (input: LoginInput): Promise<any> => {
     const response = await apiClient.post('/auth/login', input);
-    const { token: newToken, user: newUser } = response.data;
+    const { token: newToken, user: newUser, isFirstTimeLogin } = response.data;
 
     setToken(newToken);
     setUser(newUser);
     localStorage.setItem('temple_jwt_token', newToken);
     localStorage.setItem('temple_user_info', JSON.stringify(newUser));
+
+    return { user: newUser, token: newToken, isFirstTimeLogin };
   };
 
   const logout = () => {

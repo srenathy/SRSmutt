@@ -7,12 +7,13 @@ export class AuthController {
 
   async login(request: FastifyRequest, reply: FastifyReply) {
     const input = loginSchema.parse(request.body);
-    const { user, tokenPayload } = await this.authService.login(input);
+    const { user, tokenPayload, isFirstTimeLogin } = await this.authService.login(input) as any;
     const token = await reply.jwtSign(tokenPayload);
 
     return reply.send({
       token,
-      user
+      user,
+      isFirstTimeLogin: isFirstTimeLogin || false
     });
   }
 
@@ -24,6 +25,16 @@ export class AuthController {
     return reply.send({
       message: 'Password changed successfully'
     });
+  }
+
+  async changeFirstTimePassword(request: FastifyRequest, reply: FastifyReply) {
+    const userId = request.user.id;
+    const { newPassword } = request.body as any;
+    if (!newPassword || newPassword.trim().length < 4) {
+      return reply.status(400).send({ message: 'New password must be at least 4 characters.' });
+    }
+    await (this.authService as any).changeFirstTimePassword(userId, newPassword.trim());
+    return reply.send({ message: 'First time password updated successfully' });
   }
 
   async me(request: FastifyRequest, reply: FastifyReply) {

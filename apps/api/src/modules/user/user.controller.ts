@@ -47,14 +47,32 @@ export class UserController {
       orderBy: { createdAt: 'desc' }
     });
 
-    const linkedDevoteeIds = new Set(users.map((u) => u.devoteeId).filter(Boolean));
+    const userDevoteeIds = new Set<string>();
+    const userCleanPhones = new Set<string>();
+
+    for (const u of users) {
+      if (u.devoteeId) userDevoteeIds.add(u.devoteeId);
+      if (u.devotee?.phone) {
+        const p = u.devotee.phone.replace(/\D/g, '').slice(-10);
+        if (p.length >= 7) userCleanPhones.add(p);
+      }
+      if (u.username) {
+        const p = u.username.replace(/\D/g, '').slice(-10);
+        if (p.length >= 7) userCleanPhones.add(p);
+      }
+    }
 
     const unlinkedDevoteeUsers = devotees
       .filter((d) => d.phone !== '0000000000' && !d.name?.toLowerCase().includes('general temple income') && !d.name?.toLowerCase().includes('hundi'))
-      .filter((d) => !linkedDevoteeIds.has(d.id))
+      .filter((d) => {
+        if (userDevoteeIds.has(d.id)) return false;
+        const p = (d.phone || '').replace(/\D/g, '').slice(-10);
+        if (p.length >= 7 && userCleanPhones.has(p)) return false;
+        return true;
+      })
       .map((d) => ({
         id: `devotee-${d.id}`,
-        username: d.phone ? `dev_${d.phone.replace(/\D/g, '')}` : `dev_${d.id.slice(0, 6)}`,
+        username: d.phone || `dev_${d.id.slice(0, 6)}`,
         fullName: d.name,
         role: 'DEVOTEE',
         canAccessBilling: false,

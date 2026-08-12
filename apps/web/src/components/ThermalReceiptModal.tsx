@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Printer, FileText, Receipt, MessageCircle } from 'lucide-react';
+import { X, Printer, FileText, Receipt, MessageCircle, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client.js';
+import { shareOrDownloadReceiptPdf } from '../utils/whatsappPdfShare.js';
 
 interface ThermalReceiptModalProps {
   receipt: any;
@@ -17,6 +18,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
   onClose
 }) => {
   const [viewMode, setViewMode] = useState<'official' | 'thermal'>('official');
+  const [sharingPdf, setSharingPdf] = useState(false);
 
   const { data: fetchedTemple } = useQuery({
     queryKey: ['temple-info-modal'],
@@ -40,6 +42,25 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleWhatsappShare = async () => {
+    setSharingPdf(true);
+    try {
+      const itemsList = receipt.items?.map((it: any) => `${it.description} (x${it.quantity})`).join(', ') || 'Seva';
+      const text = `Jay Sri Krishna! 🙏\n\n*Mulabagala Sri Sripadaraja Matha (Rajajinagar Branch)*\n\n*Official Receipt No:* #${receipt.receiptNumber}\n*Devotee:* ${cleanDevoteeName}\n*Sevas:* ${itemsList}\n*Total Paid:* ₹${safeNum(receipt.totalAmount).toFixed(2)}\n*Payment Mode:* ${receipt.paymentMode}\n\nThank you for your devotion and divine contribution!`;
+
+      await shareOrDownloadReceiptPdf({
+        elementId: 'receipt-pdf-printable-container',
+        fileName: `Receipt_${receipt.receiptNumber}.pdf`,
+        phone: receipt.devotee?.phone,
+        messageText: text
+      });
+    } catch (err) {
+      console.error('WhatsApp share error:', err);
+    } finally {
+      setSharingPdf(false);
+    }
   };
 
   const templeInfo = temple || fetchedTemple || {
@@ -115,17 +136,21 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             {receipt?.devotee?.phone && receipt.devotee.phone !== '0000000000' && (
               <button
-                onClick={() => {
-                  const phone = receipt.devotee.phone.replace(/\D/g, '');
-                  const itemsList = receipt.items?.map((it: any) => `${it.description} (x${it.quantity})`).join(', ') || 'Seva';
-                  const text = `Jay Sri Krishna! 🙏\n\n*Mulabagala Sri Sripadaraja Matha (Rajajinagar Branch)*\n\n*Official Receipt No:* #${receipt.receiptNumber}\n*Devotee:* ${receipt.devotee.name}\n*Sevas:* ${itemsList}\n*Total Paid:* ₹${safeNum(receipt.totalAmount).toFixed(2)}\n*Payment Mode:* ${receipt.paymentMode}\n\nThank you for your devotion and divine contribution!`;
-                  const url = `https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(text)}`;
-                  window.open(url, '_blank');
-                }}
-                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-md transition-colors"
+                onClick={handleWhatsappShare}
+                disabled={sharingPdf}
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-md transition-colors"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                WhatsApp Share
+                {sharingPdf ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Share Receipt PDF via WhatsApp
+                  </>
+                )}
               </button>
             )}
             <button
@@ -148,7 +173,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
         <div className="p-4 sm:p-8 overflow-y-auto bg-amber-50/20 font-serif text-maroon">
           {viewMode === 'official' ? (
             /* OFFICIAL MATHA HANDBILL RECEIPT TEMPLATE (VERTICAL) */
-            <div className="official-receipt-print border-2 border-red-900 p-4 bg-white rounded-md text-red-950 font-serif leading-tight shadow-sm max-w-lg mx-auto">
+            <div id="receipt-pdf-printable-container" className="official-receipt-print border-2 border-red-900 p-4 bg-white rounded-md text-red-950 font-serif leading-tight shadow-sm max-w-lg mx-auto">
               {/* Header Phone & Invocations Bar */}
               <div className="flex justify-between items-start text-[10px] sm:text-[11px] font-bold border-b border-red-950/20 pb-2 text-red-950">
                 <div className="space-y-0.5">

@@ -13,7 +13,31 @@ export class AuthService implements IAuthService {
   constructor(private readonly userRepo: IUserRepository) {}
 
   async login(input: LoginInput) {
-    const user = await this.userRepo.findByUsername(input.username);
+    let user = await this.userRepo.findByUsername(input.username);
+
+    // If no direct user account, check if devotee exists with this phone number
+    if (!user) {
+      const cleanPhone = input.username.replace(/\D/g, '');
+      if (cleanPhone.length >= 7) {
+        const devotee = await (this.userRepo as any).prisma.devotee.findFirst({
+          where: { phone: { contains: cleanPhone.slice(-10) } }
+        });
+        if (devotee) {
+          // Auto-provision user account with mobile number as default password
+          const defaultHash = await bcrypt.hash(devotee.phone, 10);
+          user = await (this.userRepo as any).prisma.user.create({
+            data: {
+              username: devotee.phone,
+              passwordHash: defaultHash,
+              fullName: devotee.name,
+              role: 'DEVOTEE',
+              devoteeId: devotee.id
+            }
+          });
+        }
+      }
+    }
+
     if (!user) {
       throw new UnauthorizedError('Invalid username or password');
     }
@@ -23,7 +47,11 @@ export class AuthService implements IAuthService {
       throw new UnauthorizedError('Invalid username or password');
     }
 
-    const userResponse: UserResponse = {
+    // First time login is flagged if devotee is logging in with default mobile number password
+    const cleanPhone = (user.username || '').replace(/\D/g, '');
+    const isFirstTimeLogin = user.role === 'DEVOTEE' && (input.password === cleanPhone || input.password === user.username);
+
+    const userResponse: UserResponse & { isFirstTimeLogin?: boolean } = {
       id: user.id,
       username: user.username,
       fullName: user.fullName,
@@ -33,17 +61,28 @@ export class AuthService implements IAuthService {
       canAccessReports: user.canAccessReports,
       canAccessMasters: user.canAccessMasters,
       canApproveExpenses: user.canApproveExpenses,
+      isFirstTimeLogin,
       createdAt: user.createdAt
     };
 
     return {
       user: userResponse,
+      isFirstTimeLogin,
       tokenPayload: {
         id: user.id,
         username: user.username,
         role: user.role
       }
     };
+  }
+
+  async changeFirstTimePassword(userId: string, newPassword: string): Promise<void> {
+    const user = await this.userRepo.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await this.userRepo.updatePasswordHash(userId, newHash);
   }
 
   async changePassword(userId: string, input: ChangePasswordInput): Promise<void> {
