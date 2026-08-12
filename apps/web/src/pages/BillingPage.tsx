@@ -219,7 +219,7 @@ export const BillingPage: React.FC = () => {
         <div className="bg-white p-8 rounded-2xl border border-turmeric/30 shadow-sm space-y-6">
           <h3 className="font-display text-lg font-bold text-kumkum">Select Offering Kind</h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <button
               onClick={() => setKind(ReceiptKind.NEW_SEVA)}
               className={`p-6 rounded-2xl border-2 text-left transition-all ${
@@ -254,18 +254,6 @@ export const BillingPage: React.FC = () => {
             >
               <h4 className="font-display font-bold text-base text-kumkum">In-Kind (Dravya)</h4>
               <p className="text-xs text-textInk/60 mt-1">Material or monetary Dravya offerings & donations.</p>
-            </button>
-
-            <button
-              onClick={() => setKind(ReceiptKind.HUNDI_COLLECTION)}
-              className={`p-6 rounded-2xl border-2 text-left transition-all ${
-                kind === ReceiptKind.HUNDI_COLLECTION
-                  ? 'border-kumkum bg-kumkum/5 shadow-md'
-                  : 'border-turmeric/30 hover:border-turmeric bg-white'
-              }`}
-            >
-              <h4 className="font-display font-bold text-base text-kumkum">💰 Hundi & Direct Income</h4>
-              <p className="text-xs text-textInk/60 mt-1">Kanike Hundi collection openings, lease & direct temple income.</p>
             </button>
           </div>
 

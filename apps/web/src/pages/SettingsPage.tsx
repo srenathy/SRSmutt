@@ -32,6 +32,17 @@ export const SettingsPage: React.FC = () => {
     showSankalpa: true
   });
 
+  const [categoryBudgets, setCategoryBudgets] = useState<Array<{ id: string; categoryName: string; monthlyCap: number }>>([
+    { id: '1', categoryName: 'Cook & Kitchen Staff Salaries', monthlyCap: 30000 },
+    { id: '2', categoryName: 'Catering & Prasadam Ingredients', monthlyCap: 50000 },
+    { id: '3', categoryName: 'Electricity & Utility Bills', monthlyCap: 15000 },
+    { id: '4', categoryName: 'Temple Cleaning & Maintenance', monthlyCap: 20000 },
+    { id: '5', categoryName: 'Flowers & Pooja Samagri', monthlyCap: 12000 }
+  ]);
+
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatCap, setNewCatCap] = useState('');
+
   useEffect(() => {
     const fetchTempleInfo = async () => {
       try {
@@ -70,6 +81,13 @@ export const SettingsPage: React.FC = () => {
         setPrinterSettings(JSON.parse(savedPrinter));
       } catch (e) {}
     }
+
+    const savedCategoryBudgets = localStorage.getItem('temple_category_budgets');
+    if (savedCategoryBudgets) {
+      try {
+        setCategoryBudgets(JSON.parse(savedCategoryBudgets));
+      } catch (e) {}
+    }
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -89,7 +107,8 @@ export const SettingsPage: React.FC = () => {
       };
       await apiClient.put('/temple', payload);
       localStorage.setItem('temple_printer_settings', JSON.stringify(printerSettings));
-      setSuccessMessage('Temple information and billing settings updated successfully!');
+      localStorage.setItem('temple_category_budgets', JSON.stringify(categoryBudgets));
+      setSuccessMessage('Temple information, petty cash limits, and category budgets updated successfully!');
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to update temple settings');
@@ -319,33 +338,105 @@ export const SettingsPage: React.FC = () => {
                 <p className="text-[10px] text-textInk/50 mt-0.5">Printed as officiating priest on Sankalpa & Seva receipts.</p>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-textInk mb-1">Monthly Expenditure Budget (₹)</label>
-                <input
-                  type="number"
-                  name="monthlyExpenseBudget"
-                  value={formData.monthlyExpenseBudget}
-                  onChange={handleChange}
-                  required
-                  min="0"
-                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum"
-                />
-                <p className="text-[10px] text-textInk/50 mt-0.5">Operational budget allocated every month.</p>
+            {/* Petty Cash Controls (Renamed & Kept Separate) */}
+            <div className="bg-ivory/60 p-4 rounded-xl border border-turmeric/20 space-y-3">
+              <h4 className="font-display font-bold text-xs text-kumkum uppercase">PETTY CASH ALLOWANCE & THRESHOLDS (KEPT SEPARATE FROM EXPENDITURE)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Petty Cash Monthly Allowance Limit (₹)</label>
+                  <input
+                    type="number"
+                    name="monthlyExpenseBudget"
+                    value={formData.monthlyExpenseBudget}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum bg-white"
+                  />
+                  <p className="text-[10px] text-textInk/60 mt-0.5 font-medium">Petty cash allowance for minor daily branch outlays (kept separate from operational expenditure calculations and does not count towards total temple expenditures on dashboard).</p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Petty Cash Per-Voucher Admin Approval Cap (₹)</label>
+                  <input
+                    type="number"
+                    name="expenseApprovalThreshold"
+                    value={formData.expenseApprovalThreshold}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum bg-white"
+                  />
+                  <p className="text-[10px] text-textInk/60 mt-0.5 font-medium">Single petty cash voucher limit. Any petty expense above this threshold requires explicit admin authorization.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Configurable Monthly Expenditure Capped Budgets by Category (Cook, Catering, Utilities, etc.) */}
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 space-y-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-turmeric/20 pb-2">
+                <div>
+                  <h4 className="font-display font-bold text-sm text-kumkum">Configurable Monthly Expenditure Caps (Cooks, Catering, Utilities)</h4>
+                  <p className="text-[11px] text-textInk/60">Configure monthly capped spending budgets for specific recurring categories.</p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-textInk mb-1">Admin Approval Threshold Limit (₹)</label>
+              {/* Add New Category Budget Form */}
+              <div className="flex flex-wrap items-center gap-2 bg-ivory/50 p-3 rounded-xl border border-turmeric/20">
+                <input
+                  type="text"
+                  placeholder="Category Name (e.g. Cook Salary, Catering, Electricity)"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  className="flex-1 min-w-[200px] px-3 py-1.5 rounded-lg border border-turmeric/30 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum font-semibold"
+                />
                 <input
                   type="number"
-                  name="expenseApprovalThreshold"
-                  value={formData.expenseApprovalThreshold}
-                  onChange={handleChange}
-                  required
-                  min="0"
-                  className="w-full px-3 py-1.5 rounded-lg border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum"
+                  placeholder="Monthly Cap (₹)"
+                  value={newCatCap}
+                  onChange={(e) => setNewCatCap(e.target.value)}
+                  className="w-32 px-3 py-1.5 rounded-lg border border-turmeric/30 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum"
                 />
-                <p className="text-[10px] text-textInk/50 mt-0.5">Expenses above this require explicit admin approval.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!newCatName.trim() || !newCatCap) return;
+                    setCategoryBudgets((prev) => [
+                      ...prev,
+                      { id: Date.now().toString(), categoryName: newCatName.trim(), monthlyCap: Number(newCatCap) }
+                    ]);
+                    setNewCatName('');
+                    setNewCatCap('');
+                  }}
+                  className="bg-kumkum hover:bg-kumkum-light text-white text-xs font-bold px-4 py-1.5 rounded-lg shadow-xs transition"
+                >
+                  + Add Category Cap
+                </button>
               </div>
+
+              {/* List of Configured Category Budgets */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+                {categoryBudgets.map((cat, idx) => (
+                  <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl border border-turmeric/20 bg-ivory/30 text-xs">
+                    <div>
+                      <p className="font-bold text-textInk">{cat.categoryName}</p>
+                      <p className="text-[10px] text-textInk/50">Monthly Capped Limit</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-kumkum text-sm">₹{cat.monthlyCap.toLocaleString('en-IN')}</span>
+                      <button
+                        type="button"
+                        onClick={() => setCategoryBudgets((prev) => prev.filter((_, i) => i !== idx))}
+                        className="w-6 h-6 rounded-lg bg-red-100 text-red-700 font-bold flex items-center justify-center text-xs hover:bg-red-200 transition"
+                        title="Remove Category Budget"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             </div>
           </div>
         )}

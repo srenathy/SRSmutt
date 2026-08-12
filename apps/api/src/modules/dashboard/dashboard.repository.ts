@@ -6,6 +6,8 @@ export interface IDashboardRepository {
     todayTotal: number;
     monthTotal: number;
     monthExpenses: number;
+    currentMonthOperatingBalance: number;
+    previousCarriedDeficit: number;
     netEarnings: number;
     pendingExpensesCount: number;
     totalReceiptsCount: number;
@@ -32,7 +34,9 @@ export class DashboardRepository implements IDashboardRepository {
       totalReceiptsCount,
       todayReceiptsCount,
       paymentModeGroups,
-      recentReceipts
+      recentReceipts,
+      allReceipts,
+      allExpenses
     ] = await Promise.all([
       this.prisma.receipt.aggregate({
         _sum: { totalAmount: true },
@@ -64,6 +68,14 @@ export class DashboardRepository implements IDashboardRepository {
       this.prisma.receipt.findMany({
         where: { createdAt: { gte: startOf14Days }, cancelledAt: null },
         select: { createdAt: true, totalAmount: true }
+      }),
+      this.prisma.receipt.findMany({
+        where: { cancelledAt: null },
+        select: { createdAt: true, totalAmount: true }
+      }),
+      this.prisma.expense.findMany({
+        where: { status: 'APPROVED' },
+        select: { createdAt: true, amount: true }
       })
     ]);
 
@@ -100,14 +112,47 @@ export class DashboardRepository implements IDashboardRepository {
       count: trendMap[date].count
     }));
 
+    // Historic Cumulative Deficit Carry-Forward Calculation (Excludes Petty Cash)
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const monthlyIncomeMap: Record<string, number> = {};
+    const monthlyExpenseMap: Record<string, number> = {};
+
+    for (const r of allReceipts) {
+      const key = `${r.createdAt.getFullYear()}-${String(r.createdAt.getMonth() + 1).padStart(2, '0')}`;
+      monthlyIncomeMap[key] = (monthlyIncomeMap[key] || 0) + Number(r.totalAmount || 0);
+    }
+
+    for (const e of allExpenses) {
+      const key = `${e.createdAt.getFullYear()}-${String(e.createdAt.getMonth() + 1).padStart(2, '0')}`;
+      monthlyExpenseMap[key] = (monthlyExpenseMap[key] || 0) + Number(e.amount || 0);
+    }
+
+    const allMonthKeys = Array.from(
+      new Set([...Object.keys(monthlyIncomeMap), ...Object.keys(monthlyExpenseMap)])
+    ).sort();
+
+    let accumulatedNetBalance = 0;
+    for (const key of allMonthKeys) {
+      if (key < currentMonthKey) {
+        const inc = monthlyIncomeMap[key] || 0;
+        const exp = monthlyExpenseMap[key] || 0;
+        accumulatedNetBalance += (inc - exp);
+      }
+    }
+
+    const previousCarriedDeficit = accumulatedNetBalance < 0 ? Math.abs(accumulatedNetBalance) : 0;
     const totalIncome = Number(monthSum._sum.totalAmount || 0);
     const totalExpenses = Number(monthExpensesSum._sum.amount || 0);
+    const currentMonthOperatingBalance = totalIncome - totalExpenses;
+    const netEarnings = currentMonthOperatingBalance + accumulatedNetBalance;
 
     return {
       todayTotal: Number(todaySum._sum.totalAmount || 0),
       monthTotal: totalIncome,
       monthExpenses: totalExpenses,
-      netEarnings: totalIncome - totalExpenses,
+      currentMonthOperatingBalance,
+      previousCarriedDeficit,
+      netEarnings,
       pendingExpensesCount,
       totalReceiptsCount,
       todayReceiptsCount,

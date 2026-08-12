@@ -2,24 +2,34 @@ import { PrismaClient } from '@prisma/client';
 import { PaymentMode, ReceiptKind } from '@temple/shared';
 
 export interface IReportsRepository {
-  getDailyReport(dateStr: string): Promise<any>;
-  getMonthlyReport(year: number, month: number): Promise<any>;
+  getDailyReport(dateStr: string, kind?: string, paymentMode?: string): Promise<any>;
+  getMonthlyReport(year: number, month: number, kind?: string, paymentMode?: string): Promise<any>;
+  getCustomRangeReport(startDateStr: string, endDateStr: string, kind?: string, paymentMode?: string): Promise<any>;
   getFinancialBalanceReport(): Promise<any>;
 }
 
 export class ReportsRepository implements IReportsRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async getDailyReport(dateStr: string) {
+  async getDailyReport(dateStr: string, kind?: string, paymentMode?: string) {
     const startDate = new Date(`${dateStr}T00:00:00.000Z`);
     const endDate = new Date(`${dateStr}T23:59:59.999Z`);
 
+    const whereClause: any = {
+      createdAt: { gte: startDate, lte: endDate },
+      cancelledAt: null
+    };
+
+    if (kind && kind !== 'ALL') {
+      whereClause.kind = kind;
+    }
+    if (paymentMode && paymentMode !== 'ALL') {
+      whereClause.paymentMode = paymentMode;
+    }
+
     const [receipts, paymentModeGroups, kindGroups] = await Promise.all([
       this.prisma.receipt.findMany({
-        where: {
-          createdAt: { gte: startDate, lte: endDate },
-          cancelledAt: null
-        },
+        where: whereClause,
         include: {
           devotee: true,
           createdByUser: { select: { fullName: true } },
@@ -31,19 +41,13 @@ export class ReportsRepository implements IReportsRepository {
         by: ['paymentMode'],
         _sum: { totalAmount: true },
         _count: true,
-        where: {
-          createdAt: { gte: startDate, lte: endDate },
-          cancelledAt: null
-        }
+        where: whereClause
       }),
       this.prisma.receipt.groupBy({
         by: ['kind'],
         _sum: { totalAmount: true },
         _count: true,
-        where: {
-          createdAt: { gte: startDate, lte: endDate },
-          cancelledAt: null
-        }
+        where: whereClause
       })
     ]);
 
@@ -78,16 +82,25 @@ export class ReportsRepository implements IReportsRepository {
     };
   }
 
-  async getMonthlyReport(year: number, month: number) {
+  async getMonthlyReport(year: number, month: number, kind?: string, paymentMode?: string) {
     const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
+    const whereClause: any = {
+      createdAt: { gte: startDate, lte: endDate },
+      cancelledAt: null
+    };
+
+    if (kind && kind !== 'ALL') {
+      whereClause.kind = kind;
+    }
+    if (paymentMode && paymentMode !== 'ALL') {
+      whereClause.paymentMode = paymentMode;
+    }
+
     const [receipts, paymentModeGroups, kindGroups] = await Promise.all([
       this.prisma.receipt.findMany({
-        where: {
-          createdAt: { gte: startDate, lte: endDate },
-          cancelledAt: null
-        },
+        where: whereClause,
         include: {
           devotee: true,
           createdByUser: { select: { fullName: true } },
@@ -99,19 +112,13 @@ export class ReportsRepository implements IReportsRepository {
         by: ['paymentMode'],
         _sum: { totalAmount: true },
         _count: true,
-        where: {
-          createdAt: { gte: startDate, lte: endDate },
-          cancelledAt: null
-        }
+        where: whereClause
       }),
       this.prisma.receipt.groupBy({
         by: ['kind'],
         _sum: { totalAmount: true },
         _count: true,
-        where: {
-          createdAt: { gte: startDate, lte: endDate },
-          cancelledAt: null
-        }
+        where: whereClause
       })
     ]);
 
@@ -159,6 +166,78 @@ export class ReportsRepository implements IReportsRepository {
         date,
         totalAmount: dailyBreakdown[date]
       })),
+      receipts
+    };
+  }
+
+  async getCustomRangeReport(startDateStr: string, endDateStr: string, kind?: string, paymentMode?: string) {
+    const startDate = new Date(`${startDateStr}T00:00:00.000Z`);
+    const endDate = new Date(`${endDateStr}T23:59:59.999Z`);
+
+    const whereClause: any = {
+      createdAt: { gte: startDate, lte: endDate },
+      cancelledAt: null
+    };
+
+    if (kind && kind !== 'ALL') {
+      whereClause.kind = kind;
+    }
+    if (paymentMode && paymentMode !== 'ALL') {
+      whereClause.paymentMode = paymentMode;
+    }
+
+    const [receipts, paymentModeGroups, kindGroups] = await Promise.all([
+      this.prisma.receipt.findMany({
+        where: whereClause,
+        include: {
+          devotee: true,
+          createdByUser: { select: { fullName: true } },
+          items: true
+        },
+        orderBy: { createdAt: 'asc' }
+      }),
+      this.prisma.receipt.groupBy({
+        by: ['paymentMode'],
+        _sum: { totalAmount: true },
+        _count: true,
+        where: whereClause
+      }),
+      this.prisma.receipt.groupBy({
+        by: ['kind'],
+        _sum: { totalAmount: true },
+        _count: true,
+        where: whereClause
+      })
+    ]);
+
+    let grandTotal = 0;
+    for (const r of receipts) {
+      grandTotal += Number(r.totalAmount || 0);
+    }
+
+    const byPaymentMode: Record<string, { amount: number; count: number }> = {};
+    for (const p of paymentModeGroups) {
+      byPaymentMode[p.paymentMode] = {
+        amount: Number(p._sum.totalAmount || 0),
+        count: p._count
+      };
+    }
+
+    const byKind: Record<string, { amount: number; count: number }> = {};
+    for (const k of kindGroups) {
+      byKind[k.kind] = {
+        amount: Number(k._sum.totalAmount || 0),
+        count: k._count
+      };
+    }
+
+    return {
+      startDate: startDateStr,
+      endDate: endDateStr,
+      totalReceipts: receipts.length,
+      grandTotal,
+      byPaymentMode,
+      byKind,
       receipts
     };
   }

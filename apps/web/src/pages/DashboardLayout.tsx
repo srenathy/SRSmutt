@@ -37,7 +37,7 @@ export const DashboardLayout: React.FC = () => {
     { label: '+ New Seva Billing', path: '/dashboard/billing', icon: Receipt, show: isAdmin || user?.canAccessBilling !== false },
     { label: 'Receipt History & Reprint', path: '/dashboard/receipts', icon: FileText, show: isAdmin || user?.canAccessBilling !== false },
     { label: 'Daily Sankalpa List', path: '/dashboard/sankalpa', icon: Scroll, show: true },
-    { label: 'Temple Expenditures', path: '/dashboard/expenses', icon: TrendingDown, show: isAdmin || user?.canAccessExpenses !== false },
+    { label: 'Income & Expenditures', path: '/dashboard/expenses', icon: Wallet, show: isAdmin || user?.canAccessExpenses !== false },
     { label: 'Masters Management', path: '/dashboard/masters', icon: Layers, show: isAdmin || user?.canAccessMasters === true },
     { label: 'Collection Reports', path: '/dashboard/reports', icon: BarChart3, show: isAdmin || user?.canAccessReports !== false },
     { label: 'User & Access Control', path: '/dashboard/users', icon: Users, show: isAdmin },

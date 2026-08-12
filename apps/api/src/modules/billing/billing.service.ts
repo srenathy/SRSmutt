@@ -28,10 +28,28 @@ export class BillingService implements IBillingService {
     const prepared = await strategy.prepareAndValidate(input, this.prisma);
     const receiptNumber = await this.numberGenerator.generateNextNumber();
 
+    let devoteeId = input.devoteeId;
+    if (!devoteeId) {
+      let defaultDevotee = await this.prisma.devotee.findFirst({
+        where: { phone: '0000000000' }
+      });
+      if (!defaultDevotee) {
+        defaultDevotee = await this.prisma.devotee.create({
+          data: {
+            name: 'Sri Raghavendra Swamy Matha (General Temple Income)',
+            phone: '0000000000',
+            address: 'Main Temple Premises',
+            city: 'Mantralayam'
+          }
+        });
+      }
+      devoteeId = defaultDevotee.id;
+    }
+
     const receipt = await this.billingRepo.createReceiptInTransaction({
       receiptNumber,
       kind: input.kind as any,
-      devoteeId: input.devoteeId,
+      devoteeId,
       paymentMode: input.paymentMode as any,
       transactionRef: input.transactionRef,
       sankalpaNote: input.sankalpaNote,

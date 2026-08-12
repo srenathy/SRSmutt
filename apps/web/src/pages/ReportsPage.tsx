@@ -9,16 +9,20 @@ export const ReportsPage: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || (user as any)?.isCentralAdmin;
 
-  const [reportType, setReportType] = useState<'daily' | 'monthly' | 'expenditures'>('daily');
+  const [reportType, setReportType] = useState<'daily' | 'monthly' | 'custom' | 'expenditures'>('daily');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [filterKind, setFilterKind] = useState<string>('ALL');
+  const [filterPaymentMode, setFilterPaymentMode] = useState<string>('ALL');
 
   // Daily Query
   const dailyQuery = useQuery({
-    queryKey: ['report-daily', selectedDate],
+    queryKey: ['report-daily', selectedDate, filterKind, filterPaymentMode],
     queryFn: async () => {
-      const res = await apiClient.get(`/reports/daily?date=${selectedDate}`);
+      const res = await apiClient.get(`/reports/daily?date=${selectedDate}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
     enabled: reportType === 'daily'
@@ -26,12 +30,22 @@ export const ReportsPage: React.FC = () => {
 
   // Monthly Query
   const monthlyQuery = useQuery({
-    queryKey: ['report-monthly', selectedYear, selectedMonth],
+    queryKey: ['report-monthly', selectedYear, selectedMonth, filterKind, filterPaymentMode],
     queryFn: async () => {
-      const res = await apiClient.get(`/reports/monthly?year=${selectedYear}&month=${selectedMonth}`);
+      const res = await apiClient.get(`/reports/monthly?year=${selectedYear}&month=${selectedMonth}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
     enabled: reportType === 'monthly'
+  });
+
+  // Custom Date Range Query
+  const customQuery = useQuery({
+    queryKey: ['report-custom', startDate, endDate, filterKind, filterPaymentMode],
+    queryFn: async () => {
+      const res = await apiClient.get(`/reports/custom?startDate=${startDate}&endDate=${endDate}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
+      return res.data.data;
+    },
+    enabled: reportType === 'custom'
   });
 
   // Admin Expenditures & Financial Surplus Query
@@ -48,8 +62,8 @@ export const ReportsPage: React.FC = () => {
     window.print();
   };
 
-  const reportData = reportType === 'daily' ? dailyQuery.data : monthlyQuery.data;
-  const isLoading = reportType === 'daily' ? dailyQuery.isLoading : monthlyQuery.isLoading;
+  const reportData = reportType === 'daily' ? dailyQuery.data : reportType === 'monthly' ? monthlyQuery.data : reportType === 'custom' ? customQuery.data : null;
+  const isLoading = reportType === 'daily' ? dailyQuery.isLoading : reportType === 'monthly' ? monthlyQuery.isLoading : reportType === 'custom' ? customQuery.isLoading : false;
 
   const setPresetDate = (type: 'today' | 'yesterday' | 'thisMonth') => {
     const today = new Date();
@@ -186,6 +200,14 @@ export const ReportsPage: React.FC = () => {
             >
               Monthly Report
             </button>
+            <button
+              onClick={() => setReportType('custom')}
+              className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                reportType === 'custom' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+              }`}
+            >
+              📅 Custom Date Range
+            </button>
             {isAdmin && (
               <button
                 onClick={() => setReportType('expenditures')}
@@ -222,7 +244,7 @@ export const ReportsPage: React.FC = () => {
           </div>
         </div>
 
-        {reportType === 'daily' ? (
+        {reportType === 'daily' && (
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-kumkum" />
             <span className="font-semibold text-textInk">Select Date:</span>
@@ -233,7 +255,9 @@ export const ReportsPage: React.FC = () => {
               className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
             />
           </div>
-        ) : (
+        )}
+
+        {reportType === 'monthly' && (
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-kumkum" />
             <span className="font-semibold text-textInk">Year & Month:</span>
@@ -257,6 +281,60 @@ export const ReportsPage: React.FC = () => {
                 </option>
               ))}
             </select>
+          </div>
+        )}
+
+        {reportType === 'custom' && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Calendar className="w-4 h-4 text-kumkum" />
+            <span className="font-semibold text-textInk">From:</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+            />
+            <span className="font-semibold text-textInk">To:</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+            />
+          </div>
+        )}
+
+        {reportType !== 'expenditures' && (
+          <div className="flex flex-wrap items-center gap-3 border-t border-turmeric/10 pt-3 mt-1 w-full">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-kumkum">Offering Type:</span>
+              <select
+                value={filterKind}
+                onChange={(e) => setFilterKind(e.target.value)}
+                className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none font-semibold text-textInk"
+              >
+                <option value="ALL">All Offering Kinds (Seva, Hundi, Dravya)</option>
+                <option value="NEW_SEVA">Regular Seva Only</option>
+                <option value="SHASHWATA_SEVA">Shashwata Seva Only</option>
+                <option value="HUNDI_COLLECTION">Hundi & Direct Income Only</option>
+                <option value="KIND_DONATION">In-Kind (Dravya) Only</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-kumkum">Payment Mode:</span>
+              <select
+                value={filterPaymentMode}
+                onChange={(e) => setFilterPaymentMode(e.target.value)}
+                className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none font-semibold text-textInk"
+              >
+                <option value="ALL">All Modes (Cash, UPI, Card, Bank)</option>
+                <option value="CASH">Cash Only</option>
+                <option value="UPI">UPI / Dynamic QR Only</option>
+                <option value="CARD">Card Only</option>
+                <option value="BANK">Direct Bank Transfer Only</option>
+              </select>
+            </div>
           </div>
         )}
       </div>

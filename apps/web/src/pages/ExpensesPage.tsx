@@ -2,16 +2,51 @@ import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.js';
 import { Role } from '@temple/shared';
-import { Plus, CheckCircle, XCircle, AlertTriangle, Receipt, FileText, Check, X, Trash2, Wallet, TrendingUp, TrendingDown, Paperclip, Download } from 'lucide-react';
+import {
+  Plus,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Receipt as ReceiptIcon,
+  FileText,
+  Check,
+  X,
+  Trash2,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  Paperclip,
+  Download,
+  IndianRupee,
+  Coins,
+  Building,
+  Landmark
+} from 'lucide-react';
 
 export const ExpensesPage: React.FC = () => {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'UNBILLED_INCOMES' | 'EXPENDITURES'>('UNBILLED_INCOMES');
+
+  // Expense states
   const [expenses, setExpenses] = useState<any[]>([]);
   const [temple, setTemple] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Unbilled Income states
+  const [unbilledIncomes, setUnbilledIncomes] = useState<any[]>([]);
+  const [incomeModalOpen, setIncomeModalOpen] = useState(false);
+  const [incomeSubmitting, setIncomeSubmitting] = useState(false);
+
+  const [incomeFormData, setIncomeFormData] = useState({
+    title: '',
+    category: 'Main Temple Kanike Hundi Box Opening',
+    amount: '',
+    paymentMode: 'CASH',
+    sankalpaNote: ''
+  });
 
   // Attachment states
   const [attachment, setAttachment] = useState<string | null>(null);
@@ -40,6 +75,16 @@ export const ExpensesPage: React.FC = () => {
     }
   };
 
+  const fetchUnbilledIncomes = async () => {
+    try {
+      const res = await apiClient.get('/receipts?limit=100');
+      const receipts = res.data.data?.data || res.data.data || [];
+      setUnbilledIncomes(receipts.filter((r: any) => r.kind === 'HUNDI_COLLECTION'));
+    } catch (err) {
+      console.error('Failed to fetch unbilled incomes:', err);
+    }
+  };
+
   const fetchTemple = async () => {
     try {
       const res = await apiClient.get('/temple');
@@ -52,6 +97,7 @@ export const ExpensesPage: React.FC = () => {
   useEffect(() => {
     fetchExpenses();
     fetchTemple();
+    fetchUnbilledIncomes();
   }, []);
 
   const handleOpenModal = () => {
@@ -67,6 +113,18 @@ export const ExpensesPage: React.FC = () => {
     setModalOpen(true);
   };
 
+  const handleOpenIncomeModal = () => {
+    setIncomeFormData({
+      title: '',
+      category: 'Main Temple Kanike Hundi Box Opening',
+      amount: '',
+      paymentMode: 'CASH',
+      sankalpaNote: ''
+    });
+    setAttachment(null);
+    setIncomeModalOpen(true);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,7 +135,7 @@ export const ExpensesPage: React.FC = () => {
     }
 
     setCompressing(true);
-    
+
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -160,6 +218,43 @@ export const ExpensesPage: React.FC = () => {
     }
   };
 
+  const handleIncomeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!incomeFormData.title.trim()) {
+      alert('Income Source / Description is required.');
+      return;
+    }
+    if (!incomeFormData.amount || Number(incomeFormData.amount) <= 0) {
+      alert('Please enter a valid positive income amount.');
+      return;
+    }
+
+    setIncomeSubmitting(true);
+    try {
+      await apiClient.post('/receipts', {
+        kind: 'HUNDI_COLLECTION',
+        paymentMode: incomeFormData.paymentMode,
+        items: [
+          {
+            description: `[${incomeFormData.category}] ${incomeFormData.title}`,
+            amount: Number(incomeFormData.amount),
+            quantity: 1,
+            devoteeCount: 1
+          }
+        ],
+        sankalpaNote: incomeFormData.sankalpaNote || 'Direct Unbilled Temple Income Entry'
+      });
+
+      alert('Direct Temple Income logged successfully! Added to income and financial reports.');
+      setIncomeModalOpen(false);
+      fetchUnbilledIncomes();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to log direct income');
+    } finally {
+      setIncomeSubmitting(false);
+    }
+  };
+
   const handleApprove = async (id: string) => {
     try {
       await apiClient.put(`/expenses/${id}/approve`);
@@ -198,6 +293,16 @@ export const ExpensesPage: React.FC = () => {
     'Miscellaneous'
   ];
 
+  const incomeCategories = [
+    'Main Temple Kanike Hundi Box Opening',
+    'Rayaru Sannidhi Kanike Hundi Box',
+    'Mula Rama Devara Kanike Box',
+    'Annadana Trust Hundi Box',
+    'Direct Bank Fixed Deposit Interest',
+    'Temple Land / Building Lease Rent',
+    'Direct Temple In-Kind / Dravya Donation'
+  ];
+
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const monthName = new Date().toLocaleString('default', { month: 'long' });
@@ -209,211 +314,498 @@ export const ExpensesPage: React.FC = () => {
     })
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
+  const totalUnbilledIncomeThisMonth = unbilledIncomes
+    .filter((r) => {
+      const d = new Date(r.createdAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, r) => sum + Number(r.totalAmount), 0);
+
   const walletLimit = Number(temple?.monthlyExpenseBudget) || 5000;
   const remainingBalance = walletLimit - totalSpentThisMonth;
   const thresholdLimit = Number(temple?.expenseApprovalThreshold) || 5000;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="font-display text-2xl font-bold text-kumkum">Temple Expenditures</h2>
-          <p className="text-xs text-textInk/60 mt-1">
-            Record temple operational expenses, bills / requests, and admin approval workflows.
-          </p>
+      {/* Header & Tabs */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-kumkum">Income & Expenditures</h2>
+            <p className="text-xs text-textInk/60 mt-1">
+              Manage unbilled direct temple income (Hundi, Lease, Bank) & operational expenditure vouchers.
+            </p>
+          </div>
+
+          {activeTab === 'UNBILLED_INCOMES' ? (
+            <button
+              onClick={handleOpenIncomeModal}
+              className="px-4 py-2.5 bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md hover:bg-emerald-800 transition-all flex items-center gap-2 self-start"
+            >
+              <Plus className="w-4 h-4" />
+              + Log Direct / Unbilled Income
+            </button>
+          ) : (
+            <button
+              onClick={handleOpenModal}
+              className="px-4 py-2.5 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all flex items-center gap-2 self-start"
+            >
+              <Plus className="w-4 h-4" />
+              + Add Temple Expense
+            </button>
+          )}
         </div>
 
-        <button
-          onClick={handleOpenModal}
-          className="px-4 py-2.5 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all flex items-center gap-2 self-start"
-        >
-          <Plus className="w-4 h-4" />
-          Add Temple Expense
-        </button>
-      </div>
+        {/* Tab Selection Navigation Bar */}
+        <div className="flex items-center gap-3 border-b border-turmeric/30 pb-3">
+          <button
+            onClick={() => setActiveTab('UNBILLED_INCOMES')}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
+              activeTab === 'UNBILLED_INCOMES'
+                ? 'bg-emerald-700 text-white shadow-md'
+                : 'bg-white text-textInk/70 hover:bg-ivory border border-turmeric/20'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            Direct / Unbilled Income (Hundi, Lease, Bank)
+          </button>
 
-      {/* Wallet Balance Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Monthly Wallet Limit */}
-        <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Monthly Wallet Limit</p>
-            <p className="text-xl font-mono font-bold text-textInk">
-              ₹{walletLimit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-[10px] text-textInk/60">Configured monthly allowance</p>
-          </div>
-          <div className="p-3.5 rounded-xl bg-ivory text-kumkum">
-            <Wallet className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Spent This Month */}
-        <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Spent in {monthName}</p>
-            <p className="text-xl font-mono font-bold text-kumkum">
-              ₹{totalSpentThisMonth.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-[10px] text-textInk/60">Sum of approved monthly expenses</p>
-          </div>
-          <div className="p-3.5 rounded-xl bg-red-50 text-red-600">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Remaining Wallet Balance */}
-        <div className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between ${
-          remainingBalance >= 0 
-            ? 'bg-emerald-50/50 border-emerald-200 text-emerald-950' 
-            : 'bg-red-50/50 border-red-200 text-red-950'
-        }`}>
-          <div className="space-y-1">
-            <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Remaining Balance</p>
-            <p className={`text-xl font-mono font-bold ${
-              remainingBalance >= 0 ? 'text-emerald-700' : 'text-red-700'
-            }`}>
-              ₹{remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </p>
-            <p className="text-[10px] text-textInk/60">
-              {remainingBalance >= 0 ? 'Within budget limit' : 'Budget limit exceeded!'}
-            </p>
-          </div>
-          <div className={`p-3.5 rounded-xl ${
-            remainingBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-          }`}>
-            <TrendingDown className="w-6 h-6" />
-          </div>
+          <button
+            onClick={() => setActiveTab('EXPENDITURES')}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${
+              activeTab === 'EXPENDITURES'
+                ? 'bg-kumkum text-white shadow-md'
+                : 'bg-white text-textInk/70 hover:bg-ivory border border-turmeric/20'
+            }`}
+          >
+            <TrendingDown className="w-4 h-4" />
+            Temple Expenditures & Bills
+          </button>
         </div>
       </div>
 
-      {/* Threshold Approval Rule Alert Banner */}
-      <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 text-xs flex items-center gap-3">
-        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-        <div>
-          <span className="font-bold">Admin Approval Threshold Rule: </span>
-          Expenses exceeding ₹{thresholdLimit.toLocaleString('en-IN')} will be automatically flagged for Admin Approval before being deducted from temple net earnings.
-        </div>
-      </div>
+      {/* TAB 1: DIRECT UNBILLED INCOMES */}
+      {activeTab === 'UNBILLED_INCOMES' && (
+        <div className="space-y-6">
+          {/* Income Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Unbilled Income ({monthName})</p>
+                <p className="text-xl font-mono font-bold text-emerald-700">
+                  ₹{totalUnbilledIncomeThisMonth.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[10px] text-textInk/60">Hundi openings, Bank interest & Lease rent</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-emerald-100 text-emerald-700">
+                <Coins className="w-6 h-6" />
+              </div>
+            </div>
 
-      {/* Expense List Table */}
-      <div className="bg-white rounded-2xl border border-turmeric/30 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-kumkum font-semibold flex items-center justify-center gap-2">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />
-            Loading expenditures...
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Unbilled Income Entries</p>
+                <p className="text-xl font-mono font-bold text-textInk">
+                  {unbilledIncomes.length} Entries
+                </p>
+                <p className="text-[10px] text-textInk/60">Logged unbilled vouchers</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-ivory text-kumkum">
+                <Landmark className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Accounting Flow Status</p>
+                <p className="text-sm font-bold text-emerald-700">Auto-Synced to Reports</p>
+                <p className="text-[10px] text-textInk/60">Included in Temple Net Earnings</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-blue-50 text-blue-700">
+                <Building className="w-6 h-6" />
+              </div>
+            </div>
           </div>
-        ) : expenses.length === 0 ? (
-          <div className="p-12 text-center text-textInk/50 text-xs font-medium">
-            No temple expenditures recorded yet. Click "Add Temple Expense" to log your first bill/request.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-ivory border-b border-turmeric/20 text-kumkum font-bold uppercase tracking-wider">
-                <tr>
-                  <th className="p-4">Bill/Request #</th>
-                  <th className="p-4">Date</th>
-                  <th className="p-4">Category</th>
-                  <th className="p-4">Title / Purpose</th>
-                  <th className="p-4">Payee / Vendor</th>
-                  <th className="p-4">Amount (₹)</th>
-                  <th className="p-4">Mode</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-turmeric/10 font-medium text-textInk">
-                {expenses.map((item) => (
-                  <tr key={item.id} className="hover:bg-ivory/40 transition-colors">
-                    <td className="p-4 font-mono font-bold text-kumkum flex items-center gap-2">
-                      {item.voucherNumber}
-                      {item.attachment && (
-                        <button
-                          onClick={() => handlePreviewAttachment(item)}
-                          className="p-1 rounded bg-kumkum/10 text-kumkum hover:bg-kumkum hover:text-white transition-colors flex items-center justify-center shrink-0"
-                          title="View Receipt Attachment"
-                        >
-                          <Paperclip className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </td>
-                    <td className="p-4">{new Date(item.createdAt).toLocaleDateString('en-IN')}</td>
-                    <td className="p-4 font-semibold">{item.category}</td>
-                    <td className="p-4 max-w-xs truncate">{item.title}</td>
-                    <td className="p-4">{item.payee || '-'}</td>
-                    <td className="p-4 font-mono font-bold text-kumkum text-sm">
-                      ₹{Number(item.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-4 font-semibold uppercase">{item.paymentMode}</td>
-                    <td className="p-4">
-                      {item.status === 'APPROVED' ? (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold inline-flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3 text-emerald-600" /> APPROVED
-                        </span>
-                      ) : item.status === 'PENDING' ? (
-                        <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold inline-flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 text-amber-600" /> PENDING APPROVAL
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-800 text-[10px] font-bold inline-flex items-center gap-1">
-                          <XCircle className="w-3 h-3 text-red-600" /> REJECTED
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {item.status === 'PENDING' && user?.role === Role.ADMIN && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(item.id)}
-                              className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold text-[11px] hover:bg-emerald-700 transition-all flex items-center gap-1"
-                              title="Approve Expense"
-                            >
-                              <Check className="w-3 h-3" /> Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(item.id)}
-                              className="px-2.5 py-1 bg-red-600 text-white rounded-lg font-bold text-[11px] hover:bg-red-700 transition-all flex items-center gap-1"
-                              title="Reject Expense"
-                            >
-                              <X className="w-3 h-3" /> Reject
-                            </button>
-                          </>
-                        )}
-                        {user?.role === Role.ADMIN && (
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="p-1.5 text-textInk/40 hover:text-red-700 transition-colors"
-                            title="Delete Bill/Request"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
+
+          {/* Unbilled Income List Table */}
+          <div className="bg-white rounded-2xl border border-turmeric/30 shadow-sm overflow-hidden">
+            <div className="p-4 bg-ivory/60 border-b border-turmeric/20 flex items-center justify-between">
+              <h3 className="font-display font-bold text-sm text-kumkum">Logged Direct Temple Incomes (Hundi, Lease, Bank)</h3>
+              <span className="text-xs font-semibold text-textInk/60">{unbilledIncomes.length} records</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-ivory text-textInk/70 uppercase font-bold text-[10px] border-b border-turmeric/20">
+                  <tr>
+                    <th className="p-4">Receipt #</th>
+                    <th className="p-4">Received Date</th>
+                    <th className="p-4">Income Description & Category</th>
+                    <th className="p-4">Payment Mode</th>
+                    <th className="p-4 text-right">Amount (₹)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-turmeric/10 font-medium">
+                  {unbilledIncomes.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-textInk/50">
+                        No direct unbilled income entries logged yet. Click "+ Log Direct / Unbilled Income" above to record Hundi box counting, lease rent or bank interest.
+                      </td>
+                    </tr>
+                  ) : (
+                    unbilledIncomes.map((inc) => (
+                      <tr key={inc.id} className="hover:bg-ivory/40">
+                        <td className="p-4 font-mono font-bold text-kumkum">{inc.receiptNumber}</td>
+                        <td className="p-4 text-textInk/70">
+                          {new Date(inc.createdAt).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-textInk block">
+                            {inc.items?.[0]?.description || 'Direct Temple Income'}
+                          </span>
+                          <span className="text-[10px] text-textInk/50">{inc.sankalpaNote || 'Unbilled Entry'}</span>
+                        </td>
+                        <td className="p-4">
+                          <span className="px-2.5 py-1 rounded-md bg-ivory border border-turmeric/20 font-bold text-[10px] text-kumkum">
+                            {inc.paymentMode}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-emerald-700 text-sm">
+                          ₹{Number(inc.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Add Expense Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4">
-          <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl p-6 space-y-4">
-            <h3 className="font-display font-bold text-lg text-kumkum">Log Temple Expenditure</h3>
+      {/* TAB 2: TEMPLE EXPENDITURES */}
+      {activeTab === 'EXPENDITURES' && (
+        <div className="space-y-6">
+          {/* Wallet Balance Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Petty Cash Monthly Allowance Limit</p>
+                <p className="text-xl font-mono font-bold text-textInk">
+                  ₹{walletLimit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[10px] text-textInk/60">Branch petty cash allowance (Excluded from temple expenditures)</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-ivory text-kumkum">
+                <Wallet className="w-6 h-6" />
+              </div>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Spent in {monthName}</p>
+                <p className="text-xl font-mono font-bold text-kumkum">
+                  ₹{totalSpentThisMonth.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[10px] text-textInk/60">Sum of approved operational expenditures</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-red-50 text-red-600">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+            </div>
+
+            <div className={`p-5 rounded-2xl border shadow-sm flex items-center justify-between ${
+              remainingBalance >= 0 
+                ? 'bg-emerald-50/50 border-emerald-200 text-emerald-950' 
+                : 'bg-red-50/50 border-red-200 text-red-950'
+            }`}>
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-textInk/50 uppercase tracking-wider">Remaining Balance</p>
+                <p className={`text-xl font-mono font-bold ${
+                  remainingBalance >= 0 ? 'text-emerald-700' : 'text-red-700'
+                }`}>
+                  ₹{remainingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[10px] text-textInk/60">
+                  {remainingBalance >= 0 ? 'Within budget limit' : 'Budget limit exceeded!'}
+                </p>
+              </div>
+              <div className={`p-3.5 rounded-xl ${
+                remainingBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+              }`}>
+                <TrendingDown className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 text-xs flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <span className="font-bold">Admin Approval Threshold Rule: </span>
+              Expenses exceeding ₹{thresholdLimit.toLocaleString('en-IN')} will be automatically flagged for Admin Approval before being deducted from temple net earnings.
+            </div>
+          </div>
+
+          {/* Expense List Table */}
+          <div className="bg-white rounded-2xl border border-turmeric/30 shadow-sm overflow-hidden">
+            <div className="p-4 bg-ivory/60 border-b border-turmeric/20 flex items-center justify-between">
+              <h3 className="font-display font-bold text-sm text-kumkum">Temple Expenditure Records</h3>
+              <span className="text-xs font-semibold text-textInk/60">{expenses.length} total entries</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-ivory text-textInk/70 uppercase font-bold text-[10px] border-b border-turmeric/20">
+                  <tr>
+                    <th className="p-4">Voucher #</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Category & Title</th>
+                    <th className="p-4">Payee / Vendor</th>
+                    <th className="p-4">Mode</th>
+                    <th className="p-4">Bill Copy</th>
+                    <th className="p-4 text-right">Amount (₹)</th>
+                    <th className="p-4 text-center">Status</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-turmeric/10 font-medium">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-textInk/50">
+                        Loading expenses...
+                      </td>
+                    </tr>
+                  ) : expenses.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-textInk/50">
+                        No expenditure bills logged yet. Click "+ Add Temple Expense" to log your first expense.
+                      </td>
+                    </tr>
+                  ) : (
+                    expenses.map((expense) => (
+                      <tr key={expense.id} className="hover:bg-ivory/40">
+                        <td className="p-4 font-mono font-bold text-kumkum">{expense.voucherNumber}</td>
+                        <td className="p-4 text-textInk/70">
+                          {new Date(expense.createdAt).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-textInk block">{expense.title}</span>
+                          <span className="text-[10px] text-textInk/50">{expense.category}</span>
+                        </td>
+                        <td className="p-4 text-textInk/80">{expense.payee || '-'}</td>
+                        <td className="p-4">
+                          <span className="px-2.5 py-1 rounded-md bg-ivory border border-turmeric/20 font-bold text-[10px] text-kumkum">
+                            {expense.paymentMode}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          {expense.attachment ? (
+                            <button
+                              type="button"
+                              onClick={() => handlePreviewAttachment(expense)}
+                              className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all font-bold text-[10px] flex items-center gap-1"
+                            >
+                              <Paperclip className="w-3 h-3" />
+                              View Bill
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                              Missing
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right font-mono font-bold text-textInk text-sm">
+                          ₹{Number(expense.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-4 text-center">
+                          {expense.status === 'APPROVED' && (
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] inline-flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Approved
+                            </span>
+                          )}
+                          {expense.status === 'PENDING' && (
+                            <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px] inline-flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" /> Pending Admin Approval
+                            </span>
+                          )}
+                          {expense.status === 'REJECTED' && (
+                            <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-800 font-bold text-[10px] inline-flex items-center gap-1">
+                              <XCircle className="w-3 h-3" /> Rejected
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {user?.role === Role.ADMIN && expense.status === 'PENDING' && (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(expense.id)}
+                                  className="p-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all"
+                                  title="Approve Expense"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleReject(expense.id)}
+                                  className="p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+                                  title="Reject Expense"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+
+                            {user?.role === Role.ADMIN && (
+                              <button
+                                onClick={() => handleDelete(expense.id)}
+                                className="p-1.5 bg-ivory text-red-600 rounded-lg border border-turmeric/20 hover:bg-red-50 transition-all"
+                                title="Delete Expense Record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LOG DIRECT UNBILLED INCOME MODAL */}
+      {incomeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="p-4 bg-emerald-800 text-white flex items-center justify-between">
+              <h3 className="font-display font-bold text-base">💰 Log Direct / Unbilled Temple Income</h3>
+              <button
+                onClick={() => setIncomeModalOpen(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleIncomeSubmit} className="p-6 space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Expense Category</label>
+                <label className="font-bold text-textInk block mb-1">Income Category / Head *</label>
+                <select
+                  value={incomeFormData.category}
+                  onChange={(e) => setIncomeFormData({ ...incomeFormData, category: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-emerald-700"
+                >
+                  {incomeCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-textInk block mb-1">Income Description / Source Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Main Kanike Hundi Box Opening #14 / Sannidhi Box"
+                  value={incomeFormData.title}
+                  onChange={(e) => setIncomeFormData({ ...incomeFormData, title: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-emerald-700"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-textInk block mb-1">Amount (₹) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="0.00"
+                    value={incomeFormData.amount}
+                    onChange={(e) => setIncomeFormData({ ...incomeFormData, amount: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-mono font-bold focus:outline-none focus:border-emerald-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-textInk block mb-1">Payment / Deposit Mode *</label>
+                  <select
+                    value={incomeFormData.paymentMode}
+                    onChange={(e) => setIncomeFormData({ ...incomeFormData, paymentMode: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold focus:outline-none focus:border-emerald-700"
+                  >
+                    <option value="CASH">CASH</option>
+                    <option value="BANK">DIRECT BANK TRANSFER</option>
+                    <option value="UPI">UPI</option>
+                    <option value="CARD">CARD</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-textInk block mb-1">Notes / Witness Committee Details</label>
+                <textarea
+                  rows={2}
+                  placeholder="Optional details e.g. Counted in presence of Priest & Manager"
+                  value={incomeFormData.sankalpaNote}
+                  onChange={(e) => setIncomeFormData({ ...incomeFormData, sankalpaNote: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-emerald-700"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-turmeric/20">
+                <button
+                  type="button"
+                  onClick={() => setIncomeModalOpen(false)}
+                  className="px-4 py-2 rounded-xl font-bold text-textInk/70 hover:bg-ivory"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={incomeSubmitting}
+                  className="px-5 py-2.5 bg-emerald-700 text-white font-bold rounded-xl shadow-md hover:bg-emerald-800 transition-all disabled:opacity-50"
+                >
+                  {incomeSubmitting ? 'Recording Income...' : 'Record Direct Income'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD EXPENSE MODAL */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="p-4 bg-kumkum text-ivory flex items-center justify-between">
+              <h3 className="font-display font-bold text-base">Add Temple Operational Expense</h3>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-ivory/80 hover:text-ivory"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-textInk block mb-1">Expense Category *</label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 bg-white"
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-kumkum"
                 >
                   {categories.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -422,134 +814,127 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Title / Purpose</label>
+                <label className="font-bold text-textInk block mb-1">Bill / Expense Title *</label>
                 <input
                   type="text"
+                  required
+                  placeholder="e.g. Purchase of Flowers & Garlands for Puja"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Flowers and Tulasi garlands for Rayara Aradhana"
-                  required
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-textInk mb-1">Amount (₹)</label>
+                  <label className="font-bold text-textInk block mb-1">Amount (₹) *</label>
                   <input
                     type="number"
                     step="0.01"
+                    required
+                    placeholder="0.00"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    placeholder="0.00"
-                    required
-                    className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-mono font-bold focus:outline-none focus:border-kumkum"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-semibold text-textInk mb-1">Payment Mode</label>
+                  <label className="font-bold text-textInk block mb-1">Payment Mode *</label>
                   <select
                     value={formData.paymentMode}
                     onChange={(e) => setFormData({ ...formData, paymentMode: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 bg-white"
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold focus:outline-none focus:border-kumkum"
                   >
                     <option value="CASH">CASH</option>
                     <option value="UPI">UPI</option>
-                    <option value="BANK">BANK CHEQUE / NEFT</option>
                     <option value="CARD">CARD</option>
+                    <option value="BANK">BANK TRANSFER</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Vendor / Payee Name</label>
+                <label className="font-bold text-textInk block mb-1">Payee / Vendor Name</label>
                 <input
                   type="text"
+                  placeholder="e.g. Sri Krishna Flower Merchants"
                   value={formData.payee}
                   onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
-                  placeholder="e.g. Sri Lakshmi Flower Merchants"
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
                 />
               </div>
 
+              {/* MANDATORY ATTACHMENT FIELD */}
               <div>
-                <label className="block text-xs font-semibold text-textInk mb-1">Additional Bill / Request Details</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={2}
-                  className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-kumkum mb-1 flex items-center justify-between">
-                  <span>Upload Receipt / Invoice <span className="text-red-600 font-bold">* (Mandatory)</span></span>
-                  {!attachment && <span className="text-[10px] text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded border border-red-200">Attachment Required</span>}
+                <label className="font-bold text-textInk block mb-1">
+                  Mandatory Bill Copy / Receipt Voucher Image or PDF *
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="space-y-2">
                   <input
                     type="file"
                     accept="image/*,application/pdf"
+                    required
                     onChange={handleFileChange}
-                    className="hidden"
-                    id="expense-attachment-upload"
+                    className="w-full p-2 border border-turmeric/30 rounded-xl bg-ivory/30 text-xs text-textInk file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-kumkum file:text-ivory hover:file:bg-kumkum-light"
                   />
-                  <label
-                    htmlFor="expense-attachment-upload"
-                    className="px-4 py-2 bg-ivory border border-turmeric/30 rounded-xl font-semibold text-xs text-kumkum cursor-pointer hover:bg-turmeric/10 hover:border-turmeric transition-all flex items-center gap-1.5"
-                  >
-                    <Paperclip className="w-4 h-4" />
-                    {attachment ? 'Change Attachment' : 'Upload Receipt File'}
-                  </label>
                   {compressing && (
-                    <span className="text-[10px] text-textInk/50 animate-pulse">Compressing file...</span>
+                    <p className="text-[10px] text-turmeric-dark font-semibold">Compressing bill copy...</p>
                   )}
                   {attachment && !compressing && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                        File Attached
+                    <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-[11px] font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Paperclip className="w-3.5 h-3.5" />
+                        Bill attachment attached successfully
                       </span>
                       <button
                         type="button"
                         onClick={() => setAttachment(null)}
-                        className="text-red-600 hover:text-red-700 font-bold text-xs"
+                        className="text-red-600 hover:underline text-[10px]"
                       >
                         Remove
                       </button>
                     </div>
                   )}
                 </div>
-                <p className="text-[9px] text-textInk/50 mt-1">
-                  Supports images (JPG, PNG) and PDFs. Images will be automatically compressed before saving.
-                </p>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3">
+              <div>
+                <label className="font-bold text-textInk block mb-1">Additional Notes / Description</label>
+                <textarea
+                  rows={2}
+                  placeholder="Optional details..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
+                />
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-turmeric/20">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-turmeric/30 rounded-xl font-semibold text-xs text-textInk/70 hover:bg-ivory"
+                  className="px-4 py-2 rounded-xl font-bold text-textInk/70 hover:bg-ivory"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 bg-kumkum text-ivory rounded-xl font-bold text-xs shadow-md hover:bg-kumkum-dark transition-all disabled:opacity-50"
+                  disabled={submitting || compressing}
+                  className="px-5 py-2.5 bg-kumkum text-ivory font-bold rounded-xl shadow-md hover:bg-kumkum-light transition-all disabled:opacity-50"
                 >
-                  {submitting ? 'Submitting...' : 'Save Bill / Request'}
+                  {submitting ? 'Submitting...' : 'Submit Expense Voucher'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* Attachment Preview Modal */}
+
+      {/* PREVIEW ATTACHMENT MODAL */}
       {previewOpen && selectedExpense && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm no-print">
           <div className="bg-white rounded-2xl border border-turmeric/30 w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
-            {/* Header */}
             <div className="p-4 bg-ivory border-b border-ivory-dark flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 className="font-display font-bold text-kumkum text-sm">
@@ -568,7 +953,6 @@ export const ExpensesPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Content Body */}
             <div className="p-6 flex flex-col items-center justify-center bg-ivory-light/20 overflow-y-auto max-h-[60vh] flex-grow">
               {selectedExpense.attachment?.startsWith('data:image/') ? (
                 <img
@@ -589,7 +973,6 @@ export const ExpensesPage: React.FC = () => {
               )}
             </div>
 
-            {/* Footer Controls */}
             <div className="p-4 bg-ivory border-t border-ivory-dark flex items-center justify-end gap-2 flex-shrink-0">
               <a
                 href={selectedExpense.attachment}
