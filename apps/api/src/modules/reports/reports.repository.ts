@@ -4,6 +4,7 @@ import { PaymentMode, ReceiptKind } from '@temple/shared';
 export interface IReportsRepository {
   getDailyReport(dateStr: string): Promise<any>;
   getMonthlyReport(year: number, month: number): Promise<any>;
+  getFinancialBalanceReport(): Promise<any>;
 }
 
 export class ReportsRepository implements IReportsRepository {
@@ -159,6 +160,57 @@ export class ReportsRepository implements IReportsRepository {
         totalAmount: dailyBreakdown[date]
       })),
       receipts
+    };
+  }
+
+  async getFinancialBalanceReport() {
+    const [receipts, expenses, expenseCategoryGroups] = await Promise.all([
+      this.prisma.receipt.findMany({
+        where: { cancelledAt: null },
+        select: { totalAmount: true, paymentMode: true, kind: true, createdAt: true }
+      }),
+      this.prisma.expense.findMany({
+        include: {
+          createdByUser: { select: { id: true, fullName: true, username: true } },
+          approvedByUser: { select: { id: true, fullName: true, username: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      this.prisma.expense.groupBy({
+        by: ['category'],
+        _sum: { amount: true },
+        _count: true
+      })
+    ]);
+
+    let totalCollections = 0;
+    for (const r of receipts) {
+      totalCollections += Number(r.totalAmount || 0);
+    }
+
+    let totalExpenditure = 0;
+    for (const e of expenses) {
+      totalExpenditure += Number(e.amount || 0);
+    }
+
+    const netRemainingBalance = totalCollections - totalExpenditure;
+
+    const byCategory: Record<string, { amount: number; count: number }> = {};
+    for (const c of expenseCategoryGroups) {
+      byCategory[c.category] = {
+        amount: Number(c._sum.amount || 0),
+        count: c._count
+      };
+    }
+
+    return {
+      totalCollections,
+      totalExpenditure,
+      netRemainingBalance,
+      totalReceiptsCount: receipts.length,
+      totalExpensesCount: expenses.length,
+      byCategory,
+      expenses
     };
   }
 }

@@ -33,8 +33,23 @@ export const BillingPage: React.FC = () => {
 
   // Created receipt result for printing
   const [createdReceipt, setCreatedReceipt] = useState<any>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showThermalModal, setShowThermalModal] = useState(false);
   const [showSankalpaModal, setShowSankalpaModal] = useState(false);
+
+  const handleStartNewBill = () => {
+    setShowSuccessModal(false);
+    setShowThermalModal(false);
+    setShowSankalpaModal(false);
+    setCreatedReceipt(null);
+    setSelectedDevotee(null);
+    setDevoteeSearch('');
+    setItems([]);
+    setSankalpaNote('');
+    setTransactionRef('');
+    setPaymentMode(PaymentMode.CASH);
+    setCurrentStep(0);
+  };
 
   // Master Vedic lists (Gotra, Nakshatra, Rashi)
   const { gotras, nakshatras, rashis } = useVedicMasters();
@@ -93,14 +108,7 @@ export const BillingPage: React.FC = () => {
     },
     onSuccess: (data) => {
       setCreatedReceipt(data);
-      setShowThermalModal(true);
-      // Reset form
-      setSelectedDevotee(null);
-      setItems([]);
-      setSankalpaNote('');
-      setTransactionRef('');
-      setPaymentMode(PaymentMode.CASH);
-      setCurrentStep(0);
+      setShowSuccessModal(true);
     }
   });
 
@@ -563,15 +571,29 @@ export const BillingPage: React.FC = () => {
                           </button>
 
                           <input
-                            type="number"
-                            min={1}
+                            type="text"
+                            inputMode="numeric"
                             value={item.devoteeCount ?? 1}
                             onFocus={(e) => e.target.select()}
                             onChange={(e) => {
-                              const parsed = parseInt(e.target.value, 10);
-                              handleDevoteeCountChange(idx, isNaN(parsed) ? 1 : parsed);
+                              const raw = e.target.value;
+                              if (raw === '') {
+                                setItems((prev) =>
+                                  prev.map((it, i) => (i === idx ? { ...it, devoteeCount: '' as any } : it))
+                                );
+                                return;
+                              }
+                              const parsed = parseInt(raw, 10);
+                              if (!isNaN(parsed)) {
+                                handleDevoteeCountChange(idx, Math.max(1, parsed));
+                              }
                             }}
-                            className="w-12 text-center text-xs font-bold text-kumkum focus:outline-none focus:ring-1 focus:ring-kumkum/40 rounded py-0.5"
+                            onBlur={() => {
+                              if (!item.devoteeCount || isNaN(Number(item.devoteeCount))) {
+                                handleDevoteeCountChange(idx, 1);
+                              }
+                            }}
+                            className="w-14 text-center text-xs font-bold text-kumkum focus:outline-none focus:ring-1 focus:ring-kumkum/40 rounded py-0.5 border border-turmeric/20"
                           />
 
                           <button
@@ -744,6 +766,70 @@ export const BillingPage: React.FC = () => {
                 'Issue Official Receipt & Print'
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success & Exit Flow Modal */}
+      {showSuccessModal && createdReceipt && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/70 backdrop-blur-xs flex justify-center items-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-turmeric/30 text-center space-y-4 animate-scaleUp">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl font-bold shadow-xs">
+              ✓
+            </div>
+
+            <div>
+              <h3 className="font-display font-bold text-xl text-kumkum">Bill Generated Successfully!</h3>
+              <p className="text-xs text-textInk/60 mt-1">
+                Receipt <span className="font-mono font-bold text-kumkum">#{createdReceipt.receiptNumber}</span> has been created.
+              </p>
+            </div>
+
+            <div className="bg-ivory/60 p-4 rounded-xl border border-turmeric/20 text-left text-xs space-y-1.5 font-sans">
+              <div className="flex justify-between">
+                <span className="text-textInk/60">Devotee:</span>
+                <span className="font-bold text-textInk">{createdReceipt.devotee?.name} ({createdReceipt.devotee?.phone})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-textInk/60">Gotra / Nakshatra:</span>
+                <span className="font-semibold text-textInk/80">{createdReceipt.devotee?.gotra || '-'} / {createdReceipt.devotee?.nakshatra || '-'}</span>
+              </div>
+              <div className="flex justify-between border-t border-turmeric/10 pt-1.5 font-bold text-sm text-kumkum font-mono">
+                <span>TOTAL AMOUNT:</span>
+                <span>₹{Number(createdReceipt.totalAmount).toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setShowThermalModal(true)}
+                  className="bg-kumkum hover:bg-kumkum-light text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                >
+                  <Printer className="w-4 h-4" /> Print Receipt
+                </button>
+                <button
+                  onClick={() => setShowSankalpaModal(true)}
+                  className="bg-turmeric-dark hover:bg-kumkum text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition"
+                >
+                  📜 Sankalpa Sheet
+                </button>
+              </div>
+
+              <button
+                onClick={handleStartNewBill}
+                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2"
+              >
+                <span>✨ Generate Next Bill / New Transaction</span>
+              </button>
+
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full text-xs text-textInk/60 hover:text-textInk font-semibold py-1.5"
+              >
+                Close / Exit
+              </button>
+            </div>
           </div>
         </div>
       )}

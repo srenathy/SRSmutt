@@ -4,6 +4,7 @@ import { DailyReportQueryParams, MonthlyReportQueryParams } from '@temple/shared
 export interface IReportsService {
   getDailyReport(query: DailyReportQueryParams): Promise<any>;
   getMonthlyReport(query: MonthlyReportQueryParams): Promise<any>;
+  getFinancialBalanceReport(): Promise<any>;
 }
 
 export class ReportsService implements IReportsService {
@@ -15,5 +16,9 @@ export class ReportsService implements IReportsService {
 
   async getMonthlyReport(query: MonthlyReportQueryParams): Promise<any> {
     return this.reportsRepo.getMonthlyReport(query.year, query.month);
+  }
+
+  async getFinancialBalanceReport(): Promise<any> {
+    return this.reportsRepo.getFinancialBalanceReport();
   }
 }

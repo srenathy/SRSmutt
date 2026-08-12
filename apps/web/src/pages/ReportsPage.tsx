@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { generateTallyXML, generateTallyCSV, downloadFile } from '../utils/tallyExport.js';
-import { Printer, Calendar, Download, TrendingUp, DollarSign, Award, Layers, FileCode, FileSpreadsheet } from 'lucide-react';
+import { Printer, Calendar, Download, TrendingUp, DollarSign, Award, Layers, FileCode, FileSpreadsheet, Wallet, ArrowDownRight, ArrowUpRight, Paperclip } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
-  const [reportType, setReportType] = useState<'daily' | 'monthly'>('daily');
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || (user as any)?.isCentralAdmin;
+
+  const [reportType, setReportType] = useState<'daily' | 'monthly' | 'expenditures'>('daily');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -28,6 +32,16 @@ export const ReportsPage: React.FC = () => {
       return res.data.data;
     },
     enabled: reportType === 'monthly'
+  });
+
+  // Admin Expenditures & Financial Surplus Query
+  const financialBalanceQuery = useQuery({
+    queryKey: ['report-financial-balance'],
+    queryFn: async () => {
+      const res = await apiClient.get('/reports/financial-balance');
+      return res.data.data;
+    },
+    enabled: reportType === 'expenditures'
   });
 
   const handlePrintReport = () => {
@@ -172,6 +186,16 @@ export const ReportsPage: React.FC = () => {
             >
               Monthly Report
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => setReportType('expenditures')}
+                className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                  reportType === 'expenditures' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+                }`}
+              >
+                Expenditures & Surplus (Admin)
+              </button>
+            )}
           </div>
 
           {/* Quick Filter Presets */}
@@ -238,7 +262,121 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Report Summary Cards */}
-      {isLoading ? (
+      {reportType === 'expenditures' ? (
+        financialBalanceQuery.isLoading ? (
+          <div className="p-12 text-center text-kumkum font-semibold flex items-center justify-center gap-2 bg-white rounded-2xl border border-turmeric/20">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />
+            Loading Admin Expenditure & Net Balance Audit Report...
+          </div>
+        ) : financialBalanceQuery.data ? (
+          <div className="space-y-6">
+            {/* Top Financial Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
+                <div className="flex items-center justify-between text-xs font-semibold text-textInk/60">
+                  <span>Total Collection Income</span>
+                  <ArrowDownRight className="w-5 h-5 text-emerald-600" />
+                </div>
+                <p className="font-mono text-3xl font-bold text-emerald-700 mt-1">
+                  ₹{Number(financialBalanceQuery.data.totalCollections || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[11px] text-textInk/50 font-medium">From {financialBalanceQuery.data.totalReceiptsCount || 0} total receipts</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
+                <div className="flex items-center justify-between text-xs font-semibold text-textInk/60">
+                  <span>Total Temple Expenditures</span>
+                  <ArrowUpRight className="w-5 h-5 text-red-600" />
+                </div>
+                <p className="font-mono text-3xl font-bold text-red-700 mt-1">
+                  ₹{Number(financialBalanceQuery.data.totalExpenditure || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[11px] text-textInk/50 font-medium">Across {financialBalanceQuery.data.totalExpensesCount || 0} expense vouchers</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-1 bg-gradient-to-br from-white to-ivory">
+                <div className="flex items-center justify-between text-xs font-bold text-kumkum">
+                  <span>Net Fund Surplus / Remaining Balance</span>
+                  <Wallet className="w-5 h-5 text-kumkum" />
+                </div>
+                <p className={`font-mono text-3xl font-bold mt-1 ${
+                  Number(financialBalanceQuery.data.netRemainingBalance || 0) >= 0 ? 'text-kumkum' : 'text-red-600'
+                }`}>
+                  ₹{Number(financialBalanceQuery.data.netRemainingBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[11px] text-textInk/50 font-medium">Net remaining balance after all expenses</p>
+              </div>
+            </div>
+
+            {/* Category Expenditure Breakdown */}
+            <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-4">
+              <h3 className="font-display text-base font-bold text-kumkum">Expenditure Category Breakdown</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-xs">
+                {Object.entries(financialBalanceQuery.data.byCategory || {}).map(([cat, data]: [string, any]) => (
+                  <div key={cat} className="p-3 bg-ivory/50 rounded-xl border border-turmeric/20 space-y-0.5">
+                    <p className="font-semibold text-textInk/70 capitalize text-[11px]">{cat.toLowerCase().replace(/_/g, ' ')}</p>
+                    <p className="font-mono font-bold text-kumkum text-sm">₹{Number(data.amount).toFixed(0)}</p>
+                    <p className="text-[10px] text-textInk/50">{data.count} items</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Complete Expenditures Vouchers Table */}
+            <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-4">
+              <h3 className="font-display text-base font-bold text-kumkum">All Expenditure Vouchers & Expense Records</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
+                    <tr>
+                      <th className="p-3">Voucher # / Date</th>
+                      <th className="p-3">Title / Description</th>
+                      <th className="p-3">Category</th>
+                      <th className="p-3 text-right">Amount (₹)</th>
+                      <th className="p-3">Logged By</th>
+                      <th className="p-3 text-center">Attachment</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ivory-dark/60">
+                    {financialBalanceQuery.data.expenses?.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-6 text-center text-textInk/50 italic">No expenditure records found.</td>
+                      </tr>
+                    ) : (
+                      financialBalanceQuery.data.expenses?.map((e: any) => (
+                        <tr key={e.id} className="hover:bg-ivory/30">
+                          <td className="p-3">
+                            <p className="font-mono font-bold text-kumkum">{e.voucherNo || e.id.slice(0, 8)}</p>
+                            <p className="text-[10px] text-textInk/50">{new Date(e.createdAt).toLocaleDateString()}</p>
+                          </td>
+                          <td className="p-3 font-semibold text-textInk">{e.title || e.description}</td>
+                          <td className="p-3 text-textInk/80 font-medium capitalize">{e.category?.toLowerCase().replace(/_/g, ' ')}</td>
+                          <td className="p-3 text-right font-mono font-bold text-red-700">₹{Number(e.amount).toFixed(2)}</td>
+                          <td className="p-3 text-textInk/70">{e.createdByUser?.fullName || e.createdByUser?.username || '-'}</td>
+                          <td className="p-3 text-center">
+                            {e.attachment ? (
+                              <a
+                                href={e.attachment}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-kumkum hover:underline"
+                              >
+                                <Paperclip className="w-3.5 h-3.5" /> Bill File
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-textInk/40">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : null
+      ) : isLoading ? (
         <div className="p-12 text-center text-kumkum font-semibold flex items-center justify-center gap-2 bg-white rounded-2xl border border-turmeric/20">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />
           Generating collection audit report...

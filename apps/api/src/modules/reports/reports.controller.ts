@@ -16,4 +16,9 @@ export class ReportsController {
     const report = await this.service.getMonthlyReport(query);
     return reply.send({ data: report });
   }
+
+  async getFinancialBalance(request: FastifyRequest, reply: FastifyReply) {
+    const report = await this.service.getFinancialBalanceReport();
+    return reply.send({ data: report });
+  }
 }
