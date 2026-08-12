@@ -16,7 +16,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const [viewMode, setViewMode] = useState<'official' | 'horizontal' | 'thermal'>('official');
+  const [viewMode, setViewMode] = useState<'official' | 'thermal'>('official');
 
   const { data: fetchedTemple } = useQuery({
     queryKey: ['temple-info-modal'],
@@ -97,18 +97,6 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
             >
               <FileText className="w-3.5 h-3.5" />
               Official Matha Voucher (Vertical)
-            </button>
-
-            <button
-              onClick={() => setViewMode('horizontal')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                viewMode === 'horizontal'
-                  ? 'bg-kumkum text-white shadow-sm'
-                  : 'bg-white text-textInk/70 border border-turmeric/30 hover:bg-ivory'
-              }`}
-            >
-              <Layout className="w-3.5 h-3.5" />
-              Horizontal Format
             </button>
 
             <button
@@ -315,60 +303,6 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          ) : viewMode === 'horizontal' ? (
-            /* HORIZONTAL / LANDSCAPE RECEIPT FORMAT */
-            <div className="official-receipt-print border-2 border-red-900 p-5 bg-white rounded-md text-red-950 font-serif leading-tight shadow-sm max-w-2xl mx-auto space-y-4">
-              {/* Header */}
-              <div className="flex justify-between items-center border-b-2 border-red-950 pb-2">
-                <div>
-                  <h1 className="font-bold text-lg text-red-950">Mulabagala Sri Sripadaraja Matha</h1>
-                  <h2 className="font-bold text-xs text-red-900">(Rajajinagar Branch)</h2>
-                  <p className="text-[11px] font-sans text-red-950/80">{templeInfo.address}</p>
-                </div>
-                <div className="text-right">
-                  <div className="border-2 border-red-950 px-3 py-1 font-bold text-xs bg-red-50 inline-block mb-1">
-                    RECEIPT: {receipt.receiptNumber}
-                  </div>
-                  <p className="text-xs font-mono font-bold">Date: {formattedDate}</p>
-                </div>
-              </div>
-
-              {/* Two Column Grid */}
-              <div className="grid grid-cols-2 gap-4 text-xs font-sans">
-                {/* Devotee Info Column */}
-                <div className="space-y-1.5 p-3 bg-red-50/30 rounded border border-red-900/20">
-                  <p className="font-bold border-b border-red-900/30 pb-1 text-red-950 uppercase text-[10px]">Devotee Details</p>
-                  <p><span className="font-bold">Name:</span> {cleanDevoteeName}</p>
-                  <p><span className="font-bold">City/Address:</span> {receipt.devotee?.city || '-'}</p>
-                  <p><span className="font-bold">Phone:</span> {receipt.devotee?.phone || '-'}</p>
-                  <p><span className="font-bold">Gotra / Nakshatra:</span> {receipt.devotee?.gotra || '-'} / {receipt.devotee?.nakshatra || '-'}</p>
-                </div>
-
-                {/* Seva Items Column */}
-                <div className="p-3 bg-white rounded border border-red-900/40 flex flex-col justify-between">
-                  <div>
-                    <p className="font-bold border-b border-red-900/30 pb-1 text-red-950 uppercase text-[10px] mb-2">Seva Particulars</p>
-                    {receipt.items?.map((item: any, idx: number) => (
-                      <div key={idx} className="flex justify-between py-1 border-b border-red-950/10">
-                        <span className="font-bold">{item.description}</span>
-                        <span className="font-mono font-bold">₹{(safeNum(item.amount) * safeNum(item.quantity || 1)).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-2 border-t-2 border-red-950 flex justify-between font-bold text-sm text-red-950">
-                    <span>GRAND TOTAL ({receipt.paymentMode}):</span>
-                    <span className="font-mono">₹{safeNum(receipt.totalAmount).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer Notice */}
-              <div className="border-t border-red-950/30 pt-2 flex justify-between items-center text-[9px] font-sans">
-                <p className="italic text-red-900">* This is a computer system-generated receipt. No manual signature/authorization required.</p>
-                <p className="font-bold">|| Sri Krishnarpanamastu ||</p>
               </div>
             </div>
           ) : (
