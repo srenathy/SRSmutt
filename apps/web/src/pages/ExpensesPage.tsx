@@ -557,15 +557,6 @@ export const ExpensesPage: React.FC = () => {
                               </>
                             )}
 
-                            {user?.role === Role.ADMIN && (
-                              <button
-                                onClick={() => handleDelete(expense.id)}
-                                className="p-1.5 bg-ivory text-red-600 rounded-lg border border-turmeric/20 hover:bg-red-50 transition-all"
-                                title="Delete Expense Record"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -857,15 +848,6 @@ export const ExpensesPage: React.FC = () => {
                               </>
                             )}
 
-                            {user?.role === Role.ADMIN && (
-                              <button
-                                onClick={() => handleDelete(expense.id)}
-                                className="p-1.5 bg-ivory text-red-600 rounded-lg border border-turmeric/20 hover:bg-red-50 transition-all"
-                                title="Delete Expense Record"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
