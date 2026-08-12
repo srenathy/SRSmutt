@@ -3,10 +3,10 @@ import { MasterTable, ColumnConfig } from '../components/MasterTable.js';
 import { MasterFormDrawer, FieldConfig } from '../components/MasterFormDrawer.js';
 import { apiClient } from '../api/client.js';
 
-type Tab = 'temple' | 'sevas' | 'shashwata' | 'gotras' | 'nakshatras' | 'rashis' | 'announcements';
+type Tab = 'sevas' | 'shashwata' | 'gotras' | 'nakshatras' | 'rashis' | 'announcements';
 
 export const MastersPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>('temple');
+  const [activeTab, setActiveTab] = useState<Tab>('sevas');
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -18,10 +18,7 @@ export const MastersPage: React.FC = () => {
   const fetchTabContent = async (tab: Tab) => {
     setLoading(true);
     try {
-      if (tab === 'temple') {
-        const res = await apiClient.get('/temple');
-        setData(res.data.data ? [res.data.data] : []);
-      } else if (tab === 'sevas') {
+      if (tab === 'sevas') {
         const res = await apiClient.get('/sevas');
         setData(res.data.data || []);
       } else if (tab === 'shashwata') {
@@ -71,9 +68,7 @@ export const MastersPage: React.FC = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      if (activeTab === 'temple') {
-        await apiClient.put('/temple', formData);
-      } else if (activeTab === 'sevas') {
+      if (activeTab === 'sevas') {
         if (editingItem) {
           await apiClient.put(`/sevas/${editingItem.id}`, formData);
         } else {
@@ -143,15 +138,7 @@ export const MastersPage: React.FC = () => {
   };
 
   const getColumns = (): ColumnConfig<any>[] => {
-    if (activeTab === 'temple') {
-      return [
-        { key: 'name', header: 'Temple Name' },
-        { key: 'deity', header: 'Deity' },
-        { key: 'city', header: 'City' },
-        { key: 'phone', header: 'Phone' },
-        { key: 'registrationNumber', header: 'Reg No' }
-      ];
-    } else if (activeTab === 'sevas') {
+    if (activeTab === 'sevas') {
       return [
         { key: 'code', header: 'Code' },
         { key: 'name', header: 'Seva Name' },
@@ -252,19 +239,7 @@ export const MastersPage: React.FC = () => {
   };
 
   const getFormFields = (): FieldConfig[] => {
-    if (activeTab === 'temple') {
-      return [
-        { name: 'name', label: 'Temple Name', type: 'text', required: true },
-        { name: 'deity', label: 'Main Deity', type: 'text', required: true },
-        { name: 'address', label: 'Address', type: 'text', required: true },
-        { name: 'city', label: 'City', type: 'text', required: true },
-        { name: 'state', label: 'State', type: 'text', required: true },
-        { name: 'pincode', label: 'Pincode', type: 'text', required: true },
-        { name: 'phone', label: 'Phone', type: 'text', required: true },
-        { name: 'email', label: 'Email', type: 'email' },
-        { name: 'registrationNumber', label: 'Registration Number', type: 'text' }
-      ];
-    } else if (activeTab === 'sevas') {
+    if (activeTab === 'sevas') {
       return [
         { name: 'code', label: 'Seva Code', type: 'text', required: true },
         { name: 'name', label: 'Seva Name', type: 'text', required: true },
@@ -313,17 +288,6 @@ export const MastersPage: React.FC = () => {
     <div className="space-y-6">
       {/* Tabs Navigation */}
       <div className="flex flex-wrap items-center gap-2 border-b border-turmeric/20 pb-3">
-        <button
-          onClick={() => setActiveTab('temple')}
-          className={`px-4 py-2 rounded-xl font-semibold text-xs transition-all ${
-            activeTab === 'temple'
-              ? 'bg-kumkum text-ivory shadow-sm font-bold'
-              : 'text-textInk/70 hover:text-kumkum hover:bg-ivory'
-          }`}
-        >
-          🏛️ Temple Info
-        </button>
-
         <button
           onClick={() => setActiveTab('sevas')}
           className={`px-4 py-2 rounded-xl font-semibold text-xs transition-all ${
@@ -394,9 +358,7 @@ export const MastersPage: React.FC = () => {
       {/* Master Data Table */}
       <MasterTable
         title={`${
-          activeTab === 'temple'
-            ? 'Temple Master'
-            : activeTab === 'sevas'
+          activeTab === 'sevas'
             ? 'Regular Sevas'
             : activeTab === 'shashwata'
             ? 'Shashwata Sevas'
@@ -412,9 +374,9 @@ export const MastersPage: React.FC = () => {
         columns={getColumns()}
         data={data}
         isLoading={loading}
-        onAdd={activeTab !== 'temple' ? () => handleOpenDrawer() : undefined}
+        onAdd={() => handleOpenDrawer()}
         onEdit={(item) => handleOpenDrawer(item)}
-        onDelete={activeTab !== 'temple' ? handleDelete : undefined}
+        onDelete={handleDelete}
       />
 
       {/* Side Drawer Editor */}
