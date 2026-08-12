@@ -164,7 +164,7 @@ export class ReportsRepository implements IReportsRepository {
   }
 
   async getFinancialBalanceReport() {
-    const [receipts, expenses, expenseCategoryGroups] = await Promise.all([
+    const [receipts, expenses, expenseCategoryGroups, receiptKindGroups] = await Promise.all([
       this.prisma.receipt.findMany({
         where: { cancelledAt: null },
         select: { totalAmount: true, paymentMode: true, kind: true, createdAt: true }
@@ -180,6 +180,12 @@ export class ReportsRepository implements IReportsRepository {
         by: ['category'],
         _sum: { amount: true },
         _count: true
+      }),
+      this.prisma.receipt.groupBy({
+        by: ['kind'],
+        _sum: { totalAmount: true },
+        _count: true,
+        where: { cancelledAt: null }
       })
     ]);
 
@@ -203,6 +209,14 @@ export class ReportsRepository implements IReportsRepository {
       };
     }
 
+    const byKind: Record<string, { amount: number; count: number }> = {};
+    for (const k of receiptKindGroups) {
+      byKind[k.kind] = {
+        amount: Number(k._sum.totalAmount || 0),
+        count: k._count
+      };
+    }
+
     return {
       totalCollections,
       totalExpenditure,
@@ -210,6 +224,7 @@ export class ReportsRepository implements IReportsRepository {
       totalReceiptsCount: receipts.length,
       totalExpensesCount: expenses.length,
       byCategory,
+      byKind,
       expenses
     };
   }

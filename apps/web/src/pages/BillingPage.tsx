@@ -219,7 +219,7 @@ export const BillingPage: React.FC = () => {
         <div className="bg-white p-8 rounded-2xl border border-turmeric/30 shadow-sm space-y-6">
           <h3 className="font-display text-lg font-bold text-kumkum">Select Offering Kind</h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               onClick={() => setKind(ReceiptKind.NEW_SEVA)}
               className={`p-6 rounded-2xl border-2 text-left transition-all ${
@@ -254,6 +254,18 @@ export const BillingPage: React.FC = () => {
             >
               <h4 className="font-display font-bold text-base text-kumkum">In-Kind (Dravya)</h4>
               <p className="text-xs text-textInk/60 mt-1">Material or monetary Dravya offerings & donations.</p>
+            </button>
+
+            <button
+              onClick={() => setKind(ReceiptKind.HUNDI_COLLECTION)}
+              className={`p-6 rounded-2xl border-2 text-left transition-all ${
+                kind === ReceiptKind.HUNDI_COLLECTION
+                  ? 'border-kumkum bg-kumkum/5 shadow-md'
+                  : 'border-turmeric/30 hover:border-turmeric bg-white'
+              }`}
+            >
+              <h4 className="font-display font-bold text-base text-kumkum">💰 Hundi & Direct Income</h4>
+              <p className="text-xs text-textInk/60 mt-1">Kanike Hundi collection openings, lease & direct temple income.</p>
             </button>
           </div>
 
@@ -510,6 +522,46 @@ export const BillingPage: React.FC = () => {
                 className="bg-kumkum text-ivory text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" /> Add Dravya Offering Line Item
+              </button>
+            </div>
+          )}
+
+          {kind === ReceiptKind.HUNDI_COLLECTION && (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-textInk/70">Quick Hundi Box Presets & Direct Income Categories:</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Main Temple Kanike Hundi Opening', amt: 5000 },
+                  { label: 'Rayaru Sannidhi Hundi', amt: 2500 },
+                  { label: 'Mula Rama Devara Pooja Hundi', amt: 2000 },
+                  { label: 'Annadana Trust Hundi', amt: 1500 },
+                  { label: 'Direct Temple Bank Interest / Deposit Income', amt: 1000 }
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    onClick={() => {
+                      setItems((prev) => [
+                        ...prev,
+                        { description: preset.label, amount: preset.amt, quantity: 1, devoteeCount: 1 }
+                      ]);
+                    }}
+                    className="bg-ivory hover:bg-turmeric/20 border border-turmeric/30 px-3 py-1.5 rounded-xl text-xs font-semibold text-textInk flex items-center gap-1.5 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-kumkum" />
+                    {preset.label} (₹{preset.amt})
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  setItems((prev) => [
+                    ...prev,
+                    { description: 'Custom Hundi / Direct Income Entry', amount: 1000, quantity: 1, devoteeCount: 1 }
+                  ]);
+                }}
+                className="bg-kumkum text-ivory text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 mt-2"
+              >
+                <Plus className="w-4 h-4" /> Add Custom Hundi / Income Line Item
               </button>
             </div>
           )}

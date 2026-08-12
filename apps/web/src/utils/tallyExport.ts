@@ -65,6 +65,8 @@ function getCreditLedger(kind: string): string {
       return 'Shashwata Seva Corpus Fund';
     case 'KIND_DONATION':
       return 'Kanike / In-Kind Donation';
+    case 'HUNDI_COLLECTION':
+      return 'Hundi Kanike Opening Income';
     default:
       return 'Seva Collection Income';
   }

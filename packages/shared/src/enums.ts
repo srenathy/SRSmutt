@@ -16,7 +16,8 @@ export enum PaymentMode {
 export enum ReceiptKind {
   NEW_SEVA = 'NEW_SEVA',
   SHASHWATA_SEVA = 'SHASHWATA_SEVA',
-  KIND_DONATION = 'KIND_DONATION'
+  KIND_DONATION = 'KIND_DONATION',
+  HUNDI_COLLECTION = 'HUNDI_COLLECTION'
 }
 
 export enum AuditAction {

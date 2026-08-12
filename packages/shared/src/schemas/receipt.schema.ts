@@ -32,10 +32,15 @@ export const kindDonationReceiptSchema = baseReceiptSchema.extend({
   kind: z.literal(ReceiptKind.KIND_DONATION)
 });
 
+export const hundiCollectionReceiptSchema = baseReceiptSchema.extend({
+  kind: z.literal(ReceiptKind.HUNDI_COLLECTION)
+});
+
 export const createReceiptSchema = z.discriminatedUnion('kind', [
   newSevaReceiptSchema,
   shashwataSevaReceiptSchema,
-  kindDonationReceiptSchema
+  kindDonationReceiptSchema,
+  hundiCollectionReceiptSchema
 ]);
 
 export type CreateReceiptInput = z.infer<typeof createReceiptSchema>;

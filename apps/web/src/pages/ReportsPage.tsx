@@ -322,6 +322,26 @@ export const ReportsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Income Head Breakdown (Sevas, Hundi, Shashwata, Dravya) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-4">
+              <h3 className="font-display text-base font-bold text-kumkum">Income Head & Offering Stream Breakdown</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                {Object.entries(financialBalanceQuery.data.byKind || {}).map(([k, data]: [string, any]) => {
+                  const label = k === 'NEW_SEVA' ? 'Regular Seva Income'
+                    : k === 'SHASHWATA_SEVA' ? 'Shashwata Seva Corpus'
+                    : k === 'HUNDI_COLLECTION' ? '💰 Hundi & Direct Income'
+                    : 'In-Kind / Dravya';
+                  return (
+                    <div key={k} className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-200/60 space-y-1">
+                      <p className="font-bold text-emerald-950 text-xs">{label}</p>
+                      <p className="font-mono font-bold text-emerald-700 text-lg">₹{Number(data.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                      <p className="text-[11px] text-emerald-800/70 font-semibold">{data.count} receipts</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Complete Expenditures Vouchers Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-4">
               <h3 className="font-display text-base font-bold text-kumkum">All Expenditure Vouchers & Expense Records</h3>
@@ -457,6 +477,55 @@ export const ReportsPage: React.FC = () => {
                           <span>{sharePct}%</span>
                           <div className="w-16 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20">
                             <div className="bg-kumkum h-full rounded-full" style={{ width: `${sharePct}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Offering Head Breakdown Table (Sevas, Hundi, Dravya) */}
+          <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
+              <h3 className="font-display text-base font-bold text-kumkum">Collection Breakdown by Offering Head (Sevas, Hundi, Dravya)</h3>
+            </div>
+
+            <table className="w-full text-left text-xs">
+              <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
+                <tr>
+                  <th className="p-3">Offering Kind / Head</th>
+                  <th className="p-3 text-center">Receipt Count</th>
+                  <th className="p-3 text-right">Total Amount (₹)</th>
+                  <th className="p-3 text-right">% Share</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ivory-dark/60">
+                {Object.entries(reportData.byKind || {}).map(([k, data]: [string, any]) => {
+                  const label = k === 'NEW_SEVA' ? 'Regular Seva Income'
+                    : k === 'SHASHWATA_SEVA' ? 'Shashwata Seva Corpus Fund'
+                    : k === 'HUNDI_COLLECTION' ? '💰 Hundi & Direct Temple Income'
+                    : 'In-Kind / Dravya Offering';
+                  const sharePct = Number(reportData.grandTotal) > 0
+                    ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1)
+                    : '0.0';
+                  return (
+                    <tr key={k} className="hover:bg-ivory/30">
+                      <td className="p-3 font-bold text-textInk flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-turmeric-dark" />
+                        {label}
+                      </td>
+                      <td className="p-3 text-center font-semibold">{data.count}</td>
+                      <td className="p-3 text-right font-mono font-bold text-kumkum">
+                        ₹{Number(data.amount).toFixed(2)}
+                      </td>
+                      <td className="p-3 text-right font-mono text-textInk/80 font-bold">
+                        <div className="flex items-center justify-end gap-2">
+                          <span>{sharePct}%</span>
+                          <div className="w-16 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20">
+                            <div className="bg-turmeric-dark h-full rounded-full" style={{ width: `${sharePct}%` }} />
                           </div>
                         </div>
                       </td>
