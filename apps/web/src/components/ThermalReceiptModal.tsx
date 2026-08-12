@@ -254,11 +254,9 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                       <tr key={idx} className="min-h-12">
                         <td className="p-2 border-r border-red-950 font-sans">
                           <div className="font-bold text-red-950">{item.description}</div>
-                          {item.devoteeCount && item.devoteeCount > 1 ? (
-                            <div className="text-[10px] text-red-900 font-semibold">
-                              (Devotees: {item.devoteeCount})
-                            </div>
-                          ) : null}
+                          <div className="text-[10px] text-red-900 font-semibold mt-0.5">
+                            (Devotees Count: {item.devoteeCount || 1})
+                          </div>
                           {receipt.sankalpaNote && idx === 0 && (
                             <div className="text-[10px] text-red-800 italic mt-0.5">
                               Sankalpa: {receipt.sankalpaNote}

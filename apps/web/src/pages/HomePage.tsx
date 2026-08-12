@@ -116,17 +116,23 @@ export const HomePage: React.FC = () => {
           </p>
         </div>
 
-        {/* Live News Ticker */}
-        {announcements.length > 0 && (
-          <div className="max-w-4xl mx-auto mt-10 bg-turmeric/10 border border-turmeric/30 rounded-xl p-4 flex items-center space-x-3 text-left">
-            <span className="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-kumkum text-ivory rounded uppercase shrink-0">
-              NEWS
-            </span>
-            <div className="overflow-hidden text-xs text-textInk/80 truncate">
-              <strong>{announcements[0].title}:</strong> {announcements[0].content}
+        {/* Live News Ticker (ONLY for ANNOUNCEMENT category items) */}
+        {(() => {
+          const newsAnnouncement = announcements.find(
+            (a) => a.category?.toUpperCase() === 'ANNOUNCEMENT'
+          );
+          if (!newsAnnouncement) return null;
+          return (
+            <div className="max-w-4xl mx-auto mt-8 bg-turmeric/10 border border-turmeric/30 rounded-xl p-4 flex items-center space-x-3 text-left">
+              <span className="px-2.5 py-1 text-[10px] font-bold tracking-wider bg-kumkum text-ivory rounded uppercase shrink-0">
+                NEWS ANNOUNCEMENT
+              </span>
+              <div className="overflow-hidden text-xs text-textInk/80 truncate">
+                <strong>{newsAnnouncement.title}:</strong> {newsAnnouncement.content}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </section>
 
       <GopuramDivider />

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { ThermalReceiptModal } from '../components/ThermalReceiptModal';
-import { SankalpaModal } from '../components/SankalpaModal';
-import { Search, Printer, Scroll, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Printer, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PaymentMode, ReceiptKind } from '@temple/shared';
 
 export const ReceiptsPage: React.FC = () => {
@@ -16,7 +15,6 @@ export const ReceiptsPage: React.FC = () => {
 
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showThermalModal, setShowThermalModal] = useState(false);
-  const [showSankalpaModal, setShowSankalpaModal] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['receipts', page, search, startDate, endDate, kindFilter, paymentFilter],
@@ -227,13 +225,6 @@ export const ReceiptsPage: React.FC = () => {
         receipt={selectedReceipt}
         isOpen={showThermalModal}
         onClose={() => setShowThermalModal(false)}
-      />
-
-      {/* Reprints Sankalpa Modal */}
-      <SankalpaModal
-        receipt={selectedReceipt}
-        isOpen={showSankalpaModal}
-        onClose={() => setShowSankalpaModal(false)}
       />
     </div>
   );
