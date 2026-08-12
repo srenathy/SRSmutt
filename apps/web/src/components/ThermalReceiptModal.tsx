@@ -55,17 +55,29 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
     bankLocation: 'Rajajinagar, Bengaluru.'
   };
 
-  const formattedDate = new Date(receipt.createdAt).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit'
-  });
+  const safeNum = (val: any) => {
+    if (val === undefined || val === null) return 0;
+    const num = Number(val);
+    return isNaN(num) ? 0 : num;
+  };
 
-  const isUpi = receipt.paymentMode === 'UPI' || receipt.paymentMode === 'CARD';
-  const isCash = receipt.paymentMode === 'CASH';
+  const formattedDate = receipt?.createdAt && !isNaN(new Date(receipt.createdAt).getTime())
+    ? new Date(receipt.createdAt).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+      })
+    : new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+      });
+
+  const isUpi = receipt?.paymentMode === 'UPI' || receipt?.paymentMode === 'CARD';
+  const isCash = receipt?.paymentMode === 'CASH';
 
   // Clean devotee name removing any accidental (Devotee) string
-  const cleanDevoteeName = receipt.devotee?.name
+  const cleanDevoteeName = receipt?.devotee?.name
     ? receipt.devotee.name.replace(/\s*\([^)]*devotee[^)]*\)/gi, '').trim()
     : 'Devotee';
 
@@ -251,7 +263,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                           )}
                         </td>
                         <td className="p-2 text-right font-mono font-bold text-red-950 align-top">
-                          {Number(item.amount * item.quantity).toFixed(0)}
+                          {(safeNum(item.amount) * safeNum(item.quantity || 1)).toFixed(0)}
                         </td>
                       </tr>
                     ))}
@@ -270,7 +282,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                     <tr className="border-t-2 border-red-950 bg-red-50/40 font-bold text-sm text-red-950">
                       <td className="p-2 border-r border-red-950 text-right">TOTAL:</td>
                       <td className="p-2 text-right font-mono text-red-950">
-                        {Number(receipt.totalAmount).toFixed(0)} - 00
+                        {safeNum(receipt.totalAmount).toFixed(0)} - 00
                       </td>
                     </tr>
                   </tbody>
@@ -341,14 +353,14 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                     {receipt.items?.map((item: any, idx: number) => (
                       <div key={idx} className="flex justify-between py-1 border-b border-red-950/10">
                         <span className="font-bold">{item.description}</span>
-                        <span className="font-mono font-bold">₹{Number(item.amount * item.quantity).toFixed(2)}</span>
+                        <span className="font-mono font-bold">₹{(safeNum(item.amount) * safeNum(item.quantity || 1)).toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="pt-2 border-t-2 border-red-950 flex justify-between font-bold text-sm text-red-950">
                     <span>GRAND TOTAL ({receipt.paymentMode}):</span>
-                    <span className="font-mono">₹{Number(receipt.totalAmount).toFixed(2)}</span>
+                    <span className="font-mono">₹{safeNum(receipt.totalAmount).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -411,7 +423,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                       ) : null}
                     </span>
                     <span className="w-1/4 text-center font-bold">{item.quantity}</span>
-                    <span className="w-1/4 text-right font-mono font-bold">₹{Number(item.amount).toFixed(2)}</span>
+                    <span className="w-1/4 text-right font-mono font-bold">₹{safeNum(item.amount).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -419,7 +431,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
               <div className="py-3 text-right space-y-1">
                 <div className="flex justify-between font-bold text-sm">
                   <span>TOTAL AMOUNT:</span>
-                  <span>₹{Number(receipt.totalAmount).toFixed(2)}</span>
+                  <span>₹{safeNum(receipt.totalAmount).toFixed(2)}</span>
                 </div>
               </div>
 

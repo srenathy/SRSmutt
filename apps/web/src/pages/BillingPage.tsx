@@ -885,17 +885,21 @@ export const BillingPage: React.FC = () => {
               {createdReceipt.items && createdReceipt.items.length > 0 && (
                 <div className="space-y-1.5 border-b border-turmeric/10 pb-2">
                   <span className="text-textInk/60 font-medium block mb-1">Seva Items:</span>
-                  {createdReceipt.items.map((it: any, i: number) => (
-                    <div key={i} className="flex justify-between font-semibold text-[11px] text-textInk pl-2 border-l-2 border-turmeric/40">
-                      <span>{it.description} (x{it.quantity})</span>
-                      <span>₹{Number(it.amount * it.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
+                  {createdReceipt.items.map((it: any, i: number) => {
+                    const amt = Number(it.amount) || 0;
+                    const qty = Number(it.quantity) || 1;
+                    return (
+                      <div key={i} className="flex justify-between font-semibold text-[11px] text-textInk pl-2 border-l-2 border-turmeric/40">
+                        <span>{it.description} (x{qty})</span>
+                        <span>₹{(amt * qty).toFixed(2)}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <div className="flex justify-between pt-1 font-bold text-base text-kumkum font-mono">
                 <span>FINAL AMOUNT PAID:</span>
-                <span>₹{Number(createdReceipt.totalAmount || totalAmount).toFixed(2)}</span>
+                <span>₹{(Number(createdReceipt.totalAmount) || totalAmount || 0).toFixed(2)}</span>
               </div>
             </div>
           ) : (

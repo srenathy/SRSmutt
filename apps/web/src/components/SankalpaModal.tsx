@@ -73,7 +73,7 @@ export const SankalpaModal: React.FC<SankalpaModalProps> = ({
           <div className="text-center border-b-2 border-kumkum pb-4 mb-6">
             <h1 className="font-display text-2xl font-bold text-kumkum">{templeInfo.name}</h1>
             <p className="text-sm font-semibold text-turmeric-dark mt-1">SANKALPA RITUAL PRAYER SHEET</p>
-            <p className="text-xs text-textInk/60 mt-1">Receipt #: {receipt.receiptNumber} | Date: {new Date(receipt.createdAt).toLocaleDateString()}</p>
+            <p className="text-xs text-textInk/60 mt-1">Receipt #: {receipt.receiptNumber} | Date: {receipt?.createdAt && !isNaN(new Date(receipt.createdAt).getTime()) ? new Date(receipt.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN')}</p>
           </div>
 
           {/* Devotee Vedic Attributes Grid */}
