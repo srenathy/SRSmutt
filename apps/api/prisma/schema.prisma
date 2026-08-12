@@ -145,6 +145,7 @@ model Receipt {
   transactionRef  String?
   totalAmount     Decimal
   sankalpaNote    String?
+  sevaDate        DateTime?
   createdByUserId String
   createdByUser   User          @relation(fields: [createdByUserId], references: [id])
   createdAt       DateTime      @default(now())
@@ -168,6 +169,7 @@ model ReceiptItem {
   amount          Decimal
   quantity        Int            @default(1)
   devoteeCount    Int            @default(1)
+  sevaDate        DateTime?
 
   @@map("receipt_items")
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Printer, FileText, Receipt } from 'lucide-react';
+import { X, Printer, FileText, Receipt, Layout } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client.js';
 
@@ -16,7 +16,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const [viewMode, setViewMode] = useState<'official' | 'thermal'>('official');
+  const [viewMode, setViewMode] = useState<'official' | 'horizontal' | 'thermal'>('official');
 
   const { data: fetchedTemple } = useQuery({
     queryKey: ['temple-info-modal'],
@@ -64,12 +64,17 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
   const isUpi = receipt.paymentMode === 'UPI' || receipt.paymentMode === 'CARD';
   const isCash = receipt.paymentMode === 'CASH';
 
+  // Clean devotee name removing any accidental (Devotee) string
+  const cleanDevoteeName = receipt.devotee?.name
+    ? receipt.devotee.name.replace(/\s*\([^)]*devotee[^)]*\)/gi, '').trim()
+    : 'Devotee';
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-ink/70 backdrop-blur-xs flex justify-center items-start p-2 sm:p-6">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-turmeric/30 flex flex-col my-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-turmeric/30 flex flex-col my-4">
         {/* Top Control Bar (Hidden during print) */}
         <div className="no-print p-4 bg-ivory border-b border-ivory-dark flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setViewMode('official')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -79,7 +84,19 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              Official Matha Voucher (Attached Format)
+              Official Matha Voucher (Vertical)
+            </button>
+
+            <button
+              onClick={() => setViewMode('horizontal')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                viewMode === 'horizontal'
+                  ? 'bg-kumkum text-white shadow-sm'
+                  : 'bg-white text-textInk/70 border border-turmeric/30 hover:bg-ivory'
+              }`}
+            >
+              <Layout className="w-3.5 h-3.5" />
+              Horizontal Format
             </button>
 
             <button
@@ -115,7 +132,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
         {/* Printable Area */}
         <div className="p-4 sm:p-8 overflow-y-auto bg-amber-50/20 font-serif text-maroon">
           {viewMode === 'official' ? (
-            /* OFFICIAL MATHA HANDBILL RECEIPT TEMPLATE (EXACT MATCH TO ATTACHED PHOTO) */
+            /* OFFICIAL MATHA HANDBILL RECEIPT TEMPLATE (VERTICAL) */
             <div className="official-receipt-print border-2 border-red-900 p-4 bg-white rounded-md text-red-950 font-serif leading-tight shadow-sm max-w-lg mx-auto">
               {/* Header Phone & Invocations Bar */}
               <div className="flex justify-between items-start text-[10px] sm:text-[11px] font-bold border-b border-red-950/20 pb-2 text-red-950">
@@ -133,13 +150,16 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
               </div>
 
               {/* Main Title Heading */}
-              <div className="text-center my-2 space-y-1">
+              <div className="text-center my-2 space-y-0.5">
                 <h1 className="font-bold text-base sm:text-lg text-red-950 tracking-wide">
-                  {templeInfo.name || 'ಶ್ರೀ ಶ್ರೀ ಶ್ರೀ ಗುರು ರಾಘವೇಂದ್ರ ಸ್ವಾಮಿ ಮಠ'}
+                  Mulabagala Sri Sripadaraja Matha
                 </h1>
-                <h2 className="font-bold text-xs sm:text-sm text-red-950">
-                  {templeInfo.secondaryName || 'ಶ್ರೀ ಶ್ರೀಪಾದರಾಜ ಮಠ (ಮುಳಬಾಗಿಲು)'}
+                <h2 className="font-bold text-xs sm:text-sm text-red-900">
+                  (Rajajinagar Branch)
                 </h2>
+                <h3 className="font-bold text-xs text-red-950 mt-0.5">
+                  {templeInfo.name || 'ಶ್ರೀ ಶ್ರೀ ಶ್ರೀ ಗುರು ರಾಘವೇಂದ್ರ ಸ್ವಾಮಿ ಮಠ'}
+                </h3>
                 <p className="text-[10px] text-red-950/80 px-2 font-sans font-medium">
                   {templeInfo.address || 'ನಂ.542, 63ನೇ ಕ್ರಾಸ್, 5ನೇ ಬ್ಲಾಕ್, ರಾಜಾಜಿನಗರ, ಭಾಷ್ಯಂ ಸರ್ಕಲ್ ಹತ್ತಿರ, ಬೆಂಗಳೂರು-560010'}
                 </p>
@@ -169,7 +189,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                 <div className="flex items-baseline">
                   <span className="font-bold whitespace-nowrap">Smt / Sri :</span>
                   <span className="flex-1 border-b border-dotted border-red-950 px-2 font-bold text-red-900 text-sm">
-                    {receipt.devotee?.name || 'Devotee'}
+                    {cleanDevoteeName}
                   </span>
                 </div>
 
@@ -257,7 +277,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                 </table>
               </div>
 
-              {/* Bottom Bank Details & Signature Section */}
+              {/* Bottom Bank Details & Computer Generated Disclaimer Section */}
               <div className="grid grid-cols-2 gap-2 text-[10px] font-sans pt-2 border-t border-red-950/20">
                 {/* Left: Bank Details Box */}
                 <div className="border border-red-950 p-2 rounded-xs space-y-0.5 bg-red-50/20">
@@ -273,21 +293,78 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                   </div>
                 </div>
 
-                {/* Right: Signature Box */}
+                {/* Right: Computer Generated Disclaimer Box */}
                 <div className="flex flex-col justify-between text-right p-2 font-serif text-red-950">
                   <p className="text-[9px]">|| Sri Krishnarpanamastu ||</p>
-                  <div className="space-y-1 pt-6">
-                    <p className="font-bold text-[11px]">For Sri Raghavendra Swamy Math</p>
-                    <p className="text-[9px] italic text-red-900">Authorized Signature</p>
+                  <div className="space-y-1 pt-4">
+                    <p className="font-bold text-[10px]">For Sri Raghavendra Swamy Math</p>
+                    <p className="text-[8px] font-semibold text-red-900 leading-tight">
+                      * This is a computer system-generated receipt. No manual signature/authorization required.
+                    </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          ) : viewMode === 'horizontal' ? (
+            /* HORIZONTAL / LANDSCAPE RECEIPT FORMAT */
+            <div className="official-receipt-print border-2 border-red-900 p-5 bg-white rounded-md text-red-950 font-serif leading-tight shadow-sm max-w-2xl mx-auto space-y-4">
+              {/* Header */}
+              <div className="flex justify-between items-center border-b-2 border-red-950 pb-2">
+                <div>
+                  <h1 className="font-bold text-lg text-red-950">Mulabagala Sri Sripadaraja Matha</h1>
+                  <h2 className="font-bold text-xs text-red-900">(Rajajinagar Branch)</h2>
+                  <p className="text-[11px] font-sans text-red-950/80">{templeInfo.address}</p>
+                </div>
+                <div className="text-right">
+                  <div className="border-2 border-red-950 px-3 py-1 font-bold text-xs bg-red-50 inline-block mb-1">
+                    RECEIPT: {receipt.receiptNumber}
+                  </div>
+                  <p className="text-xs font-mono font-bold">Date: {formattedDate}</p>
+                </div>
+              </div>
+
+              {/* Two Column Grid */}
+              <div className="grid grid-cols-2 gap-4 text-xs font-sans">
+                {/* Devotee Info Column */}
+                <div className="space-y-1.5 p-3 bg-red-50/30 rounded border border-red-900/20">
+                  <p className="font-bold border-b border-red-900/30 pb-1 text-red-950 uppercase text-[10px]">Devotee Details</p>
+                  <p><span className="font-bold">Name:</span> {cleanDevoteeName}</p>
+                  <p><span className="font-bold">City/Address:</span> {receipt.devotee?.city || '-'}</p>
+                  <p><span className="font-bold">Phone:</span> {receipt.devotee?.phone || '-'}</p>
+                  <p><span className="font-bold">Gotra / Nakshatra:</span> {receipt.devotee?.gotra || '-'} / {receipt.devotee?.nakshatra || '-'}</p>
+                </div>
+
+                {/* Seva Items Column */}
+                <div className="p-3 bg-white rounded border border-red-900/40 flex flex-col justify-between">
+                  <div>
+                    <p className="font-bold border-b border-red-900/30 pb-1 text-red-950 uppercase text-[10px] mb-2">Seva Particulars</p>
+                    {receipt.items?.map((item: any, idx: number) => (
+                      <div key={idx} className="flex justify-between py-1 border-b border-red-950/10">
+                        <span className="font-bold">{item.description}</span>
+                        <span className="font-mono font-bold">₹{Number(item.amount * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2 border-t-2 border-red-950 flex justify-between font-bold text-sm text-red-950">
+                    <span>GRAND TOTAL ({receipt.paymentMode}):</span>
+                    <span className="font-mono">₹{Number(receipt.totalAmount).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Notice */}
+              <div className="border-t border-red-950/30 pt-2 flex justify-between items-center text-[9px] font-sans">
+                <p className="italic text-red-900">* This is a computer system-generated receipt. No manual signature/authorization required.</p>
+                <p className="font-bold">|| Sri Krishnarpanamastu ||</p>
               </div>
             </div>
           ) : (
             /* THERMAL 80MM SLIP TEMPLATE */
             <div className="p-4 overflow-y-auto font-mono text-xs text-black thermal-receipt-print max-w-xs mx-auto bg-white border border-gray-300 rounded-md">
               <div className="text-center pb-3 border-b border-dashed border-black/40 space-y-1">
-                <h1 className="font-bold text-sm uppercase tracking-wide">{templeInfo.name}</h1>
+                <h1 className="font-bold text-sm uppercase tracking-wide">Mulabagala Sri Sripadaraja Matha</h1>
+                <p className="font-bold text-xs">(Rajajinagar Branch)</p>
                 <p className="text-[10px]">{templeInfo.address}</p>
               </div>
 
@@ -310,7 +387,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                 <div className="py-3 border-b border-dashed border-black/40 space-y-1">
                   <div className="flex justify-between">
                     <span className="font-bold">Devotee:</span>
-                    <span>{receipt.devotee.name}</span>
+                    <span>{cleanDevoteeName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Gotra:</span>
@@ -348,6 +425,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
 
               <div className="pt-4 text-center text-[10px] space-y-1">
                 <p className="font-bold">|| Sri Krishnarpanamastu ||</p>
+                <p className="text-[8px] text-gray-600 italic">This is a computer-generated receipt. No signature required.</p>
                 <p className="text-[8px] text-gray-500">Issued by: {receipt.createdByUser?.fullName || 'Cashier'}</p>
               </div>
             </div>

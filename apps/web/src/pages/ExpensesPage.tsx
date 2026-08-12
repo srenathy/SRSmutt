@@ -115,7 +115,8 @@ export const ExpensesPage: React.FC = () => {
       amount: '',
       payee: '',
       paymentMode: 'CASH',
-      description: ''
+      description: '',
+      date: new Date().toISOString().split('T')[0]
     });
     setAttachment(null);
     setModalOpen(true);
@@ -127,7 +128,8 @@ export const ExpensesPage: React.FC = () => {
       category: 'Main Temple Kanike Hundi Box Opening',
       amount: '',
       paymentMode: 'CASH',
-      sankalpaNote: ''
+      sankalpaNote: '',
+      date: new Date().toISOString().split('T')[0]
     });
     setAttachment(null);
     setIncomeModalOpen(true);
@@ -206,7 +208,8 @@ export const ExpensesPage: React.FC = () => {
       const res = await apiClient.post('/expenses', {
         ...formData,
         amount: Number(formData.amount),
-        attachment: attachment || null
+        attachment: attachment || null,
+        date: formData.date || new Date().toISOString().split('T')[0]
       });
       alert(
         res.data.data.status === 'PENDING'
@@ -238,6 +241,7 @@ export const ExpensesPage: React.FC = () => {
       await apiClient.post('/receipts', {
         kind: 'HUNDI_COLLECTION',
         paymentMode: incomeFormData.paymentMode,
+        createdAt: incomeFormData.date || new Date().toISOString().split('T')[0],
         items: [
           {
             description: `[${incomeFormData.category}] ${incomeFormData.title}`,
@@ -896,7 +900,18 @@ export const ExpensesPage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="font-bold text-textInk block mb-1">Income Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={incomeFormData.date || new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setIncomeFormData({ ...incomeFormData, date: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-emerald-700"
+                  />
+                </div>
+
                 <div>
                   <label className="font-bold text-textInk block mb-1">Amount (₹) *</label>
                   <input
@@ -1060,15 +1075,28 @@ export const ExpensesPage: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="font-bold text-textInk block mb-1">Payee / Vendor Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Local Vendor Name"
-                  value={formData.payee}
-                  onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-textInk block mb-1">Expense Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.date || new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-textInk block mb-1">Payee / Vendor Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Local Vendor Name"
+                    value={formData.payee}
+                    onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-white font-medium focus:outline-none focus:border-kumkum"
+                  />
+                </div>
               </div>
 
               {/* ATTACHMENT FIELD (OPTIONAL) */}

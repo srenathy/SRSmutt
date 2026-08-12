@@ -169,6 +169,26 @@ export const SankalpaPage: React.FC = () => {
         </div>
       )}
 
+      {/* Shashwata Seva Annual Reminders & Scheduled Performance Notification Banner */}
+      {filteredList.some((item: any) => item.shashwataSevaId || item.shashwataSeva) && (
+        <div className="no-print p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 shadow-xs flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0 font-bold text-lg">
+              🔔
+            </div>
+            <div>
+              <p className="font-bold text-xs">Annual Shashwata Seva Reminders & Scheduled Sankalpa List Active!</p>
+              <p className="text-[11px] text-amber-800/80 mt-0.5">
+                Automatically recurring annual Shashwata Sevas matching this date ({new Date(dateFilter).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}) are highlighted below and included for priest sankalpa recitation.
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 bg-amber-200/60 rounded-lg text-amber-950 font-bold text-[11px] shrink-0">
+            {filteredList.filter((item: any) => item.shashwataSevaId || item.shashwataSeva).length} Annual Recurrences
+          </span>
+        </div>
+      )}
+
       {/* Printable Area - Header (Only Visible on Print) */}
       <div className="hidden print:block text-center border-b-2 border-black pb-4 mb-6 space-y-1">
         <h1 className="font-serif text-xl font-bold uppercase tracking-wider">
@@ -226,10 +246,23 @@ export const SankalpaPage: React.FC = () => {
                       <td className="p-4 print:p-2 text-textInk/90 print:text-black">{devotee.nakshatra || '-'}</td>
                       <td className="p-4 print:p-2 text-textInk/90 print:text-black">{devotee.rashi || '-'}</td>
                       <td className="p-4 print:p-2 font-bold text-kumkum print:text-black">
-                        {item.seva?.name || item.description || 'Seva'}
-                        <span className="text-[10px] font-normal text-textInk/60 ml-1 print:text-black">
-                          (Qty: {item.quantity}{item.devoteeCount ? ` | Devotees: ${item.devoteeCount}` : ''})
-                        </span>
+                        <div className="flex flex-col">
+                          <span>{item.seva?.name || item.shashwataSeva?.name || item.description || 'Seva'}</span>
+                          <div className="flex items-center gap-1 mt-0.5 no-print">
+                            {item.shashwataSevaId || item.shashwataSeva ? (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9px] font-bold">
+                                ⏳ Annual Shashwata Recurrence
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 text-[9px] font-bold">
+                                🌸 Scheduled Performance
+                              </span>
+                            )}
+                            <span className="text-[10px] font-normal text-textInk/60">
+                              (Qty: {item.quantity}{item.devoteeCount ? ` | Devotees: ${item.devoteeCount}` : ''})
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="p-4 print:p-2 text-textInk/70 italic print:text-black">
                         {item.receipt?.sankalpaNote || '-'}

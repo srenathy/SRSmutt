@@ -17,6 +17,8 @@ export const baseReceiptSchema = z.object({
   paymentMode: z.nativeEnum(PaymentMode),
   transactionRef: z.string().optional().or(z.literal('')),
   sankalpaNote: z.string().optional().or(z.literal('')),
+  createdAt: z.string().optional(),
+  sevaDate: z.string().optional(),
   items: z.array(receiptItemInputSchema).min(1, 'At least one item is required')
 });
 

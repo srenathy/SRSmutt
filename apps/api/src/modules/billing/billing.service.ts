@@ -53,6 +53,8 @@ export class BillingService implements IBillingService {
       paymentMode: input.paymentMode as any,
       transactionRef: input.transactionRef,
       sankalpaNote: input.sankalpaNote,
+      createdAt: (input as any).createdAt,
+      sevaDate: (input as any).sevaDate,
       createdByUserId: userId,
       prepared
     });

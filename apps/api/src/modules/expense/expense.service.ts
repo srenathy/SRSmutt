@@ -53,6 +53,8 @@ export class ExpenseService {
         const requiresApproval = !isUserAdmin && input.amount > userLimit;
         const status = requiresApproval ? 'PENDING' : 'APPROVED';
 
+        const expenseDate = (input as any).date ? new Date((input as any).date) : new Date();
+
         const created = await this.repo.create({
           voucherNumber,
           category: input.category,
@@ -65,7 +67,8 @@ export class ExpenseService {
           status,
           createdByUserId: userId,
           approvedByUserId: requiresApproval ? null : userId,
-          approvedAt: requiresApproval ? null : new Date()
+          approvedAt: requiresApproval ? null : new Date(),
+          createdAt: expenseDate
         });
 
         await this.auditLogger.log(userId, AuditAction.CREATE, 'Expense', created.id, undefined, created);

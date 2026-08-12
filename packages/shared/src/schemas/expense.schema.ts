@@ -7,8 +7,8 @@ export const expenseSchema = z.object({
   payee: z.string().optional().or(z.literal('')),
   paymentMode: z.string().default('CASH'),
   description: z.string().optional().or(z.literal('')),
-  attachment: z.string().optional().nullable().or(z.literal(''))
+  attachment: z.string().optional().nullable().or(z.literal('')),
+  date: z.string().optional()
 });
 
 export type ExpenseInput = z.infer<typeof expenseSchema>;
-

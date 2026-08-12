@@ -30,6 +30,8 @@ export const BillingPage: React.FC = () => {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(PaymentMode.CASH);
   const [transactionRef, setTransactionRef] = useState('');
   const [sankalpaNote, setSankalpaNote] = useState('');
+  const [receiptDate, setReceiptDate] = useState(new Date().toISOString().split('T')[0]);
+  const [sevaDate, setSevaDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Created receipt result for printing
   const [createdReceipt, setCreatedReceipt] = useState<any>(null);
@@ -48,6 +50,8 @@ export const BillingPage: React.FC = () => {
     setSankalpaNote('');
     setTransactionRef('');
     setPaymentMode(PaymentMode.CASH);
+    setReceiptDate(new Date().toISOString().split('T')[0]);
+    setSevaDate(new Date().toISOString().split('T')[0]);
     setCurrentStep(0);
   };
 
@@ -199,6 +203,8 @@ export const BillingPage: React.FC = () => {
       paymentMode,
       transactionRef: paymentMode !== PaymentMode.CASH ? transactionRef.trim() : undefined,
       sankalpaNote,
+      createdAt: receiptDate,
+      sevaDate,
       items
     };
 
@@ -707,6 +713,31 @@ export const BillingPage: React.FC = () => {
       {currentStep === 3 && (
         <div className="bg-white p-8 rounded-2xl border border-turmeric/30 shadow-sm space-y-6">
           <h3 className="font-display text-lg font-bold text-kumkum">Payment Mode & Final Confirmation</h3>
+
+          {/* Billing & Seva Execution Dates */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-ivory/50 rounded-2xl border border-turmeric/30">
+            <div>
+              <label className="text-xs font-bold text-textInk/80 block mb-1">Receipt Billing Date *</label>
+              <input
+                type="date"
+                value={receiptDate}
+                onChange={(e) => setReceiptDate(e.target.value)}
+                className="w-full px-3.5 py-2 bg-white border border-turmeric/40 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-kumkum/20 text-textInk"
+              />
+              <p className="text-[10px] text-textInk/50 mt-0.5">Allows backdating receipts to previous dates.</p>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-kumkum block mb-1">Seva Performance Date (When Seva to be Done) *</label>
+              <input
+                type="date"
+                value={sevaDate}
+                onChange={(e) => setSevaDate(e.target.value)}
+                className="w-full px-3.5 py-2 bg-white border border-kumkum/40 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-kumkum/20 text-kumkum"
+              />
+              <p className="text-[10px] text-kumkum/70 font-semibold mt-0.5">Seva will automatically be listed on the Sankalpa List for this date.</p>
+            </div>
+          </div>
 
           {/* Single-Select Radio Payment Mode */}
           <div>

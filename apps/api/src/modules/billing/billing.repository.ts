@@ -13,6 +13,8 @@ export interface IBillingRepository {
     paymentMode: PaymentMode;
     transactionRef?: string;
     sankalpaNote?: string;
+    createdAt?: string;
+    sevaDate?: string;
     createdByUserId: string;
     prepared: PreparedReceiptData;
   }): Promise<any>;
@@ -106,9 +108,14 @@ export class BillingRepository implements IBillingRepository {
     paymentMode: PaymentMode;
     transactionRef?: string;
     sankalpaNote?: string;
+    createdAt?: string;
+    sevaDate?: string;
     createdByUserId: string;
     prepared: PreparedReceiptData;
   }): Promise<any> {
+    const receiptDate = data.createdAt ? new Date(data.createdAt) : new Date();
+    const performanceDate = data.sevaDate ? new Date(data.sevaDate) : receiptDate;
+
     return this.prisma.$transaction(async (tx) => {
       const receipt = await tx.receipt.create({
         data: {
@@ -119,6 +126,8 @@ export class BillingRepository implements IBillingRepository {
           transactionRef: data.transactionRef,
           totalAmount: data.prepared.totalAmount,
           sankalpaNote: data.sankalpaNote,
+          sevaDate: performanceDate,
+          createdAt: receiptDate,
           createdByUserId: data.createdByUserId,
           items: {
             create: data.prepared.items.map((item) => ({
@@ -127,7 +136,8 @@ export class BillingRepository implements IBillingRepository {
               description: item.description,
               amount: item.amount,
               quantity: item.quantity,
-              devoteeCount: item.devoteeCount || 1
+              devoteeCount: item.devoteeCount || 1,
+              sevaDate: performanceDate
             }))
           }
         },
@@ -150,47 +160,64 @@ export class BillingRepository implements IBillingRepository {
   }
 
   async findSankalpaList(dateStr: string, sevaId?: string): Promise<any[]> {
+    const targetDate = new Date(dateStr);
     const start = new Date(dateStr);
     start.setHours(0, 0, 0, 0);
 
     const end = new Date(dateStr);
     end.setHours(23, 59, 59, 999);
 
-    const where: any = {
-      receipt: {
-        cancelledAt: null,
-        createdAt: {
-          gte: start,
-          lte: end
-        }
-      },
-      OR: [
-        { sevaId: { not: null } },
-        { shashwataSevaId: { not: null } }
-      ]
-    };
+    const targetMonth = targetDate.getMonth() + 1;
+    const targetDay = targetDate.getDate();
 
-    if (sevaId) {
-      where.OR = undefined;
-      where.sevaId = sevaId;
-    }
-
-    return this.prisma.receiptItem.findMany({
-      where,
-      include: {
-        receipt: {
-          include: {
-            devotee: true
+    // 1. Regular Sevas matching sevaDate or createdAt on dateStr
+    const regularItems = await this.prisma.receiptItem.findMany({
+      where: {
+        receipt: { cancelledAt: null },
+        OR: [
+          { sevaDate: { gte: start, lte: end } },
+          {
+            sevaDate: null,
+            receipt: { createdAt: { gte: start, lte: end } }
           }
-        },
+        ],
+        ...(sevaId ? { sevaId } : {})
+      },
+      include: {
+        receipt: { include: { devotee: true } },
         seva: true,
         shashwataSeva: true
       },
-      orderBy: {
-        receipt: {
-          createdAt: 'asc'
-        }
+      orderBy: { receipt: { createdAt: 'asc' } }
+    });
+
+    // 2. Annual Shashwata Seva recurrence (same month & day)
+    const shashwataItems = await this.prisma.receiptItem.findMany({
+      where: {
+        receipt: { cancelledAt: null },
+        shashwataSevaId: { not: null },
+        ...(sevaId ? { sevaId } : {})
+      },
+      include: {
+        receipt: { include: { devotee: true } },
+        seva: true,
+        shashwataSeva: true
       }
     });
+
+    const annualMatches = shashwataItems.filter((item) => {
+      const dateVal = item.sevaDate || item.receipt.createdAt;
+      if (!dateVal) return false;
+      const d = new Date(dateVal);
+      return d.getMonth() + 1 === targetMonth && d.getDate() === targetDay;
+    });
+
+    // Combine and deduplicate by item id
+    const map = new Map<string, any>();
+    for (const item of [...regularItems, ...annualMatches]) {
+      map.set(item.id, item);
+    }
+
+    return Array.from(map.values());
   }
 }
