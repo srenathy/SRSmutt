@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
 import {
@@ -56,6 +56,41 @@ export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+        return;
+      }
+
+      if (mainRef.current) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          mainRef.current.scrollBy({ top: 90, behavior: 'smooth' });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          mainRef.current.scrollBy({ top: -90, behavior: 'smooth' });
+        } else if (e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) {
+          e.preventDefault();
+          mainRef.current.scrollBy({ top: 400, behavior: 'smooth' });
+        } else if (e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) {
+          e.preventDefault();
+          mainRef.current.scrollBy({ top: -400, behavior: 'smooth' });
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          mainRef.current.scrollTo({ top: mainRef.current.scrollHeight, behavior: 'smooth' });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -232,7 +267,7 @@ export const DashboardLayout: React.FC = () => {
         </div>
 
         {/* Dynamic Route Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-ivory-light/50">
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-8 bg-ivory-light/50">
           <Outlet />
         </main>
       </div>
