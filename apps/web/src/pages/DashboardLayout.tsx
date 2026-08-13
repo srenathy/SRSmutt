@@ -129,27 +129,38 @@ export const DashboardLayout: React.FC = () => {
 
   const renderNavContent = () => (
     <div className="flex flex-col h-full">
-      {/* Brand Header */}
-      <div className="p-5 md:p-6 border-b border-turmeric/20 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-turmeric to-turmeric-dark flex items-center justify-center shadow-md shrink-0">
-            <ShieldCheck className="w-5 h-5 text-ink" />
+      {/* Brand Header with Matha Identity */}
+      <div className="p-4 md:p-5 border-b border-turmeric/20 flex flex-col gap-2 text-left">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-turmeric to-turmeric-dark flex items-center justify-center shadow-md shrink-0">
+              <ShieldCheck className="w-4 h-4 text-ink" />
+            </div>
+            <div>
+              <h1 className="font-display font-extrabold text-[11px] tracking-wider uppercase text-ivory">
+                SRSmutt Billing
+              </h1>
+              <p className="text-[9px] font-semibold text-turmeric uppercase tracking-widest">
+                Secure Core v2.0
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-display font-extrabold text-xs tracking-wider uppercase text-ivory">
-              SRSmutt Billing
-            </h1>
-            <p className="text-[9px] font-semibold text-turmeric uppercase tracking-widest mt-0.5">
-              Secure Core v2.0
-            </p>
-          </div>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="md:hidden p-1 text-ivory/60 hover:text-ivory"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={() => setMobileMenuOpen(false)}
-          className="md:hidden p-1 text-ivory/60 hover:text-ivory"
-        >
-          <X className="w-5 h-5" />
-        </button>
+
+        <div className="pt-2 border-t border-turmeric/10 text-left space-y-0.5">
+          <p className="text-[11px] font-medium text-ivory leading-snug">
+            Shri Raghavendra Swamy Brindavana Sannidhana
+          </p>
+          <p className="text-[10px] text-turmeric/80 leading-snug">
+            Mulabagala Sri Sripadaraja Matha, Rajajinagar
+          </p>
+        </div>
       </div>
 
       {/* Navigation Menu */}
@@ -240,34 +251,22 @@ export const DashboardLayout: React.FC = () => {
         {renderNavContent()}
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content Area (Maximizes entire right side space!) */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Global Identity Bar (App Shell Level) */}
-        <div className="px-4 pt-4 md:px-8 md:pt-6 no-print">
-          <div className="bg-[#fdfaf3] border border-[#e6dcc4] rounded-[10px] px-[20px] py-[10px] flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-2 min-w-0">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-1.5 rounded-lg bg-white border border-[#e6dcc4] text-[#4a1010] mr-1 hover:bg-[#fbf6ec] transition-colors"
-                aria-label="Toggle navigation menu"
-              >
-                <Menu className="w-4 h-4" />
-              </button>
-              <div className="flex flex-wrap items-baseline gap-x-1.5 truncate text-left">
-                <span className="text-[13px] font-medium text-[#4a1010] leading-none truncate">
-                  Shri Raghavendra Swamy Brindavana Sannidhana
-                </span>
-                <span className="text-[#a6957a] text-[13px] font-medium leading-none">·</span>
-                <span className="text-[12px] text-[#8a7a5c] leading-none truncate">
-                  Mulabagala Sri Sripadaraja Matha, Rajajinagar
-                </span>
-              </div>
-            </div>
-          </div>
+        {/* Mobile Toggle Bar */}
+        <div className="md:hidden flex items-center justify-between p-3 bg-white border-b border-turmeric/20 no-print">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-1.5 rounded-lg bg-ivory border border-turmeric/30 text-kumkum"
+            aria-label="Toggle navigation menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+          <span className="text-xs font-bold text-kumkum">SRSmutt Billing</span>
         </div>
 
         {/* Dynamic Route Content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-8 bg-ivory-light/50">
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 md:p-6 bg-ivory-light/50">
           <Outlet />
         </main>
       </div>
