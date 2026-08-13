@@ -154,6 +154,12 @@ export const DevoteeDashboardPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-right space-x-2">
                         <button
+                          onClick={() => window.open(`/receipt/${r.id}`, '_blank')}
+                          className="px-2.5 py-1 text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 rounded hover:bg-emerald-200 transition"
+                        >
+                          📄 View PDF E-Receipt
+                        </button>
+                        <button
                           onClick={() => setSelectedThermalReceipt(r)}
                           className="px-2.5 py-1 text-[11px] font-semibold bg-kumkum/10 text-kumkum border border-kumkum/30 rounded hover:bg-kumkum/20 transition"
                         >
