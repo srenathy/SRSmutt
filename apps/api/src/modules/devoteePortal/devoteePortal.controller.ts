@@ -112,15 +112,43 @@ export class DevoteePortalController {
   async getMyReceipts(request: FastifyRequest, reply: FastifyReply) {
     const userId = request.user?.id;
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: { devotee: true }
     });
 
-    if (!user || !user.devoteeId) {
+    if (!user) {
       throw new NotFoundError('Devotee profile not found');
     }
 
+    const devoteeIds: string[] = [];
+    if (user.devoteeId) {
+      devoteeIds.push(user.devoteeId);
+    }
+
+    const rawPhone = user.devotee?.phone || (user.username && /^\d{10}$/.test(user.username) ? user.username : '');
+    const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10);
+
+    if (cleanPhone) {
+      const matchingDevotees = await this.prisma.devotee.findMany({
+        where: {
+          phone: { contains: cleanPhone }
+        },
+        select: { id: true }
+      });
+      matchingDevotees.forEach((d) => {
+        if (!devoteeIds.includes(d.id)) {
+          devoteeIds.push(d.id);
+        }
+      });
+    }
+
     const receipts = await this.prisma.receipt.findMany({
-      where: { devoteeId: user.devoteeId },
+      where: {
+        OR: [
+          ...(devoteeIds.length > 0 ? [{ devoteeId: { in: devoteeIds } }] : []),
+          ...(cleanPhone ? [{ devotee: { phone: { contains: cleanPhone } } }] : [])
+        ]
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         items: {

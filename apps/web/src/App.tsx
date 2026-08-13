@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { DevoteeRegisterPage } from './pages/DevoteeRegisterPage.js';
 import { DevoteeDashboardPage } from './pages/DevoteeDashboardPage.js';
+import { PublicReceiptPage } from './pages/PublicReceiptPage.js';
 
 import { DashboardLayout } from './pages/DashboardLayout.js';
 import { OverviewPage } from './pages/OverviewPage.js';
@@ -28,6 +29,7 @@ export const App: React.FC = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/devotee-register" element={<DevoteeRegisterPage />} />
+        <Route path="/receipt/:id" element={<PublicReceiptPage />} />
 
         {/* Devotee Portal Protected Route */}
         <Route

@@ -336,6 +336,18 @@ export const UsersPage: React.FC = () => {
                 /* DEVOTEE PROFILE FORM (Fields matching Quick Register flow) */
                 <div className="space-y-3">
                   <div>
+                    <label className="block text-xs font-semibold text-textInk mb-1">Username / Login ID *</label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      required
+                      placeholder="e.g. 9888877777"
+                      className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 font-mono font-medium"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-xs font-semibold text-textInk mb-1">Devotee Full Name *</label>
                     <input
                       type="text"

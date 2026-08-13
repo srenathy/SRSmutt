@@ -48,7 +48,9 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
     setSharingPdf(true);
     try {
       const itemsList = receipt.items?.map((it: any) => `${it.description} (x${it.quantity})`).join(', ') || 'Seva';
-      const text = `Jay Sri Krishna! 🙏\n\n*Mulabagala Sri Sripadaraja Matha (Rajajinagar Branch)*\n\n*Official Receipt No:* #${receipt.receiptNumber}\n*Devotee:* ${cleanDevoteeName}\n*Sevas:* ${itemsList}\n*Total Paid:* ₹${safeNum(receipt.totalAmount).toFixed(2)}\n*Payment Mode:* ${receipt.paymentMode}\n\nThank you for your devotion and divine contribution!`;
+      const receiptLink = `${window.location.origin}/receipt/${receipt.id}`;
+      
+      const text = `Jay Sri Krishna! 🙏\n\n*Mulabagala Sri Sripadaraja Matha (Rajajinagar Branch)*\n\n*Official Receipt No:* #${receipt.receiptNumber}\n*Devotee:* ${cleanDevoteeName}\n*Sevas:* ${itemsList}\n*Total Paid:* ₹${safeNum(receipt.totalAmount).toFixed(2)}\n*Payment Mode:* ${receipt.paymentMode}\n\n📄 *View & Download Official E-Receipt PDF:*\n${receiptLink}\n\nThank you for your devotion and divine contribution!`;
 
       await shareOrDownloadReceiptPdf({
         elementId: 'receipt-pdf-printable-container',
