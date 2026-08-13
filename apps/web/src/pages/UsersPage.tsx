@@ -131,10 +131,19 @@ export const UsersPage: React.FC = () => {
   };
 
   const filteredUsers = users.filter((u) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return roleFilter === 'ALL' || (roleFilter === 'DEVOTEE' && u.role === 'DEVOTEE') || (roleFilter === 'STAFF_ADMIN' && u.role !== 'DEVOTEE');
+
     const matchesSearch =
-      u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (u.devotee?.phone && u.devotee.phone.toLowerCase().includes(searchQuery.toLowerCase()));
+      (u.username && u.username.toLowerCase().includes(q)) ||
+      (u.fullName && u.fullName.toLowerCase().includes(q)) ||
+      (u.devotee?.name && u.devotee.name.toLowerCase().includes(q)) ||
+      (u.devotee?.phone && u.devotee.phone.toLowerCase().includes(q)) ||
+      (u.devotee?.email && u.devotee.email.toLowerCase().includes(q)) ||
+      (u.devotee?.gotra && u.devotee.gotra.toLowerCase().includes(q)) ||
+      (u.devotee?.nakshatra && u.devotee.nakshatra.toLowerCase().includes(q)) ||
+      (u.devotee?.rashi && u.devotee.rashi.toLowerCase().includes(q)) ||
+      (u.devotee?.city && u.devotee.city.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
 

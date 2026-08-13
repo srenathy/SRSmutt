@@ -21,13 +21,13 @@ export class DevoteeRepository extends BaseRepository<Devotee> implements IDevot
     return this.prisma.devotee.findMany({
       where: {
         OR: [
-          { name: { contains: query } },
-          { phone: { contains: query } },
-          { gotra: { contains: query } },
-          { nakshatra: { contains: query } },
-          { rashi: { contains: query } },
-          { city: { contains: query } }
-        ]
+          { name: { contains: query, mode: 'insensitive' } },
+          { phone: { contains: query, mode: 'insensitive' } },
+          { gotra: { contains: query, mode: 'insensitive' } },
+          { nakshatra: { contains: query, mode: 'insensitive' } },
+          { rashi: { contains: query, mode: 'insensitive' } },
+          { city: { contains: query, mode: 'insensitive' } }
+        ] as any
       },
       take: 20,
       orderBy: { name: 'asc' }

@@ -57,10 +57,10 @@ export class BillingRepository implements IBillingRepository {
     }
     if (params.search) {
       where.OR = [
-        { receiptNumber: { contains: params.search } },
-        { devotee: { name: { contains: params.search } } },
-        { devotee: { phone: { contains: params.search } } }
-      ];
+        { receiptNumber: { contains: params.search, mode: 'insensitive' } },
+        { devotee: { name: { contains: params.search, mode: 'insensitive' } } },
+        { devotee: { phone: { contains: params.search, mode: 'insensitive' } } }
+      ] as any;
     }
 
     const [total, data] = await Promise.all([
