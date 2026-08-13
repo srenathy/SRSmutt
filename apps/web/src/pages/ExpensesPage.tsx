@@ -85,9 +85,24 @@ export const ExpensesPage: React.FC = () => {
 
   const fetchUnbilledIncomes = async () => {
     try {
-      const res = await apiClient.get('/receipts?limit=100');
-      const receipts = res.data.data?.data || res.data.data || [];
-      setUnbilledIncomes(receipts.filter((r: any) => r.kind === 'HUNDI_COLLECTION'));
+      const [hundiRes, kindRes] = await Promise.all([
+        apiClient.get('/receipts?limit=200&kind=HUNDI_COLLECTION'),
+        apiClient.get('/receipts?limit=200&kind=KIND_DONATION')
+      ]);
+      const hundiList = Array.isArray(hundiRes.data.data)
+        ? hundiRes.data.data
+        : Array.isArray(hundiRes.data)
+        ? hundiRes.data
+        : [];
+      const kindList = Array.isArray(kindRes.data.data)
+        ? kindRes.data.data
+        : Array.isArray(kindRes.data)
+        ? kindRes.data
+        : [];
+      const combined = [...hundiList, ...kindList].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setUnbilledIncomes(combined);
     } catch (err) {
       console.error('Failed to fetch unbilled incomes:', err);
     }
@@ -239,8 +254,9 @@ export const ExpensesPage: React.FC = () => {
 
     setIncomeSubmitting(true);
     try {
+      const kind = incomeFormData.category.includes('In-Kind') || incomeFormData.category.includes('Dravya') ? 'KIND_DONATION' : 'HUNDI_COLLECTION';
       await apiClient.post('/receipts', {
-        kind: 'HUNDI_COLLECTION',
+        kind,
         paymentMode: incomeFormData.paymentMode,
         createdAt: incomeFormData.date || new Date().toISOString().split('T')[0],
         items: [
@@ -256,6 +272,14 @@ export const ExpensesPage: React.FC = () => {
 
       alert('Direct Temple Income logged successfully! Added to income and financial reports.');
       setIncomeModalOpen(false);
+      setIncomeFormData({
+        title: '',
+        category: 'Main Temple Kanike Hundi Box Opening',
+        amount: '',
+        paymentMode: 'CASH',
+        sankalpaNote: '',
+        date: new Date().toISOString().split('T')[0]
+      });
       fetchUnbilledIncomes();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to log direct income');
