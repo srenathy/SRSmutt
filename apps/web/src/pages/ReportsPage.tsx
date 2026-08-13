@@ -53,6 +53,24 @@ export const ReportsPage: React.FC = () => {
   const [filterKind, setFilterKind] = useState<string>('ALL');
   const [filterPaymentMode, setFilterPaymentMode] = useState<string>('ALL');
 
+  const [dateAutoAdjusted, setDateAutoAdjusted] = useState(false);
+
+  const latestReceiptQuery = useQuery({
+    queryKey: ['latest-receipt-date'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get('/receipts?limit=1');
+        const list = res.data.data || res.data || [];
+        if (Array.isArray(list) && list.length > 0 && list[0].createdAt) {
+          return new Date(list[0].createdAt).toISOString().split('T')[0];
+        }
+      } catch (e) {
+        // ignore
+      }
+      return null;
+    }
+  });
+
   // Consolidated Export Dropdown state
   const [exportOpen, setExportOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -76,6 +94,15 @@ export const ReportsPage: React.FC = () => {
     },
     enabled: reportType === 'daily'
   });
+
+  useEffect(() => {
+    if (!dateAutoAdjusted && latestReceiptQuery.data && dailyQuery.isSuccess && dailyQuery.data?.totalReceipts === 0) {
+      if (latestReceiptQuery.data !== selectedDate) {
+        setSelectedDate(latestReceiptQuery.data);
+        setDateAutoAdjusted(true);
+      }
+    }
+  }, [latestReceiptQuery.data, dailyQuery.isSuccess, dailyQuery.data?.totalReceipts, selectedDate, dateAutoAdjusted]);
 
   const monthlyQuery = useQuery({
     queryKey: ['report-monthly', selectedYear, selectedMonth, filterKind, filterPaymentMode],

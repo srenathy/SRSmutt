@@ -12,8 +12,11 @@ export class ReportsRepository implements IReportsRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async getDailyReport(dateStr: string, kind?: string, paymentMode?: string) {
-    const startDate = new Date(`${dateStr}T00:00:00.000Z`);
-    const endDate = new Date(`${dateStr}T23:59:59.999Z`);
+    const utcStart = new Date(`${dateStr}T00:00:00.000Z`);
+    const utcEnd = new Date(`${dateStr}T23:59:59.999Z`);
+    // Adjust boundaries by 6h buffer to encompass IST (UTC+5:30) and local server timestamps
+    const startDate = new Date(utcStart.getTime() - 6 * 3600 * 1000);
+    const endDate = new Date(utcEnd.getTime() + 6 * 3600 * 1000);
 
     const whereClause: any = {
       createdAt: { gte: startDate, lte: endDate },

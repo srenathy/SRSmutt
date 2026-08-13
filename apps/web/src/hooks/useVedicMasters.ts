@@ -26,7 +26,7 @@ export function useVedicMasters() {
     queryKey: ['master-gotras'],
     queryFn: async () => {
       try {
-        const res = await apiClient.get('/gotras');
+        const res = await apiClient.get('/vedic/gotras');
         const list = (res.data.data || []).map((g: any) => g.name);
         return list.length > 0 ? list : DEFAULT_GOTRAS;
       } catch (e) {
@@ -40,7 +40,7 @@ export function useVedicMasters() {
     queryKey: ['master-nakshatras'],
     queryFn: async () => {
       try {
-        const res = await apiClient.get('/nakshatras');
+        const res = await apiClient.get('/vedic/nakshatras');
         const list = (res.data.data || []).map((n: any) => n.name);
         return list.length > 0 ? list : DEFAULT_NAKSHATRAS;
       } catch (e) {
@@ -54,7 +54,7 @@ export function useVedicMasters() {
     queryKey: ['master-rashis'],
     queryFn: async () => {
       try {
-        const res = await apiClient.get('/rashis');
+        const res = await apiClient.get('/vedic/rashis');
         const list = (res.data.data || []).map((r: any) => r.name);
         return list.length > 0 ? list : DEFAULT_RASHIS;
       } catch (e) {

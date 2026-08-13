@@ -86,6 +86,10 @@ export async function buildApp() {
     api.register(async (announcements) => registerAnnouncementRoutes(announcements, container.announcementController), { prefix: '/announcements' });
     api.register(async (devoteePortal) => registerDevoteePortalRoutes(devoteePortal, container.devoteePortalController), { prefix: '/devotee-portal' });
     api.register(async (vedic) => registerVedicRoutes(vedic, container.vedicController), { prefix: '/vedic' });
+    // Direct route aliases for gotras, nakshatras, rashis
+    api.get('/gotras', (req, reply) => container.vedicController.getGotras(req, reply));
+    api.get('/nakshatras', (req, reply) => container.vedicController.getNakshatras(req, reply));
+    api.get('/rashis', (req, reply) => container.vedicController.getRashis(req, reply));
     api.register(async (expenses) => registerExpenseRoutes(expenses, container.expenseController), { prefix: '/expenses' });
     api.register(async (users) => registerUserRoutes(users, container.userController), { prefix: '/users' });
   }, { prefix: '/api' });
