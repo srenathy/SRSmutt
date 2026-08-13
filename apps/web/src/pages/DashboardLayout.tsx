@@ -21,6 +21,37 @@ import {
 } from 'lucide-react';
 import { Role } from '@temple/shared';
 
+const LiveClock: React.FC = () => {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const day = now.getDate().toString().padStart(2, '0');
+  const month = now.toLocaleString('en-US', { month: 'short' });
+  const year = now.getFullYear();
+  const weekday = now.toLocaleString('en-US', { weekday: 'long' });
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }).toLowerCase();
+
+  return (
+    <div className="px-4 pt-[10px] pb-2 border-t border-[#4a332e] text-left font-sans">
+      <div className="text-[11px] font-medium text-[#d8c7a1]">
+        {day} {month} {year} · {weekday}
+      </div>
+      <div className="text-[11px] font-mono text-[#8a7362] mt-0.5">
+        {timeStr}
+      </div>
+    </div>
+  );
+};
+
 export const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -108,8 +139,8 @@ export const DashboardLayout: React.FC = () => {
         ))}
       </nav>
 
-      {/* Language & Counter Status (moved from header) */}
-      <div className="px-4 pb-2 space-y-2">
+      {/* Language Selector */}
+      <div className="px-4 pb-2">
         <div className="flex items-center gap-1.5 bg-ivory/10 px-3 py-2 rounded-xl border border-turmeric/20">
           <span className="text-[9px] uppercase font-bold text-ivory/50">Language:</span>
           <select
@@ -122,11 +153,10 @@ export const DashboardLayout: React.FC = () => {
             <option value="te">తెలుగు</option>
           </select>
         </div>
-        <div className="flex items-center justify-center gap-1.5 bg-emerald-900/30 px-3 py-1.5 rounded-xl border border-emerald-700/30">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Counter Online</span>
-        </div>
       </div>
+
+      {/* Sidebar Footer Date + Isolated Live Ticking Clock */}
+      <LiveClock />
 
       {/* User Footer Panel */}
       <div className="p-4 border-t border-turmeric/20 bg-ink-dark/50 flex items-center justify-between">
@@ -177,29 +207,29 @@ export const DashboardLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Topbar Header */}
-        <header className="h-12 min-h-12 bg-white border-b border-turmeric/20 px-4 md:px-6 py-2 flex items-center justify-between shrink-0 shadow-xs gap-3 no-print">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1.5 rounded-lg bg-ivory border border-turmeric/30 text-kumkum hover:bg-ivory-dark transition-colors"
-              aria-label="Toggle navigation menu"
-            >
-              <Menu className="w-4 h-4" />
-            </button>
-            <div className="flex flex-wrap items-baseline gap-x-2 truncate">
-              <h1 className="font-display font-bold text-xs md:text-sm text-kumkum leading-none truncate">
-                Shri Raghavendra Swamy Brindavana Sannidhana
-              </h1>
-              <span className="text-[10px] text-textInk/50 font-mono leading-none truncate">
-                • Mulabagala Sri Sripadaraja Matha
-              </span>
+        {/* Global Identity Bar (App Shell Level) */}
+        <div className="px-4 pt-4 md:px-8 md:pt-6 no-print">
+          <div className="bg-[#fdfaf3] border border-[#e6dcc4] rounded-[10px] px-[20px] py-[10px] flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-1.5 rounded-lg bg-white border border-[#e6dcc4] text-[#4a1010] mr-1 hover:bg-[#fbf6ec] transition-colors"
+                aria-label="Toggle navigation menu"
+              >
+                <Menu className="w-4 h-4" />
+              </button>
+              <div className="flex flex-wrap items-baseline gap-x-1.5 truncate text-left">
+                <span className="text-[13px] font-medium text-[#4a1010] leading-none truncate">
+                  Shri Raghavendra Swamy Brindavana Sannidhana
+                </span>
+                <span className="text-[#a6957a] text-[13px] font-medium leading-none">·</span>
+                <span className="text-[12px] text-[#8a7a5c] leading-none truncate">
+                  Mulabagala Sri Sripadaraja Matha, Rajajinagar
+                </span>
+              </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 md:gap-4 text-xs font-medium text-textInk/70">
-          </div>
-        </header>
+        </div>
 
         {/* Dynamic Route Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-ivory-light/50">

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.js';
-import { Calendar, Clock, Monitor, IndianRupee, Banknote, Smartphone, CreditCard, HeartHandshake, TrendingUp, TrendingDown, Wallet, AlertTriangle } from 'lucide-react';
+import { IndianRupee, Banknote, Smartphone, CreditCard, HeartHandshake, TrendingUp, TrendingDown, Wallet, AlertTriangle } from 'lucide-react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -16,13 +16,6 @@ import {
 export const OverviewPage: React.FC = () => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [currentTime, setCurrentTime] = useState(() => new Date());
-
-  // Live Clock Ticker
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const { data: summary, isLoading, isError } = useQuery({
     queryKey: ['dashboard-summary'],
@@ -75,46 +68,23 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. SACRED HEADER BANNER */}
-      <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          {/* Sacred Invocation Badge in Royal Blue / Sacred Indigo */}
-          <div className="inline-block px-3 py-1 rounded-md bg-blue-900 text-blue-100 text-xs font-bold tracking-widest shadow-sm">
-            || ಶ್ರೀ ಗೋಪಿನಾಥ ವಿಜಯತೇ ||
-          </div>
-          <h2 className="font-display text-2xl font-extrabold text-kumkum tracking-tight pt-1">
-            Dashboard Overview
-          </h2>
-          <p className="text-xs font-medium text-textInk/70">
-            Real-time Seva Income, Expenditures & Net Earnings Calculator
-          </p>
+      {/* 1. DASHBOARD HEADER BANNER */}
+      <div className="no-print space-y-0">
+        {/* a) Shloka band */}
+        <div className="bg-[#6b1616] rounded-t-[10px] px-[20px] py-[8px] text-left">
+          <span className="text-[13px] font-semibold text-[#e8c98a] tracking-wider">
+            || ಶ್ರೀ ಗೋಪಿನಾಥಾಯ ವಿಜಯತೇ ||
+          </span>
         </div>
 
-        {/* Right Status Badges */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="bg-ivory/80 px-4 py-2.5 rounded-xl border border-turmeric/30 min-w-[130px]">
-            <div className="flex items-center gap-2 text-xs font-bold text-kumkum">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{formattedDateString}</span>
-            </div>
-            <p className="text-[10px] text-textInk/60 font-semibold mt-0.5">{dayOfWeekString}</p>
-          </div>
-
-          <div className="bg-ivory/80 px-4 py-2.5 rounded-xl border border-turmeric/30 min-w-[140px]">
-            <div className="flex items-center gap-2 text-xs font-bold text-textInk font-mono">
-              <Clock className="w-3.5 h-3.5 text-turmeric-dark" />
-              <span>{currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
-            </div>
-            <p className="text-[10px] text-textInk/60 font-semibold mt-0.5">User: {user?.username || 'Admin'}</p>
-          </div>
-
-          <div className="bg-ivory/80 px-4 py-2.5 rounded-xl border border-turmeric/30 min-w-[130px]">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-700">
-              <Monitor className="w-3.5 h-3.5" />
-              <span>Counter - 1</span>
-            </div>
-            <p className="text-[10px] text-emerald-800 font-semibold mt-0.5">Printer Online</p>
-          </div>
+        {/* b) Title panel */}
+        <div className="bg-[#fbf6ec] border border-[#e6dcc4] border-t-0 rounded-b-[10px] p-[20px] text-left space-y-0.5">
+          <h1 className="font-display font-medium text-[22px] text-[#4a1010] leading-tight">
+            Dashboard overview
+          </h1>
+          <p className="text-[13px] text-[#8a7a5c]">
+            Real-time seva income, expenditures and net earnings
+          </p>
         </div>
       </div>
 
