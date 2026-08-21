@@ -19,9 +19,33 @@ import {
   ChevronDown,
   Sparkles,
   DollarSign,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  Utensils,
+  Flower2,
+  Zap,
+  Wrench,
+  AlertTriangle,
+  Coins,
+  Landmark,
+  Building,
+  Users,
+  CheckCircle2,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Legend,
+  CartesianGrid
+} from 'recharts';
 
 // On-palette colors matching app design system
 const PAYMENT_MODE_COLORS: Record<string, string> = {
@@ -40,11 +64,32 @@ const OFFERING_KIND_COLORS: Record<string, string> = {
 
 const PALETTE_ARRAY = ['#8C2F22', '#15803D', '#C99A3D', '#1E3A8A', '#D97706', '#9E7422', '#7E22CE'];
 
+const getCategoryIcon = (categoryName: string) => {
+  const cat = categoryName.toLowerCase();
+  if (cat.includes('cook') || cat.includes('kitchen')) return <Utensils className="w-5 h-5 text-kumkum" />;
+  if (cat.includes('flower') || cat.includes('puja')) return <Flower2 className="w-5 h-5 text-amber-700" />;
+  if (cat.includes('staff') || cat.includes('salary') || cat.includes('honorarium')) return <Users className="w-5 h-5 text-blue-700" />;
+  if (cat.includes('utility') || cat.includes('electricity') || cat.includes('water') || cat.includes('office')) return <Zap className="w-5 h-5 text-amber-600" />;
+  if (cat.includes('clean') || cat.includes('maintain') || cat.includes('temple')) return <Wrench className="w-5 h-5 text-emerald-700" />;
+  if (cat.includes('event') || cat.includes('festival')) return <Award className="w-5 h-5 text-purple-700" />;
+  return <Layers className="w-5 h-5 text-kumkum" />;
+};
+
 export const ReportsPage: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || (user as any)?.isCentralAdmin;
 
-  const [reportType, setReportType] = useState<'daily' | 'monthly' | 'custom' | 'department-budget' | 'expenditures'>('daily');
+  // Level 1 Primary Category Tabs: 'collection' | 'department-budget' | 'expenditures'
+  const [activePrimaryTab, setActivePrimaryTab] = useState<'collection' | 'department-budget' | 'expenditures'>('collection');
+  // Level 2 Sub-Selector (active when activePrimaryTab === 'collection'): 'daily' | 'monthly' | 'custom'
+  const [collectionSubTab, setCollectionSubTab] = useState<'daily' | 'monthly' | 'custom'>('daily');
+
+  const reportType = activePrimaryTab === 'department-budget'
+    ? 'department-budget'
+    : activePrimaryTab === 'expenditures'
+    ? 'expenditures'
+    : collectionSubTab;
+
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
@@ -514,138 +559,175 @@ export const ReportsPage: React.FC = () => {
           </button>
         </div>
       </div>
+      {/* 2-Level Navigation Hierarchy */}
+      <div className="no-print space-y-3">
+        {/* Level 1: Primary Category Tabs */}
+        <div className="bg-white px-4 pt-3 border-b border-turmeric/20 rounded-t-2xl shadow-xs flex items-center justify-between overflow-x-auto">
+          <div className="flex items-center gap-2 sm:gap-6">
+            <button
+              onClick={() => setActivePrimaryTab('collection')}
+              className={`pb-3 px-3 text-xs sm:text-sm font-bold transition-all relative flex items-center gap-2 ${
+                activePrimaryTab === 'collection'
+                  ? 'text-kumkum border-b-2 border-turmeric font-extrabold'
+                  : 'text-textInk/60 hover:text-kumkum border-b-2 border-transparent'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4 text-kumkum" />
+              <span>Collection Reports</span>
+            </button>
 
-      {/* Selector Tabs & Presets */}
-      <div className="no-print bg-white p-4 rounded-2xl border border-turmeric/20 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 border-r border-turmeric/20 pr-4">
             <button
-              onClick={() => setReportType('daily')}
-              className={`px-4 py-2 rounded-xl font-bold transition-all ${
-                reportType === 'daily' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+              onClick={() => setActivePrimaryTab('department-budget')}
+              className={`pb-3 px-3 text-xs sm:text-sm font-bold transition-all relative flex items-center gap-2 ${
+                activePrimaryTab === 'department-budget'
+                  ? 'text-kumkum border-b-2 border-turmeric font-extrabold'
+                  : 'text-textInk/60 hover:text-kumkum border-b-2 border-transparent'
               }`}
             >
-              Daily Report
+              <Layers className="w-4 h-4 text-kumkum" />
+              <span>Department Budgets</span>
             </button>
-            <button
-              onClick={() => setReportType('monthly')}
-              className={`px-4 py-2 rounded-xl font-bold transition-all ${
-                reportType === 'monthly' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
-              }`}
-            >
-              Monthly Report
-            </button>
-            <button
-              onClick={() => setReportType('custom')}
-              className={`px-4 py-2 rounded-xl font-bold transition-all ${
-                reportType === 'custom' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
-              }`}
-            >
-              📅 Custom Date Range
-            </button>
-            <button
-              onClick={() => setReportType('department-budget')}
-              className={`px-4 py-2 rounded-xl font-bold transition-all ${
-                reportType === 'department-budget' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
-              }`}
-            >
-              🏛️ Department Budget Report
-            </button>
+
             {isAdmin && (
               <button
-                onClick={() => setReportType('expenditures')}
-                className={`px-4 py-2 rounded-xl font-bold transition-all ${
-                  reportType === 'expenditures' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+                onClick={() => setActivePrimaryTab('expenditures')}
+                className={`pb-3 px-3 text-xs sm:text-sm font-bold transition-all relative flex items-center gap-2 ${
+                  activePrimaryTab === 'expenditures'
+                    ? 'text-kumkum border-b-2 border-turmeric font-extrabold'
+                    : 'text-textInk/60 hover:text-kumkum border-b-2 border-transparent'
                 }`}
               >
-                Expenditures & Surplus (Admin)
+                <Wallet className="w-4 h-4 text-kumkum" />
+                <span>Expenditures & Surplus Audit</span>
               </button>
             )}
           </div>
-
-          {/* Quick Filter Presets */}
-          <div className="hidden md:flex items-center gap-1.5 pl-2">
-            <span className="text-[11px] font-semibold text-textInk/50 mr-1">Quick Presets:</span>
-            <button
-              onClick={() => setPresetDate('today')}
-              className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
-            >
-              Today
-            </button>
-            <button
-              onClick={() => setPresetDate('yesterday')}
-              className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
-            >
-              Yesterday
-            </button>
-            <button
-              onClick={() => setPresetDate('thisMonth')}
-              className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
-            >
-              This Month
-            </button>
-          </div>
         </div>
 
-        {reportType === 'daily' && (
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-kumkum" />
-            <span className="font-semibold text-textInk">Select Date:</span>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
-            />
-          </div>
-        )}
+        {/* Level 2 Sub-Selector (Appears ONLY when Collection Reports is active) */}
+        {activePrimaryTab === 'collection' && (
+          <div className="bg-white p-4 rounded-b-2xl border border-turmeric/20 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 border-r border-turmeric/20 pr-4">
+                <button
+                  onClick={() => setCollectionSubTab('daily')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    collectionSubTab === 'daily'
+                      ? 'bg-kumkum text-ivory shadow-xs'
+                      : 'bg-ivory text-textInk/70 hover:bg-turmeric/10 border border-turmeric/20'
+                  }`}
+                >
+                  Daily Report
+                </button>
+                <button
+                  onClick={() => setCollectionSubTab('monthly')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    collectionSubTab === 'monthly'
+                      ? 'bg-kumkum text-ivory shadow-xs'
+                      : 'bg-ivory text-textInk/70 hover:bg-turmeric/10 border border-turmeric/20'
+                  }`}
+                >
+                  Monthly Report
+                </button>
+                <button
+                  onClick={() => setCollectionSubTab('custom')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    collectionSubTab === 'custom'
+                      ? 'bg-kumkum text-ivory shadow-xs'
+                      : 'bg-ivory text-textInk/70 hover:bg-turmeric/10 border border-turmeric/20'
+                  }`}
+                >
+                  📅 Custom Range
+                </button>
+              </div>
 
-        {reportType === 'monthly' && (
-          <div className="flex items-center gap-3">
-            <Calendar className="w-4 h-4 text-kumkum" />
-            <span className="font-semibold text-textInk">Year & Month:</span>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none"
-            >
-              <option value={2025}>2025</option>
-              <option value={2026}>2026</option>
-              <option value={2027}>2027</option>
-            </select>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none"
-            >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {new Date(2026, i, 1).toLocaleString('default', { month: 'long' })}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+              {/* Quick Filter Presets */}
+              <div className="hidden lg:flex items-center gap-1.5 pl-2">
+                <span className="text-[11px] font-semibold text-textInk/50 mr-1">Presets:</span>
+                <button
+                  onClick={() => setPresetDate('today')}
+                  className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setPresetDate('yesterday')}
+                  className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
+                >
+                  Yesterday
+                </button>
+                <button
+                  onClick={() => setPresetDate('thisMonth')}
+                  className="px-2.5 py-1 rounded-lg border border-turmeric/20 bg-ivory text-textInk/80 hover:bg-kumkum/10 text-[11px] font-semibold transition"
+                >
+                  This Month
+                </button>
+              </div>
+            </div>
 
-        {reportType === 'custom' && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Calendar className="w-4 h-4 text-kumkum" />
-            <span className="font-semibold text-textInk">From:</span>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
-            />
-            <span className="font-semibold text-textInk">To:</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
-            />
+            {/* Date Pickers */}
+            {collectionSubTab === 'daily' && (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-kumkum" />
+                <span className="font-semibold text-textInk">Select Date:</span>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                />
+              </div>
+            )}
+
+            {collectionSubTab === 'monthly' && (
+              <div className="flex items-center gap-3">
+                <Calendar className="w-4 h-4 text-kumkum" />
+                <span className="font-semibold text-textInk">Year & Month:</span>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+                  className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none"
+                >
+                  <option value={2025}>2025</option>
+                  <option value={2026}>2026</option>
+                  <option value={2027}>2027</option>
+                </select>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
+                  className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none"
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {new Date(2026, i, 1).toLocaleString('default', { month: 'long' })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {collectionSubTab === 'custom' && (
+              <div className="flex flex-wrap items-center gap-2">
+                <Calendar className="w-4 h-4 text-kumkum" />
+                <span className="font-semibold text-textInk">From:</span>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                />
+                <span className="font-semibold text-textInk">To:</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="px-3 py-1.5 border border-turmeric/30 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-kumkum"
+                />
+              </div>
+            )}
           </div>
         )}
+      </div>
 
         {reportType !== 'expenditures' && (
           <div className="flex flex-wrap items-center gap-3 border-t border-turmeric/10 pt-3 mt-1 w-full">
@@ -680,7 +762,6 @@ export const ReportsPage: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
 
       {/* Main Report Body */}
       {reportType === 'department-budget' ? (
@@ -912,89 +993,94 @@ export const ReportsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 3. Cap vs Actual Visual Comparison & Variance Chart */}
+              {/* 3. Cap vs Actual Visual Comparison Chart (Recharts Proportional Scaling) */}
               <div id="dept-comparison-chart" className="bg-white rounded-2xl border border-turmeric/30 shadow-sm p-6 space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-turmeric/20 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-turmeric/20 pb-4">
                   <div>
                     <h3 className="font-display font-bold text-base text-kumkum flex items-center gap-2">
                       <PieChartIcon className="w-5 h-5 text-kumkum" />
-                      <span>Department Monthly Cap vs Actual Spend & Increase Chart</span>
+                      <span>Department Monthly Cap vs Actual Spend Chart</span>
                     </h3>
                     <p className="text-xs text-textInk/60 mt-0.5">
-                      Visual comparison of monthly cap allocations, actual expenditure spend, and over-budget increases.
+                      Proportions mathematically scaled against allocated monthly caps. Label text renders outside bars to prevent clipping.
                     </p>
                   </div>
-
                   <div className="flex items-center gap-4 text-xs font-semibold shrink-0">
                     <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded bg-amber-400 border border-amber-500" /> Allocated Cap
+                    </span>
+                    <span className="flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded bg-kumkum" /> Actual Spent
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded bg-amber-200 border border-amber-400" /> Monthly Cap
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded bg-red-600" /> Over-Budget Increase
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-6 pt-2">
+                {/* Proportional Recharts Bar Chart */}
+                <div className="w-full h-[420px] pt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={deptRows.map((d) => ({
+                        departmentName: d.departmentName.length > 18 ? d.departmentName.slice(0, 16) + '…' : d.departmentName,
+                        fullDeptName: d.departmentName,
+                        'Allocated Cap': d.monthlyCapAmount,
+                        'Actual Spent': d.spent,
+                        isOver: d.isOver
+                      }))}
+                      layout="vertical"
+                      margin={{ top: 10, right: 40, left: 10, bottom: 10 }}
+                      barGap={4}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e6dcc4" />
+                      <XAxis
+                        type="number"
+                        tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+                        stroke="#6b1616"
+                        fontSize={11}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="departmentName"
+                        width={130}
+                        tick={{ fontSize: 11, fontWeight: 'bold', fill: '#4A3B32' }}
+                      />
+                      <Tooltip
+                        formatter={(value: any, name: any) => [`₹${Number(value).toLocaleString('en-IN')}`, name]}
+                        labelFormatter={(label, items) => items?.[0]?.payload?.fullDeptName || label}
+                        contentStyle={{ backgroundColor: '#fdfaf3', borderColor: '#e6dcc4', borderRadius: '12px', fontSize: '12px', fontWeight: '600' }}
+                      />
+                      <Bar dataKey="Allocated Cap" fill="#FCD34D" radius={[0, 4, 4, 0]} barSize={14} />
+                      <Bar dataKey="Actual Spent" fill="#8C2F22" radius={[0, 4, 4, 0]} barSize={14} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Department Details Cards (with Over-Budget Reason Notes) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-turmeric/20">
                   {deptRows.map((d) => (
-                    <div key={d.departmentName} className="bg-ivory/40 p-4 rounded-xl border border-turmeric/20 space-y-2">
-                      <div className="flex flex-wrap items-center justify-between text-xs font-semibold gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-textInk font-bold text-sm">{d.departmentName}</span>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-                            d.isOver ? 'bg-red-100 text-red-800 border-red-200' : d.status === 'At Limit' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                          }`}>
-                            {d.isOver ? `OVER BUDGET (+₹${d.overAmt.toLocaleString('en-IN')})` : d.status.toUpperCase()}
-                          </span>
-                        </div>
-
-                        <div className="font-mono text-xs text-textInk/80 flex items-center gap-3">
-                          <span>Cap: <strong>₹{d.monthlyCapAmount.toLocaleString('en-IN')}</strong></span>
-                          <span>Spent: <strong className={d.isOver ? 'text-red-600' : 'text-kumkum'}>₹{d.spent.toLocaleString('en-IN')}</strong></span>
-                          <span>Utilization: <strong className={d.isOver ? 'text-red-600' : 'text-emerald-700'}>{d.utilPct.toFixed(1)}%</strong></span>
-                        </div>
+                    <div key={d.departmentName} className={`p-4 rounded-xl border transition-all ${
+                      d.isOver ? 'bg-red-50/60 border-red-200' : 'bg-ivory/30 border-turmeric/20'
+                    }`}>
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="font-bold text-textInk">{d.departmentName}</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                          d.isOver ? 'bg-red-100 text-red-800 border-red-200' : d.status === 'At Limit' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                        }`}>
+                          {d.isOver ? `OVER BUDGET (+₹${d.overAmt.toLocaleString('en-IN')})` : d.status.toUpperCase()}
+                        </span>
                       </div>
 
-                      {/* Visual Dual Progress Bars: Monthly Cap vs Actual Spend */}
-                      <div className="space-y-1.5">
-                        {/* Cap Target Line */}
-                        <div className="relative h-4 bg-amber-100/80 rounded-lg border border-amber-300 overflow-hidden flex items-center">
-                          <div className="w-full text-[9px] font-bold text-amber-900 px-2 flex justify-between">
-                            <span>ALLOCATED CAP THRESHOLD</span>
-                            <span>₹{d.monthlyCapAmount.toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
-
-                        {/* Actual Spend Line with Over-Budget Segment */}
-                        <div className="relative h-5 bg-ivory rounded-lg border border-turmeric/30 overflow-hidden flex items-center">
-                          <div
-                            className={`h-full rounded-lg transition-all flex items-center justify-between px-2 text-[10px] font-bold text-ivory ${
-                              d.isOver ? 'bg-red-600' : 'bg-kumkum'
-                            }`}
-                            style={{ width: `${Math.min(100, d.utilPct)}%` }}
-                          >
-                            <span>ACTUAL SPEND</span>
-                            <span>₹{d.spent.toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
+                      <div className="mt-2 text-xs text-textInk/70 flex items-center justify-between font-mono">
+                        <span>Spent: <strong className={d.isOver ? 'text-red-600' : 'text-kumkum'}>₹{d.spent.toLocaleString('en-IN')}</strong></span>
+                        <span>Cap: <strong>₹{d.monthlyCapAmount.toLocaleString('en-IN')}</strong></span>
+                        <span>Util: <strong className={d.isOver ? 'text-red-600' : 'text-emerald-700'}>{d.utilPct.toFixed(1)}%</strong></span>
                       </div>
 
-                      {/* Over-budget Reason summary if applicable */}
                       {d.isOver && d.vouchers.some((v: any) => v.overBudgetReason) && (
-                        <div className="mt-2 text-[11px] bg-red-50 p-2.5 rounded-lg border border-red-200 text-red-900 flex items-start gap-2">
-                          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <div className="mt-2.5 text-[11px] bg-red-100/70 p-2 rounded-lg border border-red-200 text-red-900 flex items-start gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
                           <div>
-                            <span className="font-bold block">Over-Budget Reason Notes:</span>
-                            <ul className="list-disc list-inside space-y-0.5 text-red-800">
-                              {d.vouchers.filter((v: any) => v.overBudgetReason).map((v: any) => (
-                                <li key={v.id}>
-                                  <span className="font-semibold">{v.voucherNumber} ({v.title}):</span> {v.overBudgetReason}
-                                </li>
-                              ))}
-                            </ul>
+                            <span className="font-bold">Over-Budget Reason:</span>
+                            <span className="ml-1 font-medium">{d.vouchers.find((v: any) => v.overBudgetReason)?.overBudgetReason}</span>
                           </div>
                         </div>
                       )}
@@ -1051,37 +1137,83 @@ export const ReportsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Category Expenditure Breakdown */}
+            {/* Expenditure Category Breakdown (Sorted Descending with Icons & Progress Bars) */}
             <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-4">
-              <h3 className="font-display text-base font-bold text-kumkum">Expenditure Category Breakdown</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-xs">
-                {Object.entries(financialBalanceQuery.data.byCategory || {}).map(([cat, data]: [string, any]) => (
-                  <div key={cat} className="p-3 bg-ivory/50 rounded-xl border border-turmeric/20 space-y-0.5">
-                    <p className="font-semibold text-textInk/70 capitalize text-[11px]">{cat.toLowerCase().replace(/_/g, ' ')}</p>
-                    <p className="font-mono font-bold text-kumkum text-sm">₹{Number(data.amount).toFixed(0)}</p>
-                    <p className="text-[10px] text-textInk/50">{data.count} items</p>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
+                <h3 className="font-display text-base font-bold text-kumkum">Expenditure Category Breakdown</h3>
+                <span className="text-xs text-textInk/50 font-semibold">Sorted by amount (largest first)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
+                {Object.entries(financialBalanceQuery.data.byCategory || {})
+                  .sort((a: any, b: any) => Number(b[1].amount) - Number(a[1].amount))
+                  .map(([cat, data]: [string, any]) => {
+                    const totalExp = Number(financialBalanceQuery.data.totalExpenditure || 1);
+                    const pct = totalExp > 0 ? ((Number(data.amount) / totalExp) * 100).toFixed(1) : '0.0';
+                    return (
+                      <div key={cat} className="p-4 bg-gradient-to-br from-ivory/60 to-white rounded-2xl border border-turmeric/30 shadow-2xs space-y-2 hover:shadow-xs transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <span className="p-2 rounded-xl bg-ivory text-kumkum border border-turmeric/20">
+                            {getCategoryIcon(cat)}
+                          </span>
+                          <span className="text-[10px] font-bold text-kumkum bg-kumkum/10 px-2 py-0.5 rounded-md font-mono">
+                            {pct}%
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-bold text-textInk capitalize text-xs">{cat.toLowerCase().replace(/_/g, ' ')}</p>
+                          <p className="font-mono font-bold text-kumkum text-lg mt-0.5">₹{Number(data.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                          <p className="text-[10px] text-textInk/50 font-medium">{data.count} expense vouchers</p>
+                        </div>
+                        {/* Progress proportion bar */}
+                        <div className="w-full bg-ivory rounded-full h-1.5 overflow-hidden border border-turmeric/20">
+                          <div className="h-full bg-kumkum rounded-full transition-all" style={{ width: `${Math.min(100, Number(pct))}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
 
-            {/* Income Head Breakdown */}
+            {/* Income Head Breakdown (Sorted Descending with Icons & Progress Bars) */}
             <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-4">
-              <h3 className="font-display text-base font-bold text-kumkum">Income Head & Offering Stream Breakdown</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                {Object.entries(financialBalanceQuery.data.byKind || {}).map(([k, data]: [string, any]) => {
-                  const label = k === 'NEW_SEVA' ? 'Regular Seva Income'
-                    : k === 'SHASHWATA_SEVA' ? 'Shashwata Seva Corpus'
-                    : k === 'HUNDI_COLLECTION' ? '💰 Hundi & Direct Income'
-                    : 'In-Kind / Dravya';
-                  return (
-                    <div key={k} className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-200/60 space-y-1">
-                      <p className="font-bold text-emerald-950 text-xs">{label}</p>
-                      <p className="font-mono font-bold text-emerald-700 text-lg">₹{Number(data.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                      <p className="text-[11px] text-emerald-800/70 font-semibold">{data.count} receipts</p>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
+                <h3 className="font-display text-base font-bold text-kumkum">Income Head & Offering Stream Breakdown</h3>
+                <span className="text-xs text-textInk/50 font-semibold">Sorted by amount (largest first)</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                {Object.entries(financialBalanceQuery.data.byKind || {})
+                  .sort((a: any, b: any) => Number(b[1].amount) - Number(a[1].amount))
+                  .map(([k, data]: [string, any]) => {
+                    const label = k === 'NEW_SEVA' ? 'Regular Seva Income'
+                      : k === 'SHASHWATA_SEVA' ? 'Shashwata Seva Corpus'
+                      : k === 'HUNDI_COLLECTION' ? '💰 Hundi & Direct Income'
+                      : 'In-Kind / Dravya';
+                    const totalInc = Number(financialBalanceQuery.data.totalCollections || 1);
+                    const pct = totalInc > 0 ? ((Number(data.amount) / totalInc) * 100).toFixed(1) : '0.0';
+                    const cardColor = OFFERING_KIND_COLORS[k] || '#8C2F22';
+
+                    return (
+                      <div key={k} className="p-4 bg-gradient-to-br from-emerald-50/40 to-white rounded-2xl border border-emerald-200/60 shadow-2xs space-y-2 hover:shadow-xs transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <span className="p-2 rounded-xl bg-emerald-100/60 text-emerald-800 border border-emerald-200">
+                            {k === 'NEW_SEVA' ? <Award className="w-5 h-5" /> : k === 'SHASHWATA_SEVA' ? <Landmark className="w-5 h-5" /> : k === 'HUNDI_COLLECTION' ? <Coins className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md font-mono">
+                            {pct}% share
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-bold text-emerald-950 text-xs">{label}</p>
+                          <p className="font-mono font-bold text-emerald-700 text-lg mt-0.5">₹{Number(data.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                          <p className="text-[10px] text-emerald-800/60 font-medium">{data.count} official receipts</p>
+                        </div>
+                        {/* Progress proportion bar */}
+                        <div className="w-full bg-emerald-100/60 rounded-full h-1.5 overflow-hidden border border-emerald-200/40">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, Number(pct))}%`, backgroundColor: cardColor }} />
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
 
