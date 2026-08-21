@@ -167,12 +167,12 @@ export const BillingPage: React.FC = () => {
     }
   };
 
-  const handleAddCustomDravyaItem = () => {
+  const handleAddCustomDravyaItem = (initialDesc = '', initialAmt = 0) => {
     setItems((prev) => [
       ...prev,
       {
-        description: 'Dravya / In-Kind Donation',
-        amount: 100,
+        description: initialDesc,
+        amount: initialAmt,
         quantity: 1,
         devoteeCount: 1
       }
@@ -523,12 +523,36 @@ export const BillingPage: React.FC = () => {
           )}
 
           {kind === ReceiptKind.KIND_DONATION && (
-            <div>
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-textInk/70">Quick Dravya & In-Kind Common Presets:</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'Rice (Akki) Bag - 25kg',
+                  'Pure Cow Ghee (Tuppa) - 5L',
+                  'Toor Dal (Togari Bele) - 10kg',
+                  'Coconut (Tenginakai) - 50 Nos',
+                  'Jaggery (Bella) - 5kg',
+                  'Sugar (Sakkare) - 10kg',
+                  'Cooking Oil - 15L Tin',
+                  'Silk Vastram / Dhoti Offering'
+                ].map((dravya) => (
+                  <button
+                    key={dravya}
+                    type="button"
+                    onClick={() => handleAddCustomDravyaItem(dravya, 0)}
+                    className="bg-ivory hover:bg-turmeric/20 border border-turmeric/30 px-3 py-1.5 rounded-xl text-xs font-semibold text-textInk flex items-center gap-1.5 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-kumkum" />
+                    {dravya}
+                  </button>
+                ))}
+              </div>
               <button
-                onClick={handleAddCustomDravyaItem}
-                className="bg-kumkum text-ivory text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2"
+                type="button"
+                onClick={() => handleAddCustomDravyaItem('', 0)}
+                className="bg-kumkum text-ivory text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 mt-2 shadow-xs"
               >
-                <Plus className="w-4 h-4" /> Add Dravya Offering Line Item
+                <Plus className="w-4 h-4" /> Add Blank Dravya Offering Line Item
               </button>
             </div>
           )}
@@ -566,7 +590,7 @@ export const BillingPage: React.FC = () => {
                     { description: 'Custom Hundi / Direct Income Entry', amount: 1000, quantity: 1, devoteeCount: 1 }
                   ]);
                 }}
-                className="bg-kumkum text-ivory text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 mt-2"
+                className="bg-kumkum text-ivory text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 mt-2 shadow-xs"
               >
                 <Plus className="w-4 h-4" /> Add Custom Hundi / Income Line Item
               </button>
@@ -574,7 +598,7 @@ export const BillingPage: React.FC = () => {
           )}
 
           {/* Selected Items List Table */}
-          <div className="border border-ivory-dark rounded-xl overflow-hidden mt-4">
+          <div className="border border-ivory-dark rounded-xl overflow-visible mt-4 bg-white">
             <table className="w-full text-left text-xs">
               <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
                 <tr>
@@ -787,34 +811,40 @@ export const BillingPage: React.FC = () => {
           </div>
 
           {/* Live Settings Preview for UPI / Bank Transfer */}
-          {paymentMode === PaymentMode.UPI && (templeInfo?.upiId || templeInfo?.upiQrCode) && (
-            <div className="bg-amber-50 border border-amber-300/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 text-xs animate-fadeIn shadow-xs">
-              {templeInfo.upiQrCode ? (
-                <div className="bg-white p-2.5 rounded-xl border border-amber-300 shadow-xs shrink-0 text-center">
-                  <img
-                    src={templeInfo.upiQrCode}
-                    alt="UPI QR Code"
-                    className="w-36 h-36 object-contain rounded-lg mx-auto"
-                  />
-                  <span className="text-[10px] font-bold text-amber-900 block mt-1">📱 Scan & Pay ₹{totalAmount.toLocaleString('en-IN')}</span>
-                </div>
-              ) : (
-                <div className="w-24 h-24 rounded-xl bg-white border border-amber-300 flex flex-col items-center justify-center text-amber-800 text-xs font-bold p-2 text-center shrink-0">
-                  <Smartphone className="w-8 h-8 text-kumkum mb-1" />
-                  <span>UPI Pay</span>
-                </div>
-              )}
-              <div className="space-y-1.5 text-center sm:text-left flex-1">
+          {paymentMode === PaymentMode.UPI && (
+            <div className="bg-amber-50 border border-amber-300/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-5 text-xs animate-fadeIn shadow-xs">
+              <div className="bg-white p-2.5 rounded-xl border border-amber-300 shadow-xs shrink-0 text-center">
+                <img
+                  src={
+                    templeInfo?.upiQrCode ||
+                    `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                      `upi://pay?pa=${templeInfo?.upiId || 'sripadarajamath@upi'}&pn=${encodeURIComponent(
+                        templeInfo?.name || 'Sri Raghavendra Swamy Math'
+                      )}&am=${totalAmount > 0 ? totalAmount.toFixed(2) : ''}&cu=INR`
+                    )}`
+                  }
+                  alt="Official Temple UPI QR Code"
+                  className="w-36 h-36 object-contain rounded-lg mx-auto"
+                />
+                <span className="text-[10px] font-bold text-amber-900 block mt-1">📱 Scan & Pay ₹{totalAmount.toLocaleString('en-IN')}</span>
+              </div>
+
+              <div className="space-y-2 text-center sm:text-left flex-1">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-950 font-mono">
-                  ✨ Instant Counter UPI / QR
+                  ✨ Instant Dynamic Counter QR & UPI
                 </div>
                 <div>
                   <span className="font-bold text-amber-950 block text-xs">Official Temple UPI ID:</span>
-                  <span className="font-mono font-bold text-kumkum text-sm select-all">{templeInfo.upiId || 'raghavendra@upi'}</span>
+                  <span className="font-mono font-bold text-kumkum text-base select-all bg-white px-2.5 py-0.5 rounded-lg border border-amber-200 inline-block mt-0.5 shadow-2xs">
+                    {templeInfo?.upiId || 'sripadarajamath@upi'}
+                  </span>
                 </div>
-                <p className="text-[11px] text-textInk/70">
-                  Devotee can scan using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) or pay directly to the UPI ID.
+                <p className="text-[11px] text-textInk/70 leading-relaxed">
+                  Devotee can scan using any UPI app (<strong>PhonePe, Google Pay, Paytm, BHIM, Navi, etc.</strong>) to pay the exact amount instantly.
                 </p>
+                <div className="text-[10px] text-emerald-800 font-semibold flex items-center justify-center sm:justify-start gap-1">
+                  <span>✓ Auto-fills ₹{totalAmount.toLocaleString('en-IN')} on mobile scan</span>
+                </div>
               </div>
             </div>
           )}

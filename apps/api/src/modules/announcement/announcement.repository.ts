@@ -12,15 +12,13 @@ export class AnnouncementRepository extends BaseRepository<Announcement> impleme
 
   async findActive(): Promise<Announcement[]> {
     const now = new Date();
-    // Start of current day in local/UTC
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
     return this.prisma.announcement.findMany({
       where: {
         active: true,
         OR: [
           { endDate: null },
-          { endDate: { gte: startOfToday } }
+          { endDate: { gte: now } }
         ]
       },
       orderBy: [

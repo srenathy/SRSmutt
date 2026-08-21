@@ -139,17 +139,27 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                   <div className="p-4 space-y-2">
                     <div className="text-[10px] text-[#7A6B63] font-mono font-semibold flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-[#C99A3D] shrink-0" />
-                      {item.startDate && item.endDate ? (
-                        <span>
-                          {new Date(item.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – {new Date(item.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </span>
-                      ) : item.startDate ? (
-                        <span>From {new Date(item.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                      ) : item.endDate ? (
-                        <span>Until {new Date(item.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                      ) : (
-                        <span>{new Date(item.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                      )}
+                      <span>
+                        {(() => {
+                          const formatDT = (val?: string) => {
+                            if (!val) return '';
+                            const d = new Date(val);
+                            if (isNaN(d.getTime())) return '';
+                            const hasTime = d.getHours() !== 0 || d.getMinutes() !== 0;
+                            return d.toLocaleDateString('en-IN', {
+                              day: '2-digit',
+                              month: 'short',
+                              ...(hasTime ? { hour: '2-digit', minute: '2-digit', hour12: true } : {})
+                            });
+                          };
+                          if (item.startDate && item.endDate) {
+                            return `${formatDT(item.startDate)} – ${formatDT(item.endDate)}`;
+                          }
+                          if (item.startDate) return `Starts ${formatDT(item.startDate)}`;
+                          if (item.endDate) return `Until ${formatDT(item.endDate)}`;
+                          return formatDT(item.createdAt);
+                        })()}
+                      </span>
                     </div>
 
                     <h3 className="font-display font-bold text-[#2C221E] text-base group-hover:text-[#8C2F22] transition-colors line-clamp-2 leading-snug">
@@ -207,17 +217,28 @@ export const EventsSection: React.FC<EventsSectionProps> = ({
                 </span>
                 <span className="text-xs text-[#7A6B63] font-mono font-semibold flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-[#C99A3D]" />
-                  {selectedEvent.startDate && selectedEvent.endDate ? (
-                    <span>
-                      {new Date(selectedEvent.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })} – {new Date(selectedEvent.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
-                    </span>
-                  ) : selectedEvent.startDate ? (
-                    <span>Starts {new Date(selectedEvent.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-                  ) : selectedEvent.endDate ? (
-                    <span>Until {new Date(selectedEvent.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-                  ) : (
-                    <span>{new Date(selectedEvent.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-                  )}
+                  <span>
+                    {(() => {
+                      const formatDT = (val?: string) => {
+                        if (!val) return '';
+                        const d = new Date(val);
+                        if (isNaN(d.getTime())) return '';
+                        const hasTime = d.getHours() !== 0 || d.getMinutes() !== 0;
+                        return d.toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                          ...(hasTime ? { hour: '2-digit', minute: '2-digit', hour12: true } : {})
+                        });
+                      };
+                      if (selectedEvent.startDate && selectedEvent.endDate) {
+                        return `${formatDT(selectedEvent.startDate)} – ${formatDT(selectedEvent.endDate)}`;
+                      }
+                      if (selectedEvent.startDate) return `Starts ${formatDT(selectedEvent.startDate)}`;
+                      if (selectedEvent.endDate) return `Until ${formatDT(selectedEvent.endDate)}`;
+                      return formatDT(selectedEvent.createdAt);
+                    })()}
+                  </span>
                 </span>
               </div>
 

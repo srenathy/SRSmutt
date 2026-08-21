@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 export interface FieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'email' | 'date' | 'textarea' | 'checkbox' | 'image' | 'select';
+  type: 'text' | 'number' | 'email' | 'date' | 'datetime' | 'textarea' | 'checkbox' | 'image' | 'select';
   placeholder?: string;
   required?: boolean;
   options?: { label: string; value: string }[];
@@ -104,6 +104,22 @@ export const MasterFormDrawer: React.FC<MasterFormDrawerProps> = ({
                   type="date"
                   value={formData[field.name] ? String(formData[field.name]).split('T')[0] : ''}
                   onChange={(e) => onChange(field.name, e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50 font-medium text-textInk"
+                />
+              ) : field.type === 'datetime' ? (
+                <input
+                  type="datetime-local"
+                  value={
+                    formData[field.name]
+                      ? (() => {
+                          const d = new Date(formData[field.name]);
+                          if (isNaN(d.getTime())) return '';
+                          const pad = (n: number) => n.toString().padStart(2, '0');
+                          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                        })()
+                      : ''
+                  }
+                  onChange={(e) => onChange(field.name, e.target.value ? new Date(e.target.value).toISOString() : '')}
                   className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50 font-medium text-textInk"
                 />
               ) : field.type === 'checkbox' ? (

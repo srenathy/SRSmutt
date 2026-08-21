@@ -60,8 +60,8 @@ export const MastersPage: React.FC = () => {
       setEditingItem(item);
       setFormData({
         ...item,
-        startDate: item.startDate ? String(item.startDate).split('T')[0] : '',
-        endDate: item.endDate ? String(item.endDate).split('T')[0] : ''
+        startDate: item.startDate ? new Date(item.startDate).toISOString() : '',
+        endDate: item.endDate ? new Date(item.endDate).toISOString() : ''
       });
     } else {
       setEditingItem(null);
@@ -71,7 +71,7 @@ export const MastersPage: React.FC = () => {
           : activeTab === 'departments'
           ? { effectiveMonth: new Date().toISOString().slice(0, 7), monthlyCapAmount: 25000, isActive: true }
           : activeTab === 'announcements'
-          ? { category: 'EVENT', active: true, startDate: new Date().toISOString().slice(0, 10), endDate: '' }
+          ? { category: 'EVENT', active: true, startDate: new Date().toISOString(), endDate: '' }
           : activeTab === 'gallery'
           ? { category: 'TEMPLE', order: 0, active: true }
           : { active: true }
@@ -351,11 +351,24 @@ export const MastersPage: React.FC = () => {
           key: 'duration',
           header: 'Event Schedule (Auto-Expire)',
           render: (r: any) => {
-            const start = r.startDate ? new Date(r.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Immediate';
-            const end = r.endDate ? new Date(r.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Ongoing / No Expiry';
+            const formatDT = (val?: string) => {
+              if (!val) return null;
+              const d = new Date(val);
+              return d.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              });
+            };
+            const start = formatDT(r.startDate) || 'Immediate';
+            const end = formatDT(r.endDate) || 'Ongoing / No Expiry';
             return (
               <div className="text-[11px] font-mono">
-                <span className="font-semibold text-textInk">{start}</span> → <span className="font-bold text-kumkum">{end}</span>
+                <span className="font-semibold text-textInk">{start}</span>
+                <span className="text-textInk/40 mx-1">→</span>
+                <span className="font-bold text-kumkum">{end}</span>
               </div>
             );
           }
@@ -366,10 +379,8 @@ export const MastersPage: React.FC = () => {
           header: 'Live Status',
           render: (r: any) => {
             const now = new Date();
-            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-            const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-            const isPast = r.endDate && new Date(r.endDate) < startOfToday;
-            const isFuture = r.startDate && new Date(r.startDate) > endOfToday;
+            const isPast = r.endDate && new Date(r.endDate) < now;
+            const isFuture = r.startDate && new Date(r.startDate) > now;
 
             if (!r.active) {
               return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">DISABLED</span>;
@@ -480,8 +491,8 @@ export const MastersPage: React.FC = () => {
             { label: '📜 GURU_PARAMPARA (Lineage & Heritage)', value: 'GURU_PARAMPARA' }
           ]
         },
-        { name: 'startDate', label: 'Event Start Date (When event starts)', type: 'date' },
-        { name: 'endDate', label: 'Event End Date (Auto-expires and disappears after this date)', type: 'date' },
+        { name: 'startDate', label: 'Event Start Date & Time (When event starts)', type: 'datetime' },
+        { name: 'endDate', label: 'Event End Date & Time (Auto-expires and disappears after this exact time)', type: 'datetime' },
         { name: 'imageUrl', label: 'Photo / Image Attachment (Upload File or Paste URL)', type: 'image' },
         { name: 'content', label: 'Content & Event Details', type: 'textarea', required: true },
         { name: 'active', label: 'Active Toggle', type: 'checkbox' }

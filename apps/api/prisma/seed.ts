@@ -247,6 +247,49 @@ async function main() {
     });
   }
 
+  // 11. Seed Initial Photo Gallery Images
+  const initialGallery = [
+    {
+      title: 'Sri Raghavendra Swamy — Alankara Darshana',
+      caption: 'Daily morning consecrated Alankara at Rajajinagar Sannidhana',
+      imageUrl: '/gallery/brindavana-1.jpg',
+      category: 'ALANKARA',
+      order: 1,
+      active: true
+    },
+    {
+      title: 'Sri Raghavendra Swamy — Pushpa Alankara',
+      caption: 'Sacred floral decoration during special festival celebrations',
+      imageUrl: '/gallery/brindavana-2.jpg',
+      category: 'ALANKARA',
+      order: 2,
+      active: true
+    },
+    {
+      title: 'Sri Raghavendra Swamy — Vastra Alankara',
+      caption: 'Traditional silk vastra offering and golden sanctum view',
+      imageUrl: '/gallery/brindavana-3.jpg',
+      category: 'ALANKARA',
+      order: 3,
+      active: true
+    },
+    {
+      title: 'Sri Raghavendra Matha — Rajajinagar Sannidhana',
+      caption: 'Consecrated Mrittika Brindavana sanctum sanctorum',
+      imageUrl: '/gallery/brindavana-4.jpg',
+      category: 'TEMPLE',
+      order: 4,
+      active: true
+    }
+  ];
+
+  for (const img of initialGallery) {
+    const exists = await prisma.galleryImage.findFirst({ where: { title: img.title } });
+    if (!exists) {
+      await prisma.galleryImage.create({ data: img });
+    }
+  }
+
   console.log('🎉 Seed completed successfully!');
 }
 
