@@ -1,13 +1,17 @@
 import React from 'react';
 import { Clock, Flower2, Calendar, MapPin, ArrowRight } from 'lucide-react';
 
-export const QuickActions: React.FC = () => {
+interface QuickActionsProps {
+  onSelectTab?: (tabId: string) => void;
+}
+
+export const QuickActions: React.FC<QuickActionsProps> = ({ onSelectTab }) => {
   const actions = [
     {
       title: 'Darshan Timings',
       subtitle: '7:00 AM – 12:30 PM & 5:30 PM – 8:30 PM',
       icon: Clock,
-      href: '#schedule',
+      id: 'schedule',
       cta: 'View Schedule',
       badge: 'Daily'
     },
@@ -15,7 +19,7 @@ export const QuickActions: React.FC = () => {
       title: 'Book / Sponsor Seva',
       subtitle: 'Archana, Panchamrutha & Nitya Sevas',
       icon: Flower2,
-      href: '#sevas',
+      id: 'sevas',
       cta: 'Explore Sevas',
       badge: 'Offerings'
     },
@@ -23,7 +27,7 @@ export const QuickActions: React.FC = () => {
       title: 'Upcoming Events',
       subtitle: 'Aradhana Mahotsava & Special Utsavas',
       icon: Calendar,
-      href: '#events',
+      id: 'events',
       cta: 'View News',
       badge: 'Calendar'
     },
@@ -31,25 +35,25 @@ export const QuickActions: React.FC = () => {
       title: 'Contact & Directions',
       subtitle: '542, 63rd Cross, 5th Block, Rajajinagar',
       icon: MapPin,
-      href: '#contact',
+      id: 'contact',
       cta: 'Get Location',
       badge: 'Bengaluru'
     }
   ];
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleClick = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
-    const targetId = href.replace('#', '');
-    const element = document.getElementById(targetId);
+    if (onSelectTab) {
+      onSelectTab(id);
+    }
+    const element = document.getElementById('main-content-view') || document.getElementById(id);
     if (element) {
-      const offset = 80;
+      const offset = 90;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-
       window.scrollTo({
-        top: offsetPosition,
+        top: Math.max(0, elementPosition - offset),
         behavior: 'smooth'
       });
     }
@@ -57,16 +61,15 @@ export const QuickActions: React.FC = () => {
 
   return (
     <section className="py-6 sm:py-8 bg-[#FAF6EE]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {actions.map((act) => {
             const Icon = act.icon;
             return (
-              <a
+              <button
                 key={act.title}
-                href={act.href}
-                onClick={(e) => handleClick(e, act.href)}
-                className="group bg-white p-5 rounded-2xl border border-turmeric/20 shadow-xs hover:shadow-md hover:border-[#8C2F22]/40 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
+                onClick={(e) => handleClick(e, act.id)}
+                className="group text-left bg-white p-5 rounded-2xl border border-turmeric/20 shadow-xs hover:shadow-md hover:border-[#8C2F22]/40 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between cursor-pointer w-full"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -86,11 +89,11 @@ export const QuickActions: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-turmeric/10 flex items-center justify-between text-xs font-bold text-[#8C2F22]">
+                <div className="mt-4 pt-3 border-t border-turmeric/10 flex items-center justify-between text-xs font-bold text-[#8C2F22] w-full">
                   <span>{act.cta}</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </div>
-              </a>
+              </button>
             );
           })}
         </div>

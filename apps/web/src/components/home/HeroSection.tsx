@@ -4,23 +4,25 @@ import { MandalaPattern, LotusIcon, DiyaIcon } from './SpiritualDecorations';
 
 interface HeroSectionProps {
   announcements?: Array<{ id: string; title: string; content: string; category?: string }>;
+  onSelectTab?: (tabId: string) => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [], onSelectTab }) => {
   const newsItem = announcements.find((a) => a.category?.toUpperCase() === 'ANNOUNCEMENT');
 
-  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+  const scrollToSection = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
-    const element = document.getElementById(id);
+    if (onSelectTab) {
+      onSelectTab(id);
+    }
+    const element = document.getElementById('main-content-view') || document.getElementById(id);
     if (element) {
-      const offset = 80;
+      const offset = 90;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-
       window.scrollTo({
-        top: offsetPosition,
+        top: Math.max(0, elementPosition - offset),
         behavior: 'smooth'
       });
     }
@@ -69,23 +71,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) 
 
             {/* Primary Action Buttons */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-2">
-              <a
-                href="#schedule"
+              <button
                 onClick={(e) => scrollToSection(e, 'schedule')}
-                className="px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#8C2F22] hover:bg-[#6E2217] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2"
+                className="px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#8C2F22] hover:bg-[#6E2217] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
               >
                 <Clock className="w-4 h-4" />
                 <span>View Today&apos;s Timings</span>
-              </a>
+              </button>
 
-              <a
-                href="#sevas"
+              <button
                 onClick={(e) => scrollToSection(e, 'sevas')}
-                className="px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-[#8C2F22] bg-[#FAF6EE] hover:bg-[#F3EAD8] border border-[#C99A3D]/40 transition-all shadow-xs hover:shadow-md transform hover:-translate-y-0.5 flex items-center gap-2"
+                className="px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-[#8C2F22] bg-[#FAF6EE] hover:bg-[#F3EAD8] border border-[#C99A3D]/40 transition-all shadow-xs hover:shadow-md transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
               >
                 <Flower2 className="w-4 h-4 text-[#8C2F22]" />
-                <span>Seva & Offerings</span>
-              </a>
+                <span>Seva &amp; Offerings</span>
+              </button>
             </div>
 
             {/* Live News Ticker (if present) */}
