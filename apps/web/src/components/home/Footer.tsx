@@ -39,7 +39,7 @@ export const Footer: React.FC = () => {
               </div>
             </div>
             <p className="text-[#EFE3CE]/80 leading-relaxed max-w-md">
-              No.542, 63rd Cross, 5th Block, Near Bhashyam Circle, Rajajinagar, Bengaluru, Karnataka 560010. Devotees visit for daily worship, Sevas, and Teertha Prasada under the holy tradition of Jagadguru Sri Madhvacharya and Sri Sripadaraja Swamiji.
+              No.542, 63rd Cross, 5th Block, Near Bhashyam Circle, Rajajinagar, Bengaluru, Karnataka 560010. Devotees visit for daily worship, Sevas, and blessings under the holy tradition of Jagadguru Sri Madhvacharya and Sri Sripadaraja Swamiji.
             </p>
             <p className="text-[#C99A3D] font-mono font-semibold">
               Contact: +91 89046 74124
@@ -108,7 +108,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li className="text-[11px] text-[#EFE3CE]/60 pt-1">
-                Daily Teertha Prasada: 12:30 PM
+                Special Pooja on Thursdays: 7:00 AM – 9:00 PM
               </li>
             </ul>
           </div>

@@ -56,7 +56,7 @@ export const VisitSection: React.FC = () => {
                     Temple Office &amp; Seva Enquiry
                   </h3>
                   <p className="text-xs text-[#5C4D44]">
-                    For Seva booking inquiries, special sankalpa, or Teertha Prasada coordination:
+                    For Seva booking inquiries, special sankalpa, or pooja coordination:
                   </p>
                   <a
                     href="tel:+918904674124"
@@ -105,15 +105,15 @@ export const VisitSection: React.FC = () => {
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-[#2C221E] block font-bold">Daily Pooja &amp; Sevas</strong>
-                    <span>Daily Archana, Panchamrutha Abhisheka, Hastodaka, and Special Alankara.</span>
+                    <span>Daily Archana, Panchamrutha Abhisheka, Hastodaka, and Special Pushpa Alankara.</span>
                   </div>
                 </li>
 
                 <li className="flex items-start gap-3 p-3 rounded-xl bg-[#FAF6EE]/60 border border-turmeric/10">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-[#2C221E] block font-bold">Nitya Teertha Prasada</strong>
-                    <span>Daily sanctified meal distribution (Annadana) served after afternoon Mahamangalarathi (12:30 PM).</span>
+                    <strong className="text-[#2C221E] block font-bold">Special Utsavas &amp; Aradhana</strong>
+                    <span>Annual Sri Raghavendra Swamy Aradhana Mahotsava, Jayanthi celebrations, and monthly Karthika poojas.</span>
                   </div>
                 </li>
 

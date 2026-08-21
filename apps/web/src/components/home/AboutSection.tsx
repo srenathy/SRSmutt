@@ -30,7 +30,7 @@ export const AboutSection: React.FC = () => {
                 The Rajajinagar branch of <strong>Mulabagala Sri Sripadaraja Matha</strong> houses the sanctified <strong>Mrittika Brindavana of Sri Raghavendra Swamy</strong>, established under the divine guidance and pontifical authority of the Matha. Devotees from all over Bengaluru visit this holy Sannidhana for daily worship, Sevas, and spiritual solace.
               </p>
               <p>
-                Under the holy tradition of <strong>Jagadguru Sri Madhvacharya</strong> and <strong>Sri Sripadaraja Swamiji</strong> (the father of Haridasa Sahitya and revered Dwaitha saint), daily rituals including Panchamrutha Abhisheka, Hastodaka, Mahamangalarathi, and Teertha Prasada are conducted with utmost Vedic precision and devotion.
+                Under the holy tradition of <strong>Jagadguru Sri Madhvacharya</strong> and <strong>Sri Sripadaraja Swamiji</strong> (the father of Haridasa Sahitya and revered Dwaitha saint), daily rituals including Panchamrutha Abhisheka, Hastodaka, and Mahamangalarathi are conducted with utmost Vedic precision and devotion.
               </p>
             </div>
 
@@ -53,10 +53,10 @@ export const AboutSection: React.FC = () => {
               </div>
 
               <div className="bg-[#FAF6EE] p-5 rounded-2xl border border-turmeric/20 space-y-2 shadow-2xs">
-                <div className="text-2xl">🍚</div>
-                <h3 className="font-display font-bold text-[#6B1616] text-sm">Nitya Teertha Prasada</h3>
+                <div className="text-2xl">🌺</div>
+                <h3 className="font-display font-bold text-[#6B1616] text-sm">Nitya Alankara &amp; Sevas</h3>
                 <p className="text-xs text-[#5C4D44] leading-relaxed">
-                  Daily sanctified meal distribution (Annadana) served to visiting pilgrims after afternoon Mahamangalarathi.
+                  Daily Panchamrutha Abhisheka, Hastodaka, Archana, and special pushpalankara offerings.
                 </p>
               </div>
             </div>

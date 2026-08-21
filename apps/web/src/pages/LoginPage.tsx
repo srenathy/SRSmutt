@@ -132,7 +132,7 @@ export const LoginPage: React.FC = () => {
                 ॥ ಪೂಜ್ಯಾಯ ರಾಘವೇಂದ್ರಾಯ ಸತ್ಯಧರ್ಮ ರತಾಯ ಚ । ಭಜತಾಂ ಕಲ್ಪವೃಕ್ಷಾಯ ನಮತಾಂ ಕಾಮಧೇನವೇ ॥
               </p>
               <p className="text-[10px] text-[#EFE3CE]/80 font-serif">
-                Daily Archana, Abhisheka, Hastodaka &amp; Nitya Teertha Prasada
+                Daily Archana, Abhisheka, Hastodaka &amp; Phala Mantrakshate
               </p>
             </div>
 
@@ -156,7 +156,7 @@ export const LoginPage: React.FC = () => {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-[#FCD34D] shrink-0 mt-0.5" />
-                  <span><strong>Teertha Prasada Schedules:</strong> Real-time darshan &amp; meal serving timings.</span>
+                  <span><strong>Pooja &amp; Darshan Schedules:</strong> Real-time darshan, aarthi &amp; seva timings.</span>
                 </li>
               </ul>
             </div>

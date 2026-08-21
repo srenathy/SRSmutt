@@ -17,8 +17,7 @@ export const ScheduleSection: React.FC = () => {
   const morningSlots = [
     { title: 'Morning Darshan & Nirmalya Pooja', time: '7:00 AM – 9:00 AM', start: 420, end: 540, desc: 'Nirmalya Visarjana & daily morning pooja rituals' },
     { title: 'Panchamrutha Abhisheka & Archana', time: '9:00 AM – 11:30 AM', start: 540, end: 690, desc: 'Sacred milk, honey, curd, ghee & fruit abhisheka' },
-    { title: 'Daily Mahamangalarathi & Hastodaka', time: '12:00 PM – 12:30 PM', start: 720, end: 750, desc: 'Grand afternoon aarthi and Hastodaka samarpanam' },
-    { title: 'Nitya Teertha Prasada (Annadana)', time: '12:30 PM onwards', start: 750, end: 840, desc: 'Daily sanctified meal distribution for visiting devotees' },
+    { title: 'Daily Mahamangalarathi & Hastodaka', time: '12:00 PM – 12:30 PM', start: 720, end: 750, desc: 'Grand afternoon aarthi, Hastodaka samarpanam & Phala Mantrakshate' },
   ];
 
   const eveningSlots = [
@@ -40,7 +39,7 @@ export const ScheduleSection: React.FC = () => {
             Today&apos;s Darshan &amp; Pooja Timings
           </h2>
           <p className="text-xs sm:text-sm text-[#5C4D44]">
-            Verified daily ritual timings, Mahamangalarathi, and sanctified Teertha Prasada at Rajajinagar Sannidhana.
+            Verified daily ritual timings, Mahamangalarathi, and Phala Mantrakshate at Rajajinagar Sannidhana.
           </p>
           <TempleArchMotif className="opacity-80" />
         </div>
@@ -154,7 +153,7 @@ export const ScheduleSection: React.FC = () => {
               {/* Note Ribbon */}
               <div className="p-3.5 rounded-2xl bg-[#FAF6EE] border border-[#C99A3D]/20 flex items-center gap-2 text-xs text-[#7A6B63]">
                 <CheckCircle2 className="w-4 h-4 text-[#C99A3D] shrink-0" />
-                <span>Teertha Prasada is distributed to all visiting devotees immediately following Mahamangalarathi.</span>
+                <span>Phala Mantrakshate and Teertha are distributed to all visiting devotees immediately following Mahamangalarathi.</span>
               </div>
             </div>
           </div>

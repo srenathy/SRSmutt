@@ -31,10 +31,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) 
     isDarshanOpen = true;
     nextEventTitle = 'Mahamangalarathi (12:00 PM)';
     targetTotalMinutes = 720;
-  } else if (currentTotalMinutes >= 750 && currentTotalMinutes < 840) {
-    // 12:30 PM - 2:00 PM
-    statusText = 'Teertha Prasada Serving';
-    isDarshanOpen = true;
+  } else if (currentTotalMinutes >= 750 && currentTotalMinutes < 1050) {
+    // 12:30 PM - 5:30 PM
+    statusText = 'Afternoon Closure';
+    isDarshanOpen = false;
     nextEventTitle = 'Evening Darshan (5:30 PM)';
     targetTotalMinutes = 1050;
   } else if (currentTotalMinutes >= 1050 && currentTotalMinutes < 1230) {
@@ -128,7 +128,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) 
 
             {/* Devotional Exposition */}
             <p className="text-sm sm:text-base text-[#5C4D44] leading-relaxed max-w-2xl mx-auto lg:mx-0">
-              Welcome to the sanctified Sannidhana housing the consecrated Mrittika Brindavana of Sri Raghavendra Swamy, established under the divine authority of Mulabagala Sri Sripadaraja Matha. Experience daily Panchamrutha Abhisheka, Hastodaka, and sanctified Teertha Prasada.
+              Welcome to the sanctified Sannidhana housing the consecrated Mrittika Brindavana of Sri Raghavendra Swamy, established under the divine authority of Mulabagala Sri Sripadaraja Matha. Experience daily Panchamrutha Abhisheka, Hastodaka, and sacred Mahamangalarathi.
             </p>
 
             {/* Live Darshan Status & Countdown Card */}
