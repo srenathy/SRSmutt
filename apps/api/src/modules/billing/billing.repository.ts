@@ -85,9 +85,14 @@ export class BillingRepository implements IBillingRepository {
     return createPaginatedResponse(data, total, page, limit);
   }
 
-  async findById(id: string): Promise<any | null> {
-    return this.prisma.receipt.findUnique({
-      where: { id },
+  async findById(idOrNumber: string): Promise<any | null> {
+    return this.prisma.receipt.findFirst({
+      where: {
+        OR: [
+          { id: idOrNumber },
+          { receiptNumber: idOrNumber }
+        ]
+      },
       include: {
         devotee: true,
         createdByUser: {

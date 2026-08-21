@@ -82,6 +82,7 @@ export async function buildApp() {
     api.register(async (shashwata) => registerShashwataSevaRoutes(shashwata, container.shashwataSevaController), { prefix: '/shashwata-sevas' });
     api.register(async (devotee) => registerDevoteeRoutes(devotee, container.devoteeController), { prefix: '/devotees' });
     api.register(async (billing) => registerBillingRoutes(billing, container.billingController), { prefix: '/receipts' });
+    api.register(async (billing) => registerBillingRoutes(billing, container.billingController), { prefix: '/billing' });
     api.register(async (dash) => registerDashboardRoutes(dash, container.dashboardController), { prefix: '/dashboard' });
     api.register(async (reports) => registerReportsRoutes(reports, container.reportsController), { prefix: '/reports' });
     api.register(async (backup) => registerBackupRoutes(backup, container.backupController), { prefix: '/backup' });

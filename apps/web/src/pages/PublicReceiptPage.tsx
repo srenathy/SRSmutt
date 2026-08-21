@@ -13,6 +13,12 @@ export const PublicReceiptPage: React.FC = () => {
   const { data: receipt, isLoading, error } = useQuery({
     queryKey: ['public-receipt', id],
     queryFn: async () => {
+      try {
+        const res = await apiClient.get(`/receipts/public/${id}`);
+        if (res.data?.data) return res.data.data;
+      } catch {
+        // Fallback to /billing/public
+      }
       const res = await apiClient.get(`/billing/public/${id}`);
       return res.data?.data;
     },

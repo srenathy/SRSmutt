@@ -30,6 +30,9 @@ export const App: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/devotee-register" element={<DevoteeRegisterPage />} />
         <Route path="/receipt/:id" element={<PublicReceiptPage />} />
+        <Route path="/receipts/:id" element={<PublicReceiptPage />} />
+        <Route path="/receipts/public/:id" element={<PublicReceiptPage />} />
+        <Route path="/public/receipt/:id" element={<PublicReceiptPage />} />
 
         {/* Devotee Portal Protected Route */}
         <Route
