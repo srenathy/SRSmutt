@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Search } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 
 interface VedicAutocompleteProps {
   label: string;
@@ -12,35 +12,31 @@ interface VedicAutocompleteProps {
 }
 
 /**
- * Fuzzy / Substring match score
+ * Fuzzy / Substring match score for searching Gotra, Nakshatra, Rashi
  */
 function fuzzyMatch(input: string, target: string): boolean {
-  if (!input) return true;
+  if (!input || input.trim() === '') return true;
   const cleanInput = input.toLowerCase().trim();
   const cleanTarget = target.toLowerCase().trim();
   if (cleanTarget.includes(cleanInput)) return true;
 
-  // Partial fuzzy matching for 3+ letters
-  if (cleanInput.length >= 3) {
-    let inputIdx = 0;
-    for (let i = 0; i < cleanTarget.length && inputIdx < cleanInput.length; i++) {
-      if (cleanTarget[i] === cleanInput[inputIdx]) {
-        inputIdx++;
-      }
+  // Substring / sequential character matching
+  let inputIdx = 0;
+  for (let i = 0; i < cleanTarget.length && inputIdx < cleanInput.length; i++) {
+    if (cleanTarget[i] === cleanInput[inputIdx]) {
+      inputIdx++;
     }
-    return inputIdx === cleanInput.length;
   }
-
-  return false;
+  return inputIdx === cleanInput.length;
 }
 
 export const VedicAutocomplete: React.FC<VedicAutocompleteProps> = ({
   label,
-  placeholder = 'Type to search...',
+  placeholder = 'Search or select...',
   value,
   onChange,
-  options,
-  minChars = 3,
+  options = [],
+  minChars = 0,
   required = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -74,12 +70,13 @@ export const VedicAutocomplete: React.FC<VedicAutocompleteProps> = ({
     setIsOpen(false);
   };
 
-  // Filter options based on fuzzy match
-  const filteredOptions = inputValue.trim().length >= minChars
-    ? options.filter((opt) => fuzzyMatch(inputValue, opt))
+  // Filter options based on any search input (no 3-letter restriction)
+  const trimmed = inputValue.trim();
+  const filteredOptions = trimmed.length >= minChars
+    ? options.filter((opt) => fuzzyMatch(trimmed, opt))
     : options;
 
-  const showDropdown = isOpen && (inputValue.trim().length >= minChars || filteredOptions.length > 0);
+  const showDropdown = isOpen;
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -97,9 +94,14 @@ export const VedicAutocomplete: React.FC<VedicAutocompleteProps> = ({
           required={required}
           className="w-full px-3.5 py-2 rounded-xl border border-turmeric/40 text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 bg-white pr-8 text-textInk font-medium"
         />
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-textInk/40 pointer-events-none">
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-textInk/40 hover:text-textInk transition"
+        >
           <ChevronDown className="w-4 h-4" />
-        </div>
+        </button>
       </div>
 
       {showDropdown && (

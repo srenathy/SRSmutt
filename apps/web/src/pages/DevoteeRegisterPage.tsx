@@ -223,7 +223,6 @@ export const DevoteeRegisterPage: React.FC = () => {
                       value={gotraVal}
                       onChange={(val) => setValue('gotra', val, { shouldValidate: true })}
                       options={gotras}
-                      minChars={3}
                     />
                   </div>
 
@@ -234,7 +233,6 @@ export const DevoteeRegisterPage: React.FC = () => {
                       value={nakshatraVal}
                       onChange={(val) => setValue('nakshatra', val, { shouldValidate: true })}
                       options={nakshatras}
-                      minChars={3}
                     />
                   </div>
 
@@ -245,7 +243,6 @@ export const DevoteeRegisterPage: React.FC = () => {
                       value={rashiVal}
                       onChange={(val) => setValue('rashi', val, { shouldValidate: true })}
                       options={rashis}
-                      minChars={3}
                     />
                   </div>
                 </div>

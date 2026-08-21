@@ -317,19 +317,13 @@ export const BillingPage: React.FC = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search by Name, Phone, Gotra, Nakshatra, or City (Type 3+ chars for fuzzy search)..."
+                  placeholder="Search by Name, Phone, Gotra, Nakshatra, or City..."
                   value={devoteeSearch}
                   onChange={(e) => setDevoteeSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-turmeric/40 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-kumkum/20 text-textInk font-medium bg-white"
                 />
                 <Search className="w-4 h-4 text-textInk/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
-
-              {devoteeSearch.trim().length > 0 && devoteeSearch.trim().length < 3 && (
-                <p className="text-[11px] text-turmeric-dark italic px-1">
-                  💡 Type at least 3 letters to activate fuzzy search suggestion dropdown.
-                </p>
-              )}
 
               <div className="max-h-56 overflow-y-auto divide-y divide-turmeric/10 border border-turmeric/20 rounded-xl bg-white shadow-xs">
                 {devoteesQuery.isLoading ? (
@@ -397,33 +391,30 @@ export const BillingPage: React.FC = () => {
               <div>
                 <VedicAutocomplete
                   label="Gotra"
-                  placeholder="Type 3+ letters to search Gotra..."
+                  placeholder="Search or select Gotra..."
                   value={newDevotee.gotra}
                   onChange={(val) => setNewDevotee({ ...newDevotee, gotra: val })}
                   options={gotras}
-                  minChars={3}
                 />
               </div>
 
               <div>
                 <VedicAutocomplete
                   label="Nakshatra"
-                  placeholder="Type 3+ letters to search Nakshatra..."
+                  placeholder="Search or select Nakshatra..."
                   value={newDevotee.nakshatra}
                   onChange={(val) => setNewDevotee({ ...newDevotee, nakshatra: val })}
                   options={nakshatras}
-                  minChars={3}
                 />
               </div>
 
               <div>
                 <VedicAutocomplete
                   label="Rashi"
-                  placeholder="Type 3+ letters to search Rashi..."
+                  placeholder="Search or select Rashi..."
                   value={newDevotee.rashi}
                   onChange={(val) => setNewDevotee({ ...newDevotee, rashi: val })}
                   options={rashis}
-                  minChars={3}
                 />
               </div>
 
@@ -662,9 +653,15 @@ export const BillingPage: React.FC = () => {
                         <input
                           type="number"
                           min={0}
-                          value={item.amount}
-                          onChange={(e) => handleAmountChange(idx, parseFloat(e.target.value))}
-                          className="w-24 px-2 py-1 border border-turmeric/20 rounded-lg text-xs text-right font-mono"
+                          value={item.amount === 0 ? '' : item.amount}
+                          placeholder="0"
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const val = raw === '' ? 0 : parseFloat(raw);
+                            handleAmountChange(idx, isNaN(val) ? 0 : val);
+                          }}
+                          className="w-24 px-2 py-1 border border-turmeric/20 rounded-lg text-xs text-right font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-kumkum/40"
                         />
                       </td>
                       <td className="p-3 text-right font-mono font-bold text-kumkum">

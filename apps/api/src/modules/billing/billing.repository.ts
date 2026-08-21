@@ -162,18 +162,12 @@ export class BillingRepository implements IBillingRepository {
   }
 
   async findSankalpaList(dateStr: string, sevaId?: string): Promise<any[]> {
-    const targetDate = new Date(dateStr);
-    const start = new Date(dateStr);
-    start.setHours(0, 0, 0, 0);
+    const parts = dateStr.split('-');
+    const targetM = parseInt(parts[1], 10);
+    const targetD = parseInt(parts[2], 10);
 
-    const end = new Date(dateStr);
-    end.setHours(23, 59, 59, 999);
-
-    const targetMonth = targetDate.getMonth() + 1;
-    const targetDay = targetDate.getDate();
-
-    // 1. Regular Sevas matching sevaDate or createdAt on dateStr (excluding Hundi / Direct Income)
-    const regularItems = await this.prisma.receiptItem.findMany({
+    // Fetch all active seva receipt items
+    const allItems = await this.prisma.receiptItem.findMany({
       where: {
         receipt: {
           cancelledAt: null,
@@ -183,13 +177,6 @@ export class BillingRepository implements IBillingRepository {
             NOT: { name: { contains: 'General Temple Income' } }
           }
         },
-        OR: [
-          { sevaDate: { gte: start, lte: end } },
-          {
-            sevaDate: null,
-            receipt: { createdAt: { gte: start, lte: end } }
-          }
-        ],
         ...(sevaId ? { sevaId } : {})
       },
       include: {
@@ -200,40 +187,47 @@ export class BillingRepository implements IBillingRepository {
       orderBy: { receipt: { createdAt: 'asc' } }
     });
 
-    // 2. Annual Shashwata Seva recurrence (same month & day)
-    const shashwataItems = await this.prisma.receiptItem.findMany({
-      where: {
-        receipt: {
-          cancelledAt: null,
-          kind: { not: 'HUNDI_COLLECTION' },
-          devotee: {
-            phone: { not: '0000000000' },
-            NOT: { name: { contains: 'General Temple Income' } }
-          }
-        },
-        shashwataSevaId: { not: null },
-        ...(sevaId ? { sevaId } : {})
-      },
-      include: {
-        receipt: { include: { devotee: true } },
-        seva: true,
-        shashwataSeva: true
+    const formatToDateStr = (raw: Date | string | null | undefined): string => {
+      if (!raw) return '';
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const formatToLocalDateStr = (raw: Date | string | null | undefined): string => {
+      if (!raw) return '';
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const matchedItems = allItems.filter((item) => {
+      // 1. Annual Shashwata Seva recurrence (same month & day)
+      if (item.shashwataSevaId || item.receipt.kind === 'SHASHWATA_SEVA') {
+        const rawDate = item.sevaDate || item.receipt.sevaDate || item.receipt.createdAt;
+        if (!rawDate) return false;
+        const d = new Date(rawDate);
+        const itemM_UTC = d.getUTCMonth() + 1;
+        const itemD_UTC = d.getUTCDate();
+        const itemM_Loc = d.getMonth() + 1;
+        const itemD_Loc = d.getDate();
+        return (itemM_UTC === targetM && itemD_UTC === targetD) || (itemM_Loc === targetM && itemD_Loc === targetD);
       }
+
+      // 2. Regular Seva: match exact scheduled pooja performance date
+      const scheduledDate = item.sevaDate || item.receipt.sevaDate || item.receipt.createdAt;
+      const utcStr = formatToDateStr(scheduledDate);
+      const locStr = formatToLocalDateStr(scheduledDate);
+
+      return utcStr === dateStr || locStr === dateStr;
     });
 
-    const annualMatches = shashwataItems.filter((item) => {
-      const dateVal = item.sevaDate || item.receipt.createdAt;
-      if (!dateVal) return false;
-      const d = new Date(dateVal);
-      return d.getMonth() + 1 === targetMonth && d.getDate() === targetDay;
-    });
-
-    // Combine and deduplicate by item id
-    const map = new Map<string, any>();
-    for (const item of [...regularItems, ...annualMatches]) {
-      map.set(item.id, item);
-    }
-
-    return Array.from(map.values());
+    return matchedItems;
   }
 }
