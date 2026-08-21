@@ -1104,39 +1104,30 @@ export const ReportsPage: React.FC = () => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Department Details Cards (with Over-Budget Reason Notes) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-turmeric/20">
-                  {deptRows.map((d) => (
-                    <div key={d.departmentName} className={`p-4 rounded-xl border transition-all ${
-                      d.isOver ? 'bg-red-50/60 border-red-200' : 'bg-ivory/30 border-turmeric/20'
-                    }`}>
-                      <div className="flex items-center justify-between text-xs font-semibold">
-                        <span className="font-bold text-textInk">{d.departmentName}</span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-                          d.isOver ? 'bg-red-100 text-red-800 border-red-200' : d.status === 'At Limit' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                        }`}>
-                          {d.isOver ? `OVER BUDGET (+₹${d.overAmt.toLocaleString('en-IN')})` : d.status.toUpperCase()}
-                        </span>
-                      </div>
-
-                      <div className="mt-2 text-xs text-textInk/70 flex items-center justify-between font-mono">
-                        <span>Spent: <strong className={d.isOver ? 'text-red-600' : 'text-kumkum'}>₹{d.spent.toLocaleString('en-IN')}</strong></span>
-                        <span>Cap: <strong>₹{d.monthlyCapAmount.toLocaleString('en-IN')}</strong></span>
-                        <span>Util: <strong className={d.isOver ? 'text-red-600' : 'text-emerald-700'}>{d.utilPct.toFixed(1)}%</strong></span>
-                      </div>
-
-                      {d.isOver && d.vouchers.some((v: any) => v.overBudgetReason) && (
-                        <div className="mt-2.5 text-[11px] bg-red-100/70 p-2 rounded-lg border border-red-200 text-red-900 flex items-start gap-1.5">
-                          <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold">Over-Budget Reason:</span>
-                            <span className="ml-1 font-medium">{d.vouchers.find((v: any) => v.overBudgetReason)?.overBudgetReason}</span>
+                {/* Over-Budget Alert Callouts (Only shown if departments exceed cap) */}
+                {deptRows.some((d) => d.isOver && d.vouchers.some((v: any) => v.overBudgetReason)) && (
+                  <div className="pt-4 border-t border-turmeric/20 space-y-2">
+                    <h4 className="font-bold text-xs text-red-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                      <span>Over-Budget Department Incident Notes</span>
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {deptRows
+                        .filter((d) => d.isOver && d.vouchers.some((v: any) => v.overBudgetReason))
+                        .map((d) => (
+                          <div key={d.departmentName} className="p-3 bg-red-50 rounded-xl border border-red-200 text-xs space-y-1">
+                            <div className="flex items-center justify-between font-bold text-red-950">
+                              <span>{d.departmentName}</span>
+                              <span className="text-red-700 font-mono">+₹{d.overAmt.toLocaleString('en-IN')} over cap</span>
+                            </div>
+                            <p className="text-[11px] text-red-900 font-medium">
+                              <strong>Reason Note:</strong> {d.vouchers.find((v: any) => v.overBudgetReason)?.overBudgetReason}
+                            </p>
                           </div>
-                        </div>
-                      )}
+                        ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           );
