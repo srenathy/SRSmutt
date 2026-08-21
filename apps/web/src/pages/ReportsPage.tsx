@@ -584,11 +584,11 @@ export const ReportsPage: React.FC = () => {
             <button
               onClick={() => setExportOpen(!exportOpen)}
               disabled={isLoading}
-              className="bg-kumkum hover:bg-kumkum-light text-ivory font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 shadow-md disabled:opacity-40"
+              className="bg-[#FCF8F0] hover:bg-[#F5ECE0] text-[#6B1616] font-semibold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 border border-[#D4AF37]/40 shadow-xs disabled:opacity-40"
             >
-              <Download className="w-4 h-4" />
-              <span>Export Report</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
+              <Download className="w-3.5 h-3.5" />
+              <span>Export</span>
+              <ChevronDown className={`w-3 h-3 transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Menu */}
@@ -637,13 +637,13 @@ export const ReportsPage: React.FC = () => {
             )}
           </div>
 
-          {/* Secondary Outlined Print Button */}
+          {/* Primary Solid Print Button */}
           <button
             onClick={handlePrintReport}
-            className="bg-white border border-turmeric/40 text-kumkum font-bold px-4 py-2 rounded-xl text-xs hover:bg-ivory transition-colors flex items-center gap-1.5 shadow-xs"
+            className="bg-[#6B1616] hover:bg-[#541010] text-white font-semibold px-4 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-xs"
           >
-            <Printer className="w-4 h-4" />
-            Print Report
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print Report</span>
           </button>
         </div>
       </div>
@@ -855,71 +855,98 @@ export const ReportsPage: React.FC = () => {
       {reportType === 'department-budget' ? (
         (() => {
           const { deptRows, totalBudgeted, totalSpent, overBudgetCount, overallUtilPct } = getDeptReportData();
+          const overDeptsList = deptRows.filter((d) => d.isOver).map((d) => d.departmentName).join(', ');
+
+          // Derive category breakdown for current month
+          const rawExpenses: any[] = allExpensesQuery.data || [];
+          const currentMonthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+          const currentMonthExpenses = rawExpenses.filter((e) => {
+            const isApp = e.status === 'APPROVED';
+            const eMonth = e.createdAt ? new Date(e.createdAt).toISOString().slice(0, 7) : currentMonthKey;
+            return isApp && eMonth === currentMonthKey;
+          });
+
+          const catMap = new Map<string, { title: string; amount: number; count: number; dept: string }>();
+          for (const e of currentMonthExpenses) {
+            const key = e.title || e.category || 'Other Expense';
+            const existing = catMap.get(key) || { title: key, amount: 0, count: 0, dept: e.departmentName || e.category || 'General' };
+            existing.amount += Number(e.amount || 0);
+            existing.count += 1;
+            catMap.set(key, existing);
+          }
+          const currentMonthCats = Array.from(catMap.values()).sort((a, b) => b.amount - a.amount);
+
           return (
             <div className="space-y-6">
-              {/* Sticky Zone Sub-Nav */}
-              <div className="sticky top-0 z-20 bg-ivory-light/95 backdrop-blur-sm p-3 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between no-print">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-extrabold text-kumkum uppercase tracking-wider">Report Zones:</span>
-                  <a href="#dept-summary-strip" className="text-xs font-bold text-textInk hover:text-kumkum bg-white px-3 py-1.5 rounded-xl border border-turmeric/20 shadow-2xs">
+              {/* Sticky Zone Sub-Nav & Filter Bar */}
+              <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm p-3 rounded-2xl border border-turmeric/20 shadow-xs flex flex-wrap items-center justify-between gap-3 no-print">
+                <div className="flex items-center gap-2">
+                  <a href="#dept-summary-strip" className="text-xs font-bold text-textInk hover:text-kumkum bg-ivory/80 px-3 py-1.5 rounded-xl border border-turmeric/20 transition-colors">
                     1. Summary Strip
                   </a>
-                  <a href="#dept-budget-table" className="text-xs font-bold text-textInk hover:text-kumkum bg-white px-3 py-1.5 rounded-xl border border-turmeric/20 shadow-2xs">
+                  <a href="#dept-budget-table" className="text-xs font-bold text-textInk hover:text-kumkum bg-ivory/80 px-3 py-1.5 rounded-xl border border-turmeric/20 transition-colors">
                     2. Department Budget Table
                   </a>
-                  <a href="#dept-comparison-chart" className="text-xs font-bold text-textInk hover:text-kumkum bg-white px-3 py-1.5 rounded-xl border border-turmeric/20 shadow-2xs">
+                  <a href="#dept-comparison-chart" className="text-xs font-bold text-textInk hover:text-kumkum bg-ivory/80 px-3 py-1.5 rounded-xl border border-turmeric/20 transition-colors">
                     3. Cap vs Actual Comparison
                   </a>
                 </div>
-                <span className="text-xs font-bold text-textInk/60 font-mono">
-                  {selectedYear}-{String(selectedMonth).padStart(2, '0')}
-                </span>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
+                      className="px-3 py-1.5 bg-ivory/80 border border-turmeric/30 rounded-xl text-xs font-semibold text-textInk focus:outline-none"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          This Month {new Date(2026, i, 1).toLocaleString('default', { month: 'short' })} {selectedYear}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
               {/* 1. Summary Strip (4 Cards) */}
-              <div id="dept-summary-strip" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div id="dept-summary-strip" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Card 1: Total Budgeted */}
-                <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-textInk/60">Total Monthly Budgeted</p>
-                  <h3 className="font-mono text-2xl font-bold text-kumkum">
-                    ₹{totalBudgeted.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <div className="bg-white p-5 rounded-2xl border border-turmeric/20 shadow-xs space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-textInk/60">TOTAL MONTHLY BUDGETED</p>
+                  <h3 className="font-display text-2xl font-bold text-textInk">
+                    ₹{totalBudgeted.toLocaleString('en-IN')}
                   </h3>
-                  <p className="text-[10px] text-textInk/50 font-medium">Combined caps for active departments</p>
+                  <p className="text-xs text-textInk/60">Combined caps · {deptRows.length} active departments</p>
                 </div>
 
                 {/* Card 2: Total Spent */}
-                <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-textInk/60">Total Spent (This Month)</p>
-                  <h3 className="font-mono text-2xl font-bold text-red-600">
-                    ₹{totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <div className="bg-white p-5 rounded-2xl border border-turmeric/20 shadow-xs space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-textInk/60">TOTAL SPENT (THIS MONTH)</p>
+                  <h3 className="font-display text-2xl font-bold text-kumkum">
+                    ₹{totalSpent.toLocaleString('en-IN')}
                   </h3>
-                  <p className="text-[10px] text-textInk/50 font-medium">Sum of approved department expenditures</p>
+                  <p className="text-xs text-textInk/60">Sum of approved department expenditures</p>
                 </div>
 
                 {/* Card 3: Departments Over Budget */}
-                <div className={`p-5 rounded-2xl border shadow-sm space-y-1 ${
-                  overBudgetCount > 0 ? 'bg-red-50/70 border-red-200 text-red-950' : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-                }`}>
-                  <p className="text-[11px] font-bold uppercase tracking-wider opacity-70">Departments Over Budget</p>
-                  <h3 className={`font-mono text-2xl font-bold ${overBudgetCount > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+                <div className="bg-white p-5 rounded-2xl border border-turmeric/20 shadow-xs space-y-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-textInk/60">DEPARTMENTS OVER BUDGET</p>
+                  <h3 className={`font-display text-2xl font-bold ${overBudgetCount > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
                     {overBudgetCount} {overBudgetCount === 1 ? 'Department' : 'Departments'}
                   </h3>
-                  <p className="text-[10px] opacity-70 font-medium">
-                    {overBudgetCount > 0 ? 'Requires reason note audit review' : 'All departments within allocated caps'}
+                  <p className="text-xs text-textInk/60 truncate">
+                    {overBudgetCount > 0 ? `${overDeptsList} exceeded their cap` : 'All departments within allocated caps'}
                   </p>
                 </div>
 
                 {/* Card 4: Overall Utilization % */}
-                <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-textInk/60">Overall Utilization</p>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      overallUtilPct >= 100 ? 'bg-red-100 text-red-800' : overallUtilPct >= 80 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {overallUtilPct.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-ivory rounded-full h-2.5 overflow-hidden border border-turmeric/20">
+                <div className="bg-white p-5 rounded-2xl border border-turmeric/20 shadow-xs space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-textInk/60">OVERALL UTILIZATION</p>
+                  <h3 className="font-display text-2xl font-bold text-textInk">
+                    {overallUtilPct.toFixed(1)}%
+                  </h3>
+                  <div className="w-full bg-[#EBE3D0] rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
                         overallUtilPct >= 100 ? 'bg-red-600' : overallUtilPct >= 80 ? 'bg-amber-500' : 'bg-emerald-600'
@@ -927,230 +954,234 @@ export const ReportsPage: React.FC = () => {
                       style={{ width: `${Math.min(100, overallUtilPct)}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-textInk/50 font-medium">Overall budget consumed</p>
                 </div>
               </div>
 
               {/* 2. Department Budget Table */}
-              <div id="dept-budget-table" className="bg-white rounded-2xl border border-turmeric/30 shadow-sm overflow-hidden space-y-0">
-                <div className="p-4 bg-ivory/60 border-b border-turmeric/20 flex items-center justify-between">
-                  <h3 className="font-display font-bold text-sm text-kumkum flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-kumkum" />
-                    <span>Department Budget Caps & Expense Tracking</span>
+              <div id="dept-budget-table" className="space-y-3">
+                <div className="flex items-center gap-2 border-l-4 border-kumkum pl-3">
+                  <h3 className="font-display font-bold text-base text-kumkum">
+                    Department Budget Caps & Expense Tracking
                   </h3>
-                  <span className="text-xs font-semibold text-textInk/60">{deptRows.length} active departments</span>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-ivory text-textInk/70 font-semibold border-b border-turmeric/20 text-[10px] uppercase">
-                      <tr>
-                        <th className="p-4">Department Name</th>
-                        <th className="p-4 text-right">Monthly Cap (₹)</th>
-                        <th className="p-4 text-right">Spent (₹)</th>
-                        <th className="p-4 text-right">Remaining (₹)</th>
-                        <th className="p-4">Utilization %</th>
-                        <th className="p-4 text-center">Status</th>
-                        <th className="p-4 text-right">Vouchers</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-turmeric/10 font-medium">
-                      {deptRows.map((row) => (
-                        <React.Fragment key={row.departmentName}>
-                          <tr className={`hover:bg-ivory/40 transition-colors ${row.isOver ? 'bg-red-50/30' : ''}`}>
-                            <td className="p-4 font-bold text-textInk flex items-center gap-2">
-                              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                                row.status === 'Over Budget' ? 'bg-red-600' : row.status === 'At Limit' ? 'bg-amber-500' : 'bg-emerald-600'
-                              }`} />
-                              {row.departmentName}
-                            </td>
-                            <td className="p-4 text-right font-mono font-semibold text-textInk/80">
-                              ₹{row.monthlyCapAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                            </td>
-                            <td className="p-4 text-right font-mono font-bold text-kumkum">
-                              ₹{row.spent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                            </td>
-                            <td className={`p-4 text-right font-mono font-bold ${row.remaining < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
-                              {row.remaining < 0 ? `-₹${Math.abs(row.remaining).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : `₹${row.remaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-[11px] w-12 text-right">{row.utilPct.toFixed(1)}%</span>
-                                <div className="w-24 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20 shrink-0">
-                                  <div
-                                    className={`h-full rounded-full ${
-                                      row.utilPct >= 100 ? 'bg-red-600' : row.utilPct >= 80 ? 'bg-amber-500' : 'bg-emerald-600'
-                                    }`}
-                                    style={{ width: `${Math.min(100, row.utilPct)}%` }}
-                                  />
-                                </div>
-                                {row.isOver && (
-                                  <span className="text-[10px] text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded">
-                                    +₹{row.overAmt.toLocaleString('en-IN')}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                                row.status === 'Over Budget'
-                                  ? 'bg-red-100 text-red-800 border-red-200'
-                                  : row.status === 'At Limit'
-                                  ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                  : 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                              }`}>
-                                {row.status.toUpperCase()}
-                              </span>
-                            </td>
-                            <td className="p-4 text-right">
-                              <button
-                                type="button"
-                                onClick={() => setExpandedDept(expandedDept === row.departmentName ? null : row.departmentName)}
-                                className="px-3 py-1 bg-ivory hover:bg-turmeric/20 border border-turmeric/30 rounded-lg text-[11px] font-bold text-kumkum transition-colors inline-flex items-center gap-1"
-                              >
-                                <span>Vouchers ({row.vouchers.length})</span>
-                                <ChevronDown className={`w-3 h-3 transition-transform ${expandedDept === row.departmentName ? 'rotate-180' : ''}`} />
-                              </button>
-                            </td>
-                          </tr>
-
-                          {/* Expanded Voucher Drilldown Row */}
-                          {expandedDept === row.departmentName && (
-                            <tr>
-                              <td colSpan={7} className="p-4 bg-ivory/50 border-y border-turmeric/20">
-                                <div className="space-y-3">
-                                  <h4 className="font-bold text-xs text-kumkum flex items-center gap-1.5">
-                                    <span>Vouchers Logged Under {row.departmentName}</span>
-                                    <span className="text-[10px] text-textInk/60 font-mono font-normal">({row.vouchers.length} records)</span>
-                                  </h4>
-
-                                  {row.vouchers.length === 0 ? (
-                                    <p className="text-xs text-textInk/50 italic p-2">No expenditure vouchers recorded for this department in current month.</p>
-                                  ) : (
-                                    <table className="w-full text-left text-xs bg-white rounded-xl border border-turmeric/20 overflow-hidden">
-                                      <thead className="bg-ivory text-textInk/70 font-semibold border-b border-turmeric/20 text-[10px] uppercase">
-                                        <tr>
-                                          <th className="p-2.5">Voucher #</th>
-                                          <th className="p-2.5">Date</th>
-                                          <th className="p-2.5">Expense Title</th>
-                                          <th className="p-2.5">Payee / Vendor</th>
-                                          <th className="p-2.5">Mode</th>
-                                          <th className="p-2.5 text-right">Amount (₹)</th>
-                                          <th className="p-2.5">Over-Budget Reason / Notes</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody className="divide-y divide-turmeric/10">
-                                        {row.vouchers.map((v: any) => (
-                                          <tr key={v.id} className="hover:bg-ivory/30">
-                                            <td className="p-2.5 font-mono font-bold text-kumkum">{v.voucherNumber}</td>
-                                            <td className="p-2.5 text-textInk/70">
-                                              {new Date(v.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                                            </td>
-                                            <td className="p-2.5 font-bold text-textInk">{v.title}</td>
-                                            <td className="p-2.5 text-textInk/80">{v.payee || '-'}</td>
-                                            <td className="p-2.5">
-                                              <span className="px-2 py-0.5 rounded bg-ivory border border-turmeric/20 font-bold text-[10px]">
-                                                {v.paymentMode}
-                                              </span>
-                                            </td>
-                                            <td className="p-2.5 text-right font-mono font-bold text-red-600">
-                                              ₹{Number(v.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                            </td>
-                                            <td className="p-2.5 text-[11px] text-textInk/80">
-                                              {v.isOverBudget ? (
-                                                <span className="text-red-700 font-medium bg-red-50 p-1.5 rounded border border-red-200 block">
-                                                  ⚠️ {v.overBudgetReason || 'Cap Exceeded'}
-                                                </span>
-                                              ) : (
-                                                v.description || '-'
-                                              )}
-                                            </td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  )}
+                <div className="bg-white rounded-2xl border border-turmeric/20 shadow-xs overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-[#F4EBD9] text-[#63534B] font-bold text-[11px] uppercase tracking-wider border-b border-turmeric/20">
+                        <tr>
+                          <th className="p-3.5">DEPARTMENT</th>
+                          <th className="p-3.5 text-right">MONTHLY CAP</th>
+                          <th className="p-3.5 text-right">SPENT</th>
+                          <th className="p-3.5 text-right">REMAINING</th>
+                          <th className="p-3.5">UTILIZATION</th>
+                          <th className="p-3.5 text-center">STATUS</th>
+                          <th className="p-3.5 text-right">VOUCHERS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-turmeric/10 font-medium">
+                        {deptRows.map((row) => (
+                          <React.Fragment key={row.departmentName}>
+                            <tr className={`hover:bg-ivory/40 transition-colors ${row.isOver ? 'bg-red-50/20' : ''}`}>
+                              <td className="p-3.5 font-bold text-textInk flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                  row.status === 'Over Budget' ? 'bg-red-600' : row.status === 'At Limit' ? 'bg-amber-500' : 'bg-emerald-600'
+                                }`} />
+                                {row.departmentName}
+                              </td>
+                              <td className="p-3.5 text-right font-mono font-semibold text-textInk/80">
+                                ₹{row.monthlyCapAmount.toLocaleString('en-IN')}
+                              </td>
+                              <td className="p-3.5 text-right font-mono font-bold text-kumkum">
+                                ₹{row.spent.toLocaleString('en-IN')}
+                              </td>
+                              <td className={`p-3.5 text-right font-mono font-bold ${row.remaining < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                                ₹{row.remaining < 0 ? `-${Math.abs(row.remaining).toLocaleString('en-IN')}` : row.remaining.toLocaleString('en-IN')}
+                              </td>
+                              <td className="p-3.5">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-24 bg-[#EBE3D0] rounded-full h-2 overflow-hidden shrink-0">
+                                    <div
+                                      className={`h-full rounded-full ${
+                                        row.utilPct >= 100 ? 'bg-red-600' : row.utilPct >= 80 ? 'bg-amber-500' : 'bg-emerald-600'
+                                      }`}
+                                      style={{ width: `${Math.min(100, row.utilPct)}%` }}
+                                    />
+                                  </div>
+                                  <span className="font-mono font-bold text-[11px] text-textInk">{row.utilPct.toFixed(1)}%</span>
                                 </div>
                               </td>
+                              <td className="p-3.5 text-center">
+                                <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold ${
+                                  row.status === 'Over Budget'
+                                    ? 'bg-red-100 text-red-800'
+                                    : row.status === 'At Limit'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-emerald-100 text-emerald-800'
+                                }`}>
+                                  {row.status}
+                                </span>
+                              </td>
+                              <td className="p-3.5 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedDept(expandedDept === row.departmentName ? null : row.departmentName)}
+                                  className="px-2.5 py-1 bg-ivory hover:bg-turmeric/20 border border-turmeric/30 rounded-lg text-[11px] font-bold text-kumkum transition-colors inline-flex items-center gap-1"
+                                >
+                                  <span>Vouchers ({row.vouchers.length})</span>
+                                  <ChevronDown className={`w-3 h-3 transition-transform ${expandedDept === row.departmentName ? 'rotate-180' : ''}`} />
+                                </button>
+                              </td>
                             </tr>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </tbody>
-                  </table>
+
+                            {/* Expanded Voucher Drilldown Row */}
+                            {expandedDept === row.departmentName && (
+                              <tr>
+                                <td colSpan={7} className="p-4 bg-ivory/50 border-y border-turmeric/20">
+                                  <div className="space-y-3">
+                                    <h4 className="font-bold text-xs text-kumkum flex items-center gap-1.5">
+                                      <span>Vouchers Logged Under {row.departmentName}</span>
+                                      <span className="text-[10px] text-textInk/60 font-mono font-normal">({row.vouchers.length} records)</span>
+                                    </h4>
+
+                                    {row.vouchers.length === 0 ? (
+                                      <p className="text-xs text-textInk/50 italic p-2">No expenditure vouchers recorded for this department in current month.</p>
+                                    ) : (
+                                      <table className="w-full text-left text-xs bg-white rounded-xl border border-turmeric/20 overflow-hidden">
+                                        <thead className="bg-ivory text-textInk/70 font-semibold border-b border-turmeric/20 text-[10px] uppercase">
+                                          <tr>
+                                            <th className="p-2.5">Voucher #</th>
+                                            <th className="p-2.5">Date</th>
+                                            <th className="p-2.5">Expense Title</th>
+                                            <th className="p-2.5">Payee / Vendor</th>
+                                            <th className="p-2.5">Mode</th>
+                                            <th className="p-2.5 text-right">Amount (₹)</th>
+                                            <th className="p-2.5">Over-Budget Reason / Notes</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-turmeric/10">
+                                          {row.vouchers.map((v: any) => (
+                                            <tr key={v.id} className="hover:bg-ivory/30">
+                                              <td className="p-2.5 font-mono font-bold text-kumkum">{v.voucherNumber}</td>
+                                              <td className="p-2.5 text-textInk/70">
+                                                {new Date(v.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                              </td>
+                                              <td className="p-2.5 font-bold text-textInk">{v.title}</td>
+                                              <td className="p-2.5 text-textInk/80">{v.payee || '-'}</td>
+                                              <td className="p-2.5">
+                                                <span className="px-2 py-0.5 rounded bg-ivory border border-turmeric/20 font-bold text-[10px]">
+                                                  {v.paymentMode}
+                                                </span>
+                                              </td>
+                                              <td className="p-2.5 text-right font-mono font-bold text-red-600">
+                                                ₹{Number(v.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                              </td>
+                                              <td className="p-2.5 text-[11px] text-textInk/80">
+                                                {v.isOverBudget ? (
+                                                  <span className="text-red-700 font-medium bg-red-50 p-1.5 rounded border border-red-200 block">
+                                                    ⚠️ {v.overBudgetReason || 'Cap Exceeded'}
+                                                  </span>
+                                                ) : (
+                                                  v.description || '-'
+                                                )}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
 
-              {/* 3. Cap vs Actual Visual Comparison Chart (Recharts Proportional Scaling) */}
-              <div id="dept-comparison-chart" className="bg-white rounded-2xl border border-turmeric/30 shadow-sm p-6 space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-turmeric/20 pb-4">
-                  <div>
-                    <h3 className="font-display font-bold text-base text-kumkum flex items-center gap-2">
-                      <PieChartIcon className="w-5 h-5 text-kumkum" />
-                      <span>Department Monthly Cap vs Actual Spend Chart</span>
-                    </h3>
-                    <p className="text-xs text-textInk/60 mt-0.5">
-                      Proportions mathematically scaled against allocated monthly caps. Label text renders outside bars to prevent clipping.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-xs font-semibold shrink-0">
+              {/* 3. Cap vs Actual Visual Comparison (Smooth Proportionate Horizontal Bars) */}
+              <div id="dept-comparison-chart" className="bg-white rounded-2xl border border-turmeric/20 shadow-xs p-6 space-y-6">
+                {/* Legend Header */}
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-turmeric/20 pb-4">
+                  <div className="flex flex-wrap items-center gap-5 text-xs font-medium text-textInk">
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded bg-amber-400 border border-amber-500" /> Allocated Cap
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                      <span>Actual Spend (within cap)</span>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded bg-kumkum" /> Actual Spent
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-700" />
+                      <span>Actual Spend (over cap)</span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedTileId('dept-comparison-chart')}
-                      className="p-1.5 rounded-lg border border-turmeric/30 bg-ivory text-kumkum hover:bg-turmeric/20 transition-colors shadow-2xs"
-                      title="Enlarge Fullscreen"
-                    >
-                      <Maximize2 className="w-4 h-4" />
-                    </button>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-1 h-3.5 bg-turmeric-dark rounded-xs" />
+                      <span>Cap Threshold Marker</span>
+                    </span>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setExpandedTileId('dept-comparison-chart')}
+                    className="p-1.5 rounded-lg border border-turmeric/30 bg-ivory text-kumkum hover:bg-turmeric/20 transition-colors shadow-2xs"
+                    title="Enlarge Fullscreen"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Proportional Recharts Bar Chart */}
-                <div className="w-full h-[420px] pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={deptRows.map((d) => ({
-                        departmentName: d.departmentName.length > 18 ? d.departmentName.slice(0, 16) + '…' : d.departmentName,
-                        fullDeptName: d.departmentName,
-                        'Allocated Cap': d.monthlyCapAmount,
-                        'Actual Spent': d.spent,
-                        isOver: d.isOver
-                      }))}
-                      layout="vertical"
-                      margin={{ top: 10, right: 40, left: 10, bottom: 10 }}
-                      barGap={4}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e6dcc4" />
-                      <XAxis
-                        type="number"
-                        tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                        stroke="#6b1616"
-                        fontSize={11}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="departmentName"
-                        width={130}
-                        tick={{ fontSize: 11, fontWeight: 'bold', fill: '#4A3B32' }}
-                      />
-                      <Tooltip
-                        formatter={(value: any, name: any) => [`₹${Number(value).toLocaleString('en-IN')}`, name]}
-                        labelFormatter={(label, items) => items?.[0]?.payload?.fullDeptName || label}
-                        contentStyle={{ backgroundColor: '#fdfaf3', borderColor: '#e6dcc4', borderRadius: '12px', fontSize: '12px', fontWeight: '600' }}
-                      />
-                      <Bar dataKey="Allocated Cap" fill="#FCD34D" radius={[0, 4, 4, 0]} barSize={14} />
-                      <Bar dataKey="Actual Spent" fill="#8C2F22" radius={[0, 4, 4, 0]} barSize={14} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                {/* Per Department Custom Proportionate Bars */}
+                <div className="space-y-6 pt-2">
+                  {deptRows.map((d) => {
+                    const maxScale = Math.max(d.monthlyCapAmount, d.spent, 1);
+                    const spentPct = Math.min(100, (d.spent / maxScale) * 100);
+                    const capPct = Math.min(100, (d.monthlyCapAmount / maxScale) * 100);
+
+                    return (
+                      <div key={d.departmentName} className="space-y-1.5">
+                        {/* Top Line: Department Name & Status */}
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-textInk text-sm">{d.departmentName}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            d.isOver
+                              ? 'bg-red-100 text-red-800'
+                              : d.status === 'At Limit'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {d.isOver ? `Over Budget +₹${d.overAmt.toLocaleString('en-IN')}` : d.status}
+                          </span>
+                        </div>
+
+                        {/* Track Bar with Threshold Notch */}
+                        <div className="w-full bg-[#F3EDD9] h-3.5 rounded-full relative overflow-hidden">
+                          {/* Actual Spend Fill */}
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              d.isOver ? 'bg-[#8C2F22]' : 'bg-[#15803D]'
+                            }`}
+                            style={{ width: `${spentPct}%` }}
+                          />
+                          {/* Cap Threshold Marker */}
+                          <div
+                            className="absolute top-0 bottom-0 w-1 bg-[#C99A3D] z-10"
+                            style={{ left: `${capPct}%` }}
+                            title={`Cap Threshold: ₹${d.monthlyCapAmount.toLocaleString('en-IN')}`}
+                          />
+                        </div>
+
+                        {/* Bottom Line: Spent & Cap Numbers */}
+                        <div className="flex items-center justify-between text-xs text-textInk/60 font-medium font-mono">
+                          <span>Spent ₹{d.spent.toLocaleString('en-IN')}</span>
+                          <span>Cap ₹{d.monthlyCapAmount.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Over-Budget Alert Callouts (Only shown if departments exceed cap) */}
+                {/* Over-Budget Alert Callouts */}
                 {deptRows.some((d) => d.isOver && d.vouchers.some((v: any) => v.overBudgetReason)) && (
                   <div className="pt-4 border-t border-turmeric/20 space-y-2">
                     <h4 className="font-bold text-xs text-red-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -1174,6 +1205,43 @@ export const ReportsPage: React.FC = () => {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* 4. Expenditure Category Breakdown Cards */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 border-l-4 border-kumkum pl-3">
+                  <h3 className="font-display font-bold text-base text-kumkum">
+                    Expenditure Category Breakdown
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {currentMonthCats.slice(0, 6).map((cat) => {
+                    const totalMonthExp = totalSpent > 0 ? totalSpent : 1;
+                    const catPct = ((cat.amount / totalMonthExp) * 100).toFixed(1);
+
+                    return (
+                      <div key={cat.title} className="bg-white p-4 rounded-2xl border border-turmeric/20 shadow-xs flex items-center gap-3.5 relative overflow-hidden">
+                        <div className="w-11 h-11 rounded-xl bg-[#FBF3E3] border border-[#E8DEC8] flex items-center justify-center text-kumkum shrink-0">
+                          {getCategoryIcon(cat.title)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-textInk truncate">{cat.title}</p>
+                          <p className="font-display text-lg font-bold text-kumkum mt-0.5">
+                            ₹{cat.amount.toLocaleString('en-IN')}
+                          </p>
+                          <p className="text-xs text-textInk/60">
+                            {cat.count} {cat.count === 1 ? 'voucher' : 'vouchers'} · {cat.dept}
+                          </p>
+                        </div>
+                        {/* Bottom Gold Progress Line */}
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#F3EDD9]">
+                          <div className="h-full bg-[#C99A3D] rounded-full" style={{ width: `${catPct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           );
