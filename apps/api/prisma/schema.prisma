@@ -25,8 +25,9 @@ model User {
   updatedAt          DateTime   @updatedAt
   receipts           Receipt[]
   auditLogs          AuditLog[]
-  createdExpenses    Expense[]  @relation("ExpenseCreatedBy")
-  approvedExpenses   Expense[]  @relation("ExpenseApprovedBy")
+  createdExpenses    Expense[]          @relation("ExpenseCreatedBy")
+  approvedExpenses   Expense[]          @relation("ExpenseApprovedBy")
+  departmentBudgets  DepartmentBudget[]
 
   @@map("users")
 }
@@ -175,26 +176,32 @@ model ReceiptItem {
 }
 
 model Expense {
-  id               String    @id @default(uuid())
-  voucherNumber    String    @unique
-  category         String
-  title            String
-  amount           Decimal
-  payee            String?
-  paymentMode      String    @default("CASH")
-  description      String?
-  attachment       String?
-  status           String    @default("APPROVED")
-  createdByUserId  String
-  createdByUser    User      @relation("ExpenseCreatedBy", fields: [createdByUserId], references: [id])
-  approvedByUserId String?
-  approvedByUser   User?     @relation("ExpenseApprovedBy", fields: [approvedByUserId], references: [id])
-  approvedAt       DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                 String            @id @default(uuid())
+  voucherNumber      String            @unique
+  category           String
+  title              String
+  amount             Decimal
+  payee              String?
+  paymentMode        String            @default("CASH")
+  description        String?
+  attachment         String?
+  status             String            @default("APPROVED")
+  departmentBudgetId String?
+  departmentBudget   DepartmentBudget? @relation(fields: [departmentBudgetId], references: [id])
+  departmentName     String?
+  isOverBudget       Boolean           @default(false)
+  overBudgetReason   String?
+  createdByUserId    String
+  createdByUser      User              @relation("ExpenseCreatedBy", fields: [createdByUserId], references: [id])
+  approvedByUserId   String?
+  approvedByUser     User?             @relation("ExpenseApprovedBy", fields: [approvedByUserId], references: [id])
+  approvedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   @@index([createdAt])
   @@index([status])
+  @@index([departmentName])
   @@map("expenses")
 }
 
@@ -224,4 +231,21 @@ model Announcement {
   updatedAt DateTime @updatedAt
 
   @@map("announcements")
+}
+
+model DepartmentBudget {
+  id               String    @id @default(uuid())
+  departmentName   String
+  monthlyCapAmount Decimal
+  effectiveMonth   String    // YYYY-MM format
+  isActive         Boolean   @default(true)
+  createdByUserId  String?
+  createdByUser    User?     @relation(fields: [createdByUserId], references: [id])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  expenses         Expense[]
+
+  @@unique([departmentName, effectiveMonth])
+  @@map("department_budgets")
 }

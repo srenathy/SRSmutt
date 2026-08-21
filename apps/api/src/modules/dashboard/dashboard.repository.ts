@@ -129,7 +129,6 @@ export class DashboardRepository implements IDashboardRepository {
     }
 
     for (const e of allApprovedExpenses) {
-      if (isPettyCash(e.category)) continue; // STRICTLY EXCLUDE PETTY CASH ALLOWANCES
       const key = `${e.createdAt.getFullYear()}-${String(e.createdAt.getMonth() + 1).padStart(2, '0')}`;
       monthlyExpenseMap[key] = (monthlyExpenseMap[key] || 0) + Number(e.amount || 0);
     }
@@ -150,9 +149,8 @@ export class DashboardRepository implements IDashboardRepository {
     const previousCarriedDeficit = accumulatedNetBalance < 0 ? Math.abs(accumulatedNetBalance) : 0;
     const totalIncome = Number(monthSum._sum.totalAmount || 0);
 
-    // Sum month expenses excluding Petty Cash
+    // Sum month expenses (including Petty Cash)
     const totalExpenses = monthExpensesList
-      .filter((e) => !isPettyCash(e.category))
       .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
     const currentMonthOperatingBalance = totalIncome - totalExpenses;

@@ -30,6 +30,7 @@ export const ExpensesPage: React.FC = () => {
 
   // Expense states
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [departmentBudgets, setDepartmentBudgets] = useState<any[]>([]);
   const [temple, setTemple] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +48,8 @@ export const ExpensesPage: React.FC = () => {
     category: 'Main Temple Kanike Hundi Box Opening',
     amount: '',
     paymentMode: 'CASH',
-    sankalpaNote: ''
+    sankalpaNote: '',
+    date: new Date().toISOString().split('T')[0]
   });
 
   // Attachment states
@@ -57,12 +59,15 @@ export const ExpensesPage: React.FC = () => {
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
 
   const [formData, setFormData] = useState({
-    category: 'Puja Materials & Flowers',
+    departmentName: 'Cooking',
+    category: 'Cooking',
     title: '',
     amount: '',
     payee: '',
     paymentMode: 'CASH',
-    description: ''
+    description: '',
+    overBudgetReason: '',
+    date: new Date().toISOString().split('T')[0]
   });
 
   const isPettyCashCat = (cat?: string) => {
@@ -117,10 +122,20 @@ export const ExpensesPage: React.FC = () => {
     }
   };
 
+  const fetchDepartmentBudgets = async () => {
+    try {
+      const res = await apiClient.get('/department-budgets');
+      setDepartmentBudgets(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch department budgets:', err);
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
     fetchTemple();
     fetchUnbilledIncomes();
+    fetchDepartmentBudgets();
   }, []);
 
   const handleOpenModal = (pettyMode = false) => {
@@ -219,17 +234,44 @@ export const ExpensesPage: React.FC = () => {
       alert('Please wait for file compression to finish.');
       return;
     }
+
+    const targetDept = formData.departmentName || formData.category || 'Cooking';
+    const deptCapObj = departmentBudgets.find((b) => b.departmentName === targetDept);
+    const deptCap = deptCapObj ? Number(deptCapObj.monthlyCapAmount) : 25000;
+    const currentMonthKey = new Date().toISOString().slice(0, 7);
+    const monthDeptSpent = expenses
+      .filter((e) => e.status === 'APPROVED' && (e.departmentName === targetDept || e.category === targetDept))
+      .filter((e) => e.createdAt && e.createdAt.startsWith(currentMonthKey))
+      .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+    const enteredAmt = Number(formData.amount || 0);
+    const isOverBudget = monthDeptSpent + enteredAmt > deptCap;
+
+    if (isOverBudget && !formData.overBudgetReason?.trim()) {
+      alert('This expense will exceed the monthly department budget cap. Please enter a mandatory "Reason for Exceeding Budget" note.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await apiClient.post('/expenses', {
-        ...formData,
-        amount: Number(formData.amount),
+        departmentName: targetDept,
+        category: isPettyCashModal ? 'Petty Cash & Daily Outlay' : targetDept,
+        title: formData.title,
+        amount: enteredAmt,
+        payee: formData.payee,
+        paymentMode: formData.paymentMode,
+        description: formData.description,
+        isOverBudget,
+        overBudgetReason: isOverBudget ? formData.overBudgetReason : null,
         attachment: attachment || null,
         date: formData.date || new Date().toISOString().split('T')[0]
       });
       alert(
         res.data.data.status === 'PENDING'
           ? 'Bill / Request submitted successfully and sent to Admin for review!'
+          : isOverBudget
+          ? 'Expense logged successfully and tagged as OVER BUDGET.'
           : 'Expense logged and approved successfully!'
       );
       setModalOpen(false);
@@ -1035,46 +1077,30 @@ export const ExpensesPage: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
               <div>
-                <label className="font-bold text-textInk block mb-1">Expense Category *</label>
-                {isPettyCashModal ? (
-                  <input
-                    type="text"
-                    disabled
-                    value="Petty Cash & Daily Outlay"
-                    className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory text-textInk font-bold cursor-not-allowed"
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    <select
-                      value={categories.includes(formData.category) ? formData.category : 'CUSTOM'}
-                      onChange={(e) => {
-                        if (e.target.value !== 'CUSTOM') {
-                          setFormData({ ...formData, category: e.target.value });
-                        } else {
-                          setFormData({ ...formData, category: '' });
-                        }
-                      }}
-                      className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-kumkum"
-                    >
-                      {categories.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                      <option value="CUSTOM">✏️ + Enter Custom Category Manually...</option>
-                    </select>
-
-                    {/* Manual input when custom category or typing */}
-                    {(!categories.includes(formData.category) || formData.category === '') && (
-                      <input
-                        type="text"
-                        required
-                        placeholder="Enter manual category name (e.g. Temple Printing & Flex)"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full p-2.5 rounded-xl border border-kumkum/40 bg-white font-semibold text-kumkum focus:outline-none focus:border-kumkum animate-fadeIn"
-                      />
-                    )}
-                  </div>
-                )}
+                <label className="font-bold text-textInk block mb-1">Department *</label>
+                <select
+                  value={formData.departmentName || 'Cooking'}
+                  onChange={(e) => setFormData({ ...formData, departmentName: e.target.value, category: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-turmeric/30 bg-ivory/50 font-semibold text-textInk focus:outline-none focus:border-kumkum"
+                >
+                  {Array.from(
+                    new Set([
+                      'Cooking',
+                      'Flowers',
+                      'Leaves & Garland',
+                      'Temple Maintenance',
+                      'Festival & Special Events',
+                      'Utilities & Office',
+                      'Staff Allowance & Honorarium',
+                      'Miscellaneous',
+                      ...departmentBudgets.map((b) => b.departmentName)
+                    ])
+                  ).map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -1117,6 +1143,58 @@ export const ExpensesPage: React.FC = () => {
                   </select>
                 </div>
               </div>
+
+              {/* LIVE DEPARTMENT BUDGET INDICATOR & OVER BUDGET WARNING */}
+              {(() => {
+                const targetDept = formData.departmentName || formData.category || 'Cooking';
+                const deptCapObj = departmentBudgets.find((b) => b.departmentName === targetDept);
+                const deptCap = deptCapObj ? Number(deptCapObj.monthlyCapAmount) : 25000;
+                const currentMonthKey = new Date().toISOString().slice(0, 7);
+                const monthDeptSpent = expenses
+                  .filter((e) => e.status === 'APPROVED' && (e.departmentName === targetDept || e.category === targetDept))
+                  .filter((e) => e.createdAt && e.createdAt.startsWith(currentMonthKey))
+                  .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                const enteredAmt = Number(formData.amount || 0);
+                const remaining = deptCap - monthDeptSpent;
+                const totalWithNew = monthDeptSpent + enteredAmt;
+                const isOver = totalWithNew > deptCap;
+                const overAmt = totalWithNew - deptCap;
+
+                return (
+                  <div className="space-y-2">
+                    <div className="p-2.5 rounded-xl bg-ivory border border-turmeric/30 text-[11px] font-medium text-textInk">
+                      <span className="font-bold text-kumkum">{targetDept}: </span>
+                      ₹{deptCap.toLocaleString('en-IN')} cap · ₹{monthDeptSpent.toLocaleString('en-IN')} already spent this month ·{' '}
+                      <span className={remaining - enteredAmt < 0 ? 'text-red-700 font-bold ml-1' : 'text-emerald-700 font-bold ml-1'}>
+                        ₹{Math.max(0, remaining - enteredAmt).toLocaleString('en-IN')} remaining
+                      </span>
+                    </div>
+
+                    {isOver && (
+                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-900 text-xs space-y-2">
+                        <div className="flex items-center gap-2 font-bold text-red-800">
+                          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                          <span>Over Budget Warning: Exceeds monthly cap by ₹{overAmt.toLocaleString('en-IN')}</span>
+                        </div>
+                        <p className="text-[11px] text-red-700">
+                          Expenditures are necessity-driven and will not be blocked. Please enter a mandatory reason note below.
+                        </p>
+                        <div>
+                          <label className="font-bold text-red-900 block mb-1">Reason for Exceeding Budget *</label>
+                          <textarea
+                            rows={2}
+                            required
+                            placeholder="e.g. Extra festival cooking items approved by Managing Committee"
+                            value={formData.overBudgetReason || ''}
+                            onChange={(e) => setFormData({ ...formData, overBudgetReason: e.target.value })}
+                            className="w-full p-2 bg-white border border-red-300 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-red-500 text-textInk"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

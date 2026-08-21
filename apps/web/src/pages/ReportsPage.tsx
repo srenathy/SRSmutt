@@ -44,7 +44,8 @@ export const ReportsPage: React.FC = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || (user as any)?.isCentralAdmin;
 
-  const [reportType, setReportType] = useState<'daily' | 'monthly' | 'custom' | 'expenditures'>('daily');
+  const [reportType, setReportType] = useState<'daily' | 'monthly' | 'custom' | 'department-budget' | 'expenditures'>('daily');
+  const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [startDate, setStartDate] = useState(new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -167,9 +168,103 @@ export const ReportsPage: React.FC = () => {
     enabled: reportType === 'custom' && !!customQuery.data
   });
 
+  const departmentBudgetsQuery = useQuery({
+    queryKey: ['department-budgets-report'],
+    queryFn: async () => {
+      const res = await apiClient.get('/department-budgets');
+      return res.data.data || [];
+    },
+    enabled: reportType === 'department-budget'
+  });
+
+  const allExpensesQuery = useQuery({
+    queryKey: ['all-expenses-report'],
+    queryFn: async () => {
+      const res = await apiClient.get('/expenses');
+      return res.data.data || [];
+    },
+    enabled: reportType === 'department-budget'
+  });
+
   const reportData = reportType === 'daily' ? dailyQuery.data : reportType === 'monthly' ? monthlyQuery.data : reportType === 'custom' ? customQuery.data : null;
   const priorData = reportType === 'daily' ? priorDailyQuery.data : reportType === 'monthly' ? priorMonthlyQuery.data : reportType === 'custom' ? priorCustomQuery.data : null;
-  const isLoading = reportType === 'daily' ? dailyQuery.isLoading : reportType === 'monthly' ? monthlyQuery.isLoading : reportType === 'custom' ? customQuery.isLoading : false;
+  const isLoading = reportType === 'daily' ? dailyQuery.isLoading : reportType === 'monthly' ? monthlyQuery.isLoading : reportType === 'custom' ? customQuery.isLoading : reportType === 'department-budget' ? (departmentBudgetsQuery.isLoading || allExpensesQuery.isLoading) : false;
+
+  const getDeptReportData = () => {
+    const rawBudgets: any[] = departmentBudgetsQuery.data || [];
+    const rawExpenses: any[] = allExpensesQuery.data || [];
+
+    const currentMonthKey = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+
+    const defaultDepts = [
+      { departmentName: 'Cooking', monthlyCapAmount: 40000 },
+      { departmentName: 'Flowers', monthlyCapAmount: 16000 },
+      { departmentName: 'Leaves & Garland', monthlyCapAmount: 10000 },
+      { departmentName: 'Temple Maintenance', monthlyCapAmount: 25000 },
+      { departmentName: 'Festival & Special Events', monthlyCapAmount: 30000 },
+      { departmentName: 'Utilities & Office', monthlyCapAmount: 15000 },
+      { departmentName: 'Staff Allowance & Honorarium', monthlyCapAmount: 35000 },
+      { departmentName: 'Miscellaneous', monthlyCapAmount: 10000 }
+    ];
+
+    const deptMap = new Map<string, { departmentName: string; monthlyCapAmount: number; effectiveMonth: string }>();
+    for (const d of defaultDepts) {
+      deptMap.set(d.departmentName, { ...d, effectiveMonth: currentMonthKey });
+    }
+    for (const b of rawBudgets) {
+      deptMap.set(b.departmentName, {
+        departmentName: b.departmentName,
+        monthlyCapAmount: Number(b.monthlyCapAmount),
+        effectiveMonth: b.effectiveMonth
+      });
+    }
+
+    const deptRows = Array.from(deptMap.values()).map((d) => {
+      const vouchers = rawExpenses.filter((e) => {
+        const isApp = e.status === 'APPROVED';
+        const isDept = e.departmentName === d.departmentName || e.category === d.departmentName;
+        const eMonth = e.createdAt ? new Date(e.createdAt).toISOString().slice(0, 7) : currentMonthKey;
+        return isApp && isDept && eMonth === currentMonthKey;
+      });
+
+      const spent = vouchers.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+      const cap = d.monthlyCapAmount;
+      const remaining = cap - spent;
+      const utilPct = cap > 0 ? (spent / cap) * 100 : 0;
+      const isOver = spent > cap;
+      const overAmt = isOver ? spent - cap : 0;
+
+      let status = 'Within Budget';
+      if (utilPct >= 100) status = 'Over Budget';
+      else if (utilPct >= 80) status = 'At Limit';
+
+      return {
+        ...d,
+        spent,
+        remaining,
+        utilPct,
+        isOver,
+        overAmt,
+        status,
+        vouchers
+      };
+    });
+
+    deptRows.sort((a, b) => b.utilPct - a.utilPct);
+
+    const totalBudgeted = deptRows.reduce((sum, r) => sum + r.monthlyCapAmount, 0);
+    const totalSpent = deptRows.reduce((sum, r) => sum + r.spent, 0);
+    const overBudgetCount = deptRows.filter((r) => r.isOver).length;
+    const overallUtilPct = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
+
+    return {
+      deptRows,
+      totalBudgeted,
+      totalSpent,
+      overBudgetCount,
+      overallUtilPct
+    };
+  };
 
   const handlePrintReport = () => {
     window.print();
@@ -448,6 +543,14 @@ export const ReportsPage: React.FC = () => {
             >
               📅 Custom Date Range
             </button>
+            <button
+              onClick={() => setReportType('department-budget')}
+              className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                reportType === 'department-budget' ? 'bg-kumkum text-ivory shadow-sm' : 'bg-ivory text-textInk/70 hover:bg-ivory-dark'
+              }`}
+            >
+              🏛️ Department Budget Report
+            </button>
             {isAdmin && (
               <button
                 onClick={() => setReportType('expenditures')}
@@ -580,7 +683,287 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Main Report Body */}
-      {reportType === 'expenditures' ? (
+      {reportType === 'department-budget' ? (
+        (() => {
+          const { deptRows, totalBudgeted, totalSpent, overBudgetCount, overallUtilPct } = getDeptReportData();
+          return (
+            <div className="space-y-6">
+              {/* Sticky Zone Sub-Nav */}
+              <div className="sticky top-0 z-20 bg-ivory-light/95 backdrop-blur-sm p-3 rounded-2xl border border-turmeric/30 shadow-sm flex items-center justify-between no-print">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-extrabold text-kumkum uppercase tracking-wider">Report Zones:</span>
+                  <a href="#dept-summary-strip" className="text-xs font-bold text-textInk hover:text-kumkum bg-white px-3 py-1.5 rounded-xl border border-turmeric/20 shadow-2xs">
+                    1. Summary Strip
+                  </a>
+                  <a href="#dept-budget-table" className="text-xs font-bold text-textInk hover:text-kumkum bg-white px-3 py-1.5 rounded-xl border border-turmeric/20 shadow-2xs">
+                    2. Department Budget Table
+                  </a>
+                  <a href="#dept-comparison-chart" className="text-xs font-bold text-textInk hover:text-kumkum bg-white px-3 py-1.5 rounded-xl border border-turmeric/20 shadow-2xs">
+                    3. Cap vs Actual Comparison
+                  </a>
+                </div>
+                <span className="text-xs font-bold text-textInk/60 font-mono">
+                  {selectedYear}-{String(selectedMonth).padStart(2, '0')}
+                </span>
+              </div>
+
+              {/* 1. Summary Strip (4 Cards) */}
+              <div id="dept-summary-strip" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Card 1: Total Budgeted */}
+                <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-textInk/60">Total Monthly Budgeted</p>
+                  <h3 className="font-mono text-2xl font-bold text-kumkum">
+                    ₹{totalBudgeted.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </h3>
+                  <p className="text-[10px] text-textInk/50 font-medium">Combined caps for active departments</p>
+                </div>
+
+                {/* Card 2: Total Spent */}
+                <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-textInk/60">Total Spent (This Month)</p>
+                  <h3 className="font-mono text-2xl font-bold text-red-600">
+                    ₹{totalSpent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </h3>
+                  <p className="text-[10px] text-textInk/50 font-medium">Sum of approved department expenditures</p>
+                </div>
+
+                {/* Card 3: Departments Over Budget */}
+                <div className={`p-5 rounded-2xl border shadow-sm space-y-1 ${
+                  overBudgetCount > 0 ? 'bg-red-50/70 border-red-200 text-red-950' : 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                }`}>
+                  <p className="text-[11px] font-bold uppercase tracking-wider opacity-70">Departments Over Budget</p>
+                  <h3 className={`font-mono text-2xl font-bold ${overBudgetCount > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+                    {overBudgetCount} {overBudgetCount === 1 ? 'Department' : 'Departments'}
+                  </h3>
+                  <p className="text-[10px] opacity-70 font-medium">
+                    {overBudgetCount > 0 ? 'Requires reason note audit review' : 'All departments within allocated caps'}
+                  </p>
+                </div>
+
+                {/* Card 4: Overall Utilization % */}
+                <div className="bg-white p-5 rounded-2xl border border-turmeric/30 shadow-sm space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-textInk/60">Overall Utilization</p>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      overallUtilPct >= 100 ? 'bg-red-100 text-red-800' : overallUtilPct >= 80 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {overallUtilPct.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-ivory rounded-full h-2.5 overflow-hidden border border-turmeric/20">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        overallUtilPct >= 100 ? 'bg-red-600' : overallUtilPct >= 80 ? 'bg-amber-500' : 'bg-emerald-600'
+                      }`}
+                      style={{ width: `${Math.min(100, overallUtilPct)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-textInk/50 font-medium">Overall budget consumed</p>
+                </div>
+              </div>
+
+              {/* 2. Department Budget Table */}
+              <div id="dept-budget-table" className="bg-white rounded-2xl border border-turmeric/30 shadow-sm overflow-hidden space-y-0">
+                <div className="p-4 bg-ivory/60 border-b border-turmeric/20 flex items-center justify-between">
+                  <h3 className="font-display font-bold text-sm text-kumkum flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-kumkum" />
+                    <span>Department Budget Caps & Expense Tracking</span>
+                  </h3>
+                  <span className="text-xs font-semibold text-textInk/60">{deptRows.length} active departments</span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-ivory text-textInk/70 font-semibold border-b border-turmeric/20 text-[10px] uppercase">
+                      <tr>
+                        <th className="p-4">Department Name</th>
+                        <th className="p-4 text-right">Monthly Cap (₹)</th>
+                        <th className="p-4 text-right">Spent (₹)</th>
+                        <th className="p-4 text-right">Remaining (₹)</th>
+                        <th className="p-4">Utilization %</th>
+                        <th className="p-4 text-center">Status</th>
+                        <th className="p-4 text-right">Vouchers</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-turmeric/10 font-medium">
+                      {deptRows.map((row) => (
+                        <React.Fragment key={row.departmentName}>
+                          <tr className={`hover:bg-ivory/40 transition-colors ${row.isOver ? 'bg-red-50/30' : ''}`}>
+                            <td className="p-4 font-bold text-textInk flex items-center gap-2">
+                              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                                row.status === 'Over Budget' ? 'bg-red-600' : row.status === 'At Limit' ? 'bg-amber-500' : 'bg-emerald-600'
+                              }`} />
+                              {row.departmentName}
+                            </td>
+                            <td className="p-4 text-right font-mono font-semibold text-textInk/80">
+                              ₹{row.monthlyCapAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="p-4 text-right font-mono font-bold text-kumkum">
+                              ₹{row.spent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className={`p-4 text-right font-mono font-bold ${row.remaining < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                              {row.remaining < 0 ? `-₹${Math.abs(row.remaining).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : `₹${row.remaining.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`}
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-[11px] w-12 text-right">{row.utilPct.toFixed(1)}%</span>
+                                <div className="w-24 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20 shrink-0">
+                                  <div
+                                    className={`h-full rounded-full ${
+                                      row.utilPct >= 100 ? 'bg-red-600' : row.utilPct >= 80 ? 'bg-amber-500' : 'bg-emerald-600'
+                                    }`}
+                                    style={{ width: `${Math.min(100, row.utilPct)}%` }}
+                                  />
+                                </div>
+                                {row.isOver && (
+                                  <span className="text-[10px] text-red-600 font-bold bg-red-100 px-1.5 py-0.5 rounded">
+                                    +₹{row.overAmt.toLocaleString('en-IN')}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                                row.status === 'Over Budget'
+                                  ? 'bg-red-100 text-red-800 border-red-200'
+                                  : row.status === 'At Limit'
+                                  ? 'bg-amber-100 text-amber-800 border-amber-200'
+                                  : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                              }`}>
+                                {row.status.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setExpandedDept(expandedDept === row.departmentName ? null : row.departmentName)}
+                                className="px-3 py-1 bg-ivory hover:bg-turmeric/20 border border-turmeric/30 rounded-lg text-[11px] font-bold text-kumkum transition-colors inline-flex items-center gap-1"
+                              >
+                                <span>Vouchers ({row.vouchers.length})</span>
+                                <ChevronDown className={`w-3 h-3 transition-transform ${expandedDept === row.departmentName ? 'rotate-180' : ''}`} />
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* Expanded Voucher Drilldown Row */}
+                          {expandedDept === row.departmentName && (
+                            <tr>
+                              <td colSpan={7} className="p-4 bg-ivory/50 border-y border-turmeric/20">
+                                <div className="space-y-3">
+                                  <h4 className="font-bold text-xs text-kumkum flex items-center gap-1.5">
+                                    <span>Vouchers Logged Under {row.departmentName}</span>
+                                    <span className="text-[10px] text-textInk/60 font-mono font-normal">({row.vouchers.length} records)</span>
+                                  </h4>
+
+                                  {row.vouchers.length === 0 ? (
+                                    <p className="text-xs text-textInk/50 italic p-2">No expenditure vouchers recorded for this department in current month.</p>
+                                  ) : (
+                                    <table className="w-full text-left text-xs bg-white rounded-xl border border-turmeric/20 overflow-hidden">
+                                      <thead className="bg-ivory text-textInk/70 font-semibold border-b border-turmeric/20 text-[10px] uppercase">
+                                        <tr>
+                                          <th className="p-2.5">Voucher #</th>
+                                          <th className="p-2.5">Date</th>
+                                          <th className="p-2.5">Expense Title</th>
+                                          <th className="p-2.5">Payee / Vendor</th>
+                                          <th className="p-2.5">Mode</th>
+                                          <th className="p-2.5 text-right">Amount (₹)</th>
+                                          <th className="p-2.5">Over-Budget Reason / Notes</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-turmeric/10">
+                                        {row.vouchers.map((v: any) => (
+                                          <tr key={v.id} className="hover:bg-ivory/30">
+                                            <td className="p-2.5 font-mono font-bold text-kumkum">{v.voucherNumber}</td>
+                                            <td className="p-2.5 text-textInk/70">
+                                              {new Date(v.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                            </td>
+                                            <td className="p-2.5 font-bold text-textInk">{v.title}</td>
+                                            <td className="p-2.5 text-textInk/80">{v.payee || '-'}</td>
+                                            <td className="p-2.5">
+                                              <span className="px-2 py-0.5 rounded bg-ivory border border-turmeric/20 font-bold text-[10px]">
+                                                {v.paymentMode}
+                                              </span>
+                                            </td>
+                                            <td className="p-2.5 text-right font-mono font-bold text-red-600">
+                                              ₹{Number(v.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                            </td>
+                                            <td className="p-2.5 text-[11px] text-textInk/80">
+                                              {v.isOverBudget ? (
+                                                <span className="text-red-700 font-medium bg-red-50 p-1.5 rounded border border-red-200 block">
+                                                  ⚠️ {v.overBudgetReason || 'Cap Exceeded'}
+                                                </span>
+                                              ) : (
+                                                v.description || '-'
+                                              )}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 3. Cap vs Actual Visual Comparison Chart */}
+              <div id="dept-comparison-chart" className="bg-white rounded-2xl border border-turmeric/30 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
+                  <h3 className="font-display font-bold text-base text-kumkum flex items-center gap-2">
+                    <PieChartIcon className="w-4 h-4 text-kumkum" />
+                    <span>Cap vs Actual Department Budget Comparison</span>
+                  </h3>
+                  <div className="flex items-center gap-4 text-xs font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded bg-kumkum" /> Actual Spent
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded bg-turmeric/40 border border-turmeric-dark" /> Monthly Cap
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  {deptRows.map((d) => (
+                    <div key={d.departmentName} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-textInk font-bold">{d.departmentName}</span>
+                        <span className="font-mono text-textInk/80">
+                          ₹{d.spent.toLocaleString('en-IN')} / ₹{d.monthlyCapAmount.toLocaleString('en-IN')}{' '}
+                          <span className={d.isOver ? 'text-red-600 font-bold ml-1' : 'text-emerald-700 font-bold ml-1'}>
+                            ({d.utilPct.toFixed(0)}%)
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="relative h-6 bg-ivory rounded-xl border border-turmeric/30 overflow-hidden flex items-center">
+                        {/* Cap Threshold Background */}
+                        <div className="absolute top-0 bottom-0 left-0 bg-turmeric/20 rounded-xl" style={{ width: '100%' }} />
+
+                        {/* Actual Spent Bar */}
+                        <div
+                          className={`h-full rounded-xl transition-all flex items-center justify-end pr-2 text-[10px] font-bold text-ivory ${
+                            d.isOver ? 'bg-red-600' : 'bg-kumkum'
+                          }`}
+                          style={{ width: `${Math.min(100, d.utilPct)}%` }}
+                        >
+                          {d.utilPct > 15 && `₹${d.spent.toLocaleString('en-IN')}`}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()
+      ) : reportType === 'expenditures' ? (
         financialBalanceQuery.isLoading ? (
           <div className="p-12 text-center text-kumkum font-semibold flex items-center justify-center gap-2 bg-white rounded-2xl border border-turmeric/20">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-turmeric border-t-transparent" />

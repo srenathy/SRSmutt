@@ -190,6 +190,63 @@ async function main() {
     });
   }
 
+  // 9. Seed Department Budgets for current month
+  const currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  const defaultDepartments = [
+    { departmentName: 'Cooking', monthlyCapAmount: 40000.00 },
+    { departmentName: 'Flowers', monthlyCapAmount: 16000.00 },
+    { departmentName: 'Leaves & Garland', monthlyCapAmount: 10000.00 },
+    { departmentName: 'Temple Maintenance', monthlyCapAmount: 25000.00 },
+    { departmentName: 'Festival & Special Events', monthlyCapAmount: 30000.00 },
+    { departmentName: 'Utilities & Office', monthlyCapAmount: 15000.00 },
+    { departmentName: 'Staff Allowance & Honorarium', monthlyCapAmount: 35000.00 },
+    { departmentName: 'Miscellaneous', monthlyCapAmount: 10000.00 }
+  ];
+
+  for (const dep of defaultDepartments) {
+    await prisma.departmentBudget.upsert({
+      where: {
+        departmentName_effectiveMonth: {
+          departmentName: dep.departmentName,
+          effectiveMonth: currentMonthKey
+        }
+      },
+      update: { monthlyCapAmount: dep.monthlyCapAmount },
+      create: {
+        departmentName: dep.departmentName,
+        monthlyCapAmount: dep.monthlyCapAmount,
+        effectiveMonth: currentMonthKey
+      }
+    });
+  }
+
+  // 10. One-time Data Migration: Map existing expense categories to departmentName
+  const allExpenses = await prisma.expense.findMany();
+  for (const exp of allExpenses) {
+    let depName = 'Miscellaneous';
+    const catLower = (exp.category || '').toLowerCase();
+    if (catLower.includes('cook') || catLower.includes('kitchen') || catLower.includes('food')) {
+      depName = 'Cooking';
+    } else if (catLower.includes('flower') || catLower.includes('puja material')) {
+      depName = 'Flowers';
+    } else if (catLower.includes('garland') || catLower.includes('leaf') || catLower.includes('leaves')) {
+      depName = 'Leaves & Garland';
+    } else if (catLower.includes('clean') || catLower.includes('maint')) {
+      depName = 'Temple Maintenance';
+    } else if (catLower.includes('festival') || catLower.includes('event')) {
+      depName = 'Festival & Special Events';
+    } else if (catLower.includes('electric') || catLower.includes('water') || catLower.includes('util')) {
+      depName = 'Utilities & Office';
+    } else if (catLower.includes('staff') || catLower.includes('salary') || catLower.includes('allowance') || catLower.includes('petty')) {
+      depName = 'Staff Allowance & Honorarium';
+    }
+
+    await prisma.expense.update({
+      where: { id: exp.id },
+      data: { departmentName: depName }
+    });
+  }
+
   console.log('🎉 Seed completed successfully!');
 }
 

@@ -3,7 +3,7 @@ import { MasterTable, ColumnConfig } from '../components/MasterTable.js';
 import { MasterFormDrawer, FieldConfig } from '../components/MasterFormDrawer.js';
 import { apiClient } from '../api/client.js';
 
-type Tab = 'sevas' | 'shashwata' | 'gotras' | 'nakshatras' | 'rashis' | 'announcements';
+type Tab = 'sevas' | 'shashwata' | 'departments' | 'gotras' | 'nakshatras' | 'rashis' | 'announcements';
 
 export const MastersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('sevas');
@@ -23,6 +23,9 @@ export const MastersPage: React.FC = () => {
         setData(res.data.data || []);
       } else if (tab === 'shashwata') {
         const res = await apiClient.get('/shashwata-sevas');
+        setData(res.data.data || []);
+      } else if (tab === 'departments') {
+        const res = await apiClient.get('/department-budgets');
         setData(res.data.data || []);
       } else if (tab === 'gotras') {
         const res = await apiClient.get('/vedic/gotras');
@@ -58,6 +61,8 @@ export const MastersPage: React.FC = () => {
       setFormData(
         activeTab === 'shashwata'
           ? { durationYears: 25, active: true }
+          : activeTab === 'departments'
+          ? { effectiveMonth: new Date().toISOString().slice(0, 7), monthlyCapAmount: 25000, isActive: true }
           : activeTab === 'announcements'
           ? { category: 'EVENT', active: true }
           : { active: true }
@@ -74,60 +79,84 @@ export const MastersPage: React.FC = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const payload: any = { ...formData };
+      if (payload.amount !== undefined && payload.amount !== null && payload.amount !== '') {
+        payload.amount = Number(payload.amount);
+      }
+      if (payload.monthlyCapAmount !== undefined && payload.monthlyCapAmount !== null && payload.monthlyCapAmount !== '') {
+        payload.monthlyCapAmount = Number(payload.monthlyCapAmount);
+      }
+      if (payload.durationYears !== undefined && payload.durationYears !== null && payload.durationYears !== '') {
+        payload.durationYears = Number(payload.durationYears);
+      }
+      delete payload.id;
+      delete payload.createdAt;
+      delete payload.updatedAt;
+
       if (activeTab === 'sevas') {
         if (editingItem) {
-          await apiClient.put(`/sevas/${editingItem.id}`, formData);
+          await apiClient.put(`/sevas/${editingItem.id}`, payload);
         } else {
-          await apiClient.post('/sevas', formData);
+          await apiClient.post('/sevas', payload);
         }
       } else if (activeTab === 'shashwata') {
         if (editingItem) {
-          await apiClient.put(`/shashwata-sevas/${editingItem.id}`, formData);
+          await apiClient.put(`/shashwata-sevas/${editingItem.id}`, payload);
         } else {
-          await apiClient.post('/shashwata-sevas', formData);
+          await apiClient.post('/shashwata-sevas', payload);
         }
+      } else if (activeTab === 'departments') {
+        await apiClient.post('/department-budgets', payload);
       } else if (activeTab === 'gotras') {
         if (editingItem) {
-          await apiClient.put(`/vedic/gotras/${editingItem.id}`, formData);
+          await apiClient.put(`/vedic/gotras/${editingItem.id}`, payload);
         } else {
-          await apiClient.post('/vedic/gotras', formData);
+          await apiClient.post('/vedic/gotras', payload);
         }
       } else if (activeTab === 'nakshatras') {
         if (editingItem) {
-          await apiClient.put(`/vedic/nakshatras/${editingItem.id}`, formData);
+          await apiClient.put(`/vedic/nakshatras/${editingItem.id}`, payload);
         } else {
-          await apiClient.post('/vedic/nakshatras', formData);
+          await apiClient.post('/vedic/nakshatras', payload);
         }
       } else if (activeTab === 'rashis') {
         if (editingItem) {
-          await apiClient.put(`/vedic/rashis/${editingItem.id}`, formData);
+          await apiClient.put(`/vedic/rashis/${editingItem.id}`, payload);
         } else {
-          await apiClient.post('/vedic/rashis', formData);
+          await apiClient.post('/vedic/rashis', payload);
         }
       } else if (activeTab === 'announcements') {
         if (editingItem) {
-          await apiClient.put(`/announcements/${editingItem.id}`, formData);
+          await apiClient.put(`/announcements/${editingItem.id}`, payload);
         } else {
-          await apiClient.post('/announcements', formData);
+          await apiClient.post('/announcements', payload);
         }
       }
       setDrawerOpen(false);
       setEditingItem(null);
       fetchTabContent(activeTab);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to save master record');
+      let errMsg = 'Failed to save master record';
+      if (typeof err.response?.data?.message === 'string') {
+        errMsg = err.response.data.message;
+      } else if (Array.isArray(err.response?.data)) {
+        errMsg = err.response.data.map((e: any) => e.message || `${e.path?.join('.')}: ${e.message}`).join(', ');
+      }
+      alert(errMsg);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (item: any) => {
-    if (!confirm(`Are you sure you want to delete ${item.name || item.title || 'this item'}?`)) return;
+    if (!confirm(`Are you sure you want to delete ${item.departmentName || item.name || item.title || 'this item'}?`)) return;
     try {
       if (activeTab === 'sevas') {
         await apiClient.delete(`/sevas/${item.id}`);
       } else if (activeTab === 'shashwata') {
         await apiClient.delete(`/shashwata-sevas/${item.id}`);
+      } else if (activeTab === 'departments') {
+        await apiClient.delete(`/department-budgets/${item.id}`);
       } else if (activeTab === 'gotras') {
         await apiClient.delete(`/vedic/gotras/${item.id}`);
       } else if (activeTab === 'nakshatras') {
@@ -180,6 +209,25 @@ export const MastersPage: React.FC = () => {
           render: (r: any) => (
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
               {r.active ? 'ACTIVE' : 'INACTIVE'}
+            </span>
+          )
+        }
+      ];
+    } else if (activeTab === 'departments') {
+      return [
+        { key: 'departmentName', header: 'Department Name' },
+        {
+          key: 'monthlyCapAmount',
+          header: 'Monthly Spending Cap',
+          render: (r: any) => `₹${Number(r.monthlyCapAmount || 0).toLocaleString('en-IN')}`
+        },
+        { key: 'effectiveMonth', header: 'Effective Month' },
+        {
+          key: 'isActive',
+          header: 'Status',
+          render: (r: any) => (
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+              {r.isActive !== false ? 'ACTIVE' : 'INACTIVE'}
             </span>
           )
         }
@@ -280,6 +328,12 @@ export const MastersPage: React.FC = () => {
         { name: 'description', label: 'Description', type: 'textarea' },
         { name: 'active', label: 'Active', type: 'checkbox' }
       ];
+    } else if (activeTab === 'departments') {
+      return [
+        { name: 'departmentName', label: 'Department Name', type: 'text', required: true, placeholder: 'e.g. Cooking, Flowers, Maintenance' },
+        { name: 'monthlyCapAmount', label: 'Monthly Spending Cap (₹)', type: 'number', required: true, placeholder: 'e.g. 40000' },
+        { name: 'effectiveMonth', label: 'Effective Month (YYYY-MM)', type: 'text', required: true, placeholder: 'e.g. 2026-08' }
+      ];
     } else if (activeTab === 'gotras') {
       return [
         { name: 'name', label: 'Gotra Name', type: 'text', required: true },
@@ -350,6 +404,17 @@ export const MastersPage: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('departments')}
+          className={`px-4 py-2 rounded-xl font-semibold text-xs transition-all ${
+            activeTab === 'departments'
+              ? 'bg-kumkum text-ivory shadow-sm font-bold'
+              : 'text-textInk/70 hover:text-kumkum hover:bg-ivory'
+          }`}
+        >
+          🏛️ Department Budgets
+        </button>
+
+        <button
           onClick={() => setActiveTab('gotras')}
           className={`px-4 py-2 rounded-xl font-semibold text-xs transition-all ${
             activeTab === 'gotras'
@@ -401,6 +466,8 @@ export const MastersPage: React.FC = () => {
             ? 'Regular Sevas'
             : activeTab === 'shashwata'
             ? 'Shashwata Sevas'
+            : activeTab === 'departments'
+            ? 'Department Monthly Budget Caps'
             : activeTab === 'gotras'
             ? 'Gotras Master (Vedic Lineages)'
             : activeTab === 'nakshatras'

@@ -164,7 +164,7 @@ export const DashboardLayout: React.FC = () => {
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
         {navItems.map((item) => (
           <NavLink
             key={item.path}

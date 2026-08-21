@@ -41,6 +41,10 @@ import { ExpenseService } from './modules/expense/expense.service.js';
 import { ExpenseController } from './modules/expense/expense.controller.js';
 import { UserController } from './modules/user/user.controller.js';
 
+import { DepartmentBudgetRepository } from './modules/departmentBudget/department-budget.repository.js';
+import { DepartmentBudgetService } from './modules/departmentBudget/department-budget.service.js';
+import { DepartmentBudgetController } from './modules/departmentBudget/department-budget.controller.js';
+
 export function buildContainer(prisma: PrismaClient) {
   const auditRepo = new AuditRepository(prisma);
   const auditLogger = new AuditService(auditRepo);
@@ -98,6 +102,10 @@ export function buildContainer(prisma: PrismaClient) {
 
   const userController = new UserController(prisma, auditLogger);
 
+  const departmentBudgetRepo = new DepartmentBudgetRepository(prisma);
+  const departmentBudgetService = new DepartmentBudgetService(departmentBudgetRepo);
+  const departmentBudgetController = new DepartmentBudgetController(departmentBudgetService);
+
   return {
     authController,
     templeController,
@@ -112,6 +120,7 @@ export function buildContainer(prisma: PrismaClient) {
     devoteePortalController,
     vedicController,
     expenseController,
-    userController
+    userController,
+    departmentBudgetController
   };
 }

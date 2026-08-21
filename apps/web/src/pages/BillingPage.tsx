@@ -127,7 +127,8 @@ export const BillingPage: React.FC = () => {
 
   const handleAddSevaItem = (seva: any) => {
     if (kind === ReceiptKind.NEW_SEVA) {
-      setItems([
+      setItems((prev) => [
+        ...prev,
         {
           sevaId: seva.id,
           description: seva.name,
@@ -137,7 +138,8 @@ export const BillingPage: React.FC = () => {
         }
       ]);
     } else if (kind === ReceiptKind.SHASHWATA_SEVA) {
-      setItems([
+      setItems((prev) => [
+        ...prev,
         {
           shashwataSevaId: seva.id,
           description: `${seva.name} (${seva.durationYears} Years)`,
