@@ -86,7 +86,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) 
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-[#FAF6EE] via-[#FDFBF7] to-[#FAF6EE] border-b border-[#C99A3D]/25 pt-8 pb-12 sm:pt-12 sm:pb-16">
+    <section id="hero" className="snap-page-section relative overflow-hidden bg-gradient-to-b from-[#FAF6EE] via-[#FDFBF7] to-[#FAF6EE] border-b border-[#C99A3D]/25 pt-8 pb-12 sm:pt-12 sm:pb-16 min-h-[calc(100vh-80px)] flex flex-col justify-center">
       {/* Background Spiritual Ambient Patterns */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none overflow-hidden opacity-40">
         <div className="absolute -top-32 -left-32">

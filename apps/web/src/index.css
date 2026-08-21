@@ -9,6 +9,23 @@ html, body {
   scroll-behavior: smooth;
 }
 
+/* Full-Page Stacked Card Scroll Snap */
+html {
+  scroll-snap-type: y proximity;
+}
+
+@media (min-width: 1024px) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+}
+
+.snap-page-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+  scroll-margin-top: 75px;
+}
+
 @layer base {
   body {
     font-family: 'Inter', sans-serif;

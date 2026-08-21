@@ -28,7 +28,7 @@ export const ScheduleSection: React.FC = () => {
   ];
 
   return (
-    <section id="schedule" className="py-12 sm:py-16 bg-[#FAF6EE] scroll-mt-24">
+    <section id="schedule" className="snap-page-section py-12 sm:py-16 bg-[#FAF6EE] scroll-mt-24 min-h-[calc(100vh-80px)] flex flex-col justify-center">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 space-y-8">
         {/* Section Heading */}
         <div className="text-center max-w-3xl mx-auto space-y-2">

@@ -12,6 +12,7 @@ import { VisitSection } from '../components/home/VisitSection.js';
 import { Footer } from '../components/home/Footer.js';
 import { ScrollReveal } from '../components/home/ScrollReveal.js';
 import { GopuramDivider } from '../components/GopuramMotif.js';
+import { SidePageNavigator } from '../components/home/SidePageNavigator.js';
 
 interface Announcement {
   id: string;
@@ -64,9 +65,12 @@ export const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAF6EE] text-[#2C221E] flex flex-col font-sans selection:bg-[#C99A3D] selection:text-white">
+    <div className="min-h-screen bg-[#FAF6EE] text-[#2C221E] flex flex-col font-sans selection:bg-[#C99A3D] selection:text-white relative">
       {/* 1. Header with Full Width Alignment & Right-Corner Logo */}
       <Header />
+
+      {/* Floating Side Page Navigator with Up/Down and Section Dots */}
+      <SidePageNavigator />
 
       {/* 2. Hero Section with Live Countdown & Consecrated Brindavana Visual */}
       <HeroSection announcements={announcements} />
