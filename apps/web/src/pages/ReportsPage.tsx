@@ -34,7 +34,8 @@ import {
   FileText,
   Maximize2,
   Minimize2,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import {
   PieChart,
@@ -135,14 +136,17 @@ export const ReportsPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Primary Period Queries
+  // Primary Period Queries (Auto-Synced with 12s live polling & background refetch)
   const dailyQuery = useQuery({
     queryKey: ['report-daily', selectedDate, filterKind, filterPaymentMode],
     queryFn: async () => {
       const res = await apiClient.get(`/reports/daily?date=${selectedDate}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
-    enabled: reportType === 'daily'
+    enabled: reportType === 'daily',
+    refetchInterval: 12000,
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   useEffect(() => {
@@ -160,7 +164,10 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get(`/reports/monthly?year=${selectedYear}&month=${selectedMonth}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
-    enabled: reportType === 'monthly'
+    enabled: reportType === 'monthly',
+    refetchInterval: 12000,
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   const customQuery = useQuery({
@@ -169,7 +176,10 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get(`/reports/custom?startDate=${startDate}&endDate=${endDate}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
-    enabled: reportType === 'custom'
+    enabled: reportType === 'custom',
+    refetchInterval: 12000,
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   const financialBalanceQuery = useQuery({
@@ -178,7 +188,10 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get('/reports/financial-balance');
       return res.data.data;
     },
-    enabled: reportType === 'expenditures'
+    enabled: reportType === 'expenditures',
+    refetchInterval: 12000,
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   // Prior Period Calculation for Trend Deltas
@@ -196,7 +209,8 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get(`/reports/daily?date=${priorDate}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
-    enabled: reportType === 'daily' && !!dailyQuery.data
+    enabled: reportType === 'daily' && !!dailyQuery.data,
+    refetchInterval: 12000
   });
 
   const priorMonthlyQuery = useQuery({
@@ -205,7 +219,8 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get(`/reports/monthly?year=${priorYear}&month=${priorMonth}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
-    enabled: reportType === 'monthly' && !!monthlyQuery.data
+    enabled: reportType === 'monthly' && !!monthlyQuery.data,
+    refetchInterval: 12000
   });
 
   const priorCustomQuery = useQuery({
@@ -214,7 +229,8 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get(`/reports/custom?startDate=${priorStartDate}&endDate=${priorEndDate}&kind=${filterKind}&paymentMode=${filterPaymentMode}`);
       return res.data.data;
     },
-    enabled: reportType === 'custom' && !!customQuery.data
+    enabled: reportType === 'custom' && !!customQuery.data,
+    refetchInterval: 12000
   });
 
   const departmentBudgetsQuery = useQuery({
@@ -223,7 +239,10 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get('/department-budgets');
       return res.data.data || [];
     },
-    enabled: reportType === 'department-budget'
+    enabled: reportType === 'department-budget',
+    refetchInterval: 12000,
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   const allExpensesQuery = useQuery({
@@ -232,7 +251,10 @@ export const ReportsPage: React.FC = () => {
       const res = await apiClient.get('/expenses');
       return res.data.data || [];
     },
-    enabled: reportType === 'department-budget'
+    enabled: reportType === 'department-budget',
+    refetchInterval: 12000,
+    staleTime: 0,
+    refetchOnWindowFocus: true
   });
 
   const reportData = reportType === 'daily' ? dailyQuery.data : reportType === 'monthly' ? monthlyQuery.data : reportType === 'custom' ? customQuery.data : null;
@@ -525,14 +547,38 @@ export const ReportsPage: React.FC = () => {
               <Calendar className="w-3.5 h-3.5 text-kumkum" />
               {getScopePillText()}
             </span>
+            {/* Live Auto-Sync Badge & Instant Refresh */}
+            <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-full font-bold text-[11px] shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span>Auto-Synced (Live)</span>
+            </span>
           </div>
           <p className="text-xs text-textInk/60 mt-1">
             Comprehensive audit report breakdown by payment mode, date period, and Tally Prime XML/CSV exports.
           </p>
         </div>
 
-        {/* Consolidated Export Controls (Only 2 buttons: Export Dropdown + Print Report) */}
+        {/* Consolidated Export & Sync Controls */}
         <div className="flex items-center gap-2.5 self-start sm:self-auto no-print">
+          {/* Instant Manual Refresh Button */}
+          <button
+            onClick={() => {
+              dailyQuery.refetch();
+              monthlyQuery.refetch();
+              customQuery.refetch();
+              departmentBudgetsQuery.refetch();
+              allExpensesQuery.refetch();
+              financialBalanceQuery.refetch();
+            }}
+            disabled={dailyQuery.isFetching || monthlyQuery.isFetching || customQuery.isFetching || departmentBudgetsQuery.isFetching || allExpensesQuery.isFetching || financialBalanceQuery.isFetching}
+            className="px-3 py-2 rounded-xl bg-ivory hover:bg-turmeric/20 text-kumkum font-bold transition-all border border-turmeric/30 flex items-center gap-1.5 text-xs shadow-2xs disabled:opacity-50"
+            title="Force instant background data refresh"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${
+              (dailyQuery.isFetching || monthlyQuery.isFetching || customQuery.isFetching || departmentBudgetsQuery.isFetching || allExpensesQuery.isFetching || financialBalanceQuery.isFetching) ? 'animate-spin' : ''
+            }`} />
+            <span>Refresh</span>
+          </button>
           {/* Export Dropdown Button */}
           <div className="relative" ref={dropdownRef}>
             <button
