@@ -31,7 +31,10 @@ import {
   Users,
   CheckCircle2,
   HelpCircle,
-  FileText
+  FileText,
+  Maximize2,
+  Minimize2,
+  X
 } from 'lucide-react';
 import {
   PieChart,
@@ -83,6 +86,7 @@ export const ReportsPage: React.FC = () => {
   const [activePrimaryTab, setActivePrimaryTab] = useState<'collection' | 'department-budget' | 'expenditures'>('collection');
   // Level 2 Sub-Selector (active when activePrimaryTab === 'collection'): 'daily' | 'monthly' | 'custom'
   const [collectionSubTab, setCollectionSubTab] = useState<'daily' | 'monthly' | 'custom'>('daily');
+  const [expandedTileId, setExpandedTileId] = useState<string | null>(null);
 
   const reportType = activePrimaryTab === 'department-budget'
     ? 'department-budget'
@@ -280,8 +284,8 @@ export const ReportsPage: React.FC = () => {
       const overAmt = isOver ? spent - cap : 0;
 
       let status = 'Within Budget';
-      if (utilPct >= 100) status = 'Over Budget';
-      else if (utilPct >= 80) status = 'At Limit';
+      if (isOver) status = 'Over Budget';
+      else if (utilPct >= 80 || spent === cap) status = 'At Limit';
 
       return {
         ...d,
@@ -355,10 +359,50 @@ export const ReportsPage: React.FC = () => {
 
   const handleExportCSV = () => {
     setExportOpen(false);
+
+    if (activePrimaryTab === 'department-budget') {
+      const { deptRows, totalBudgeted, totalSpent, overBudgetCount } = getDeptReportData();
+      let csvContent = 'data:text/csv;charset=utf-8,';
+      csvContent += `Department Budget Caps & Expense Audit Report (${selectedYear}-${String(selectedMonth).padStart(2, '0')})\n`;
+      csvContent += `Total Monthly Budgeted (INR),${totalBudgeted}\n`;
+      csvContent += `Total Spent This Month (INR),${totalSpent}\n`;
+      csvContent += `Departments Over Budget,${overBudgetCount}\n\n`;
+      csvContent += 'Department Name,Monthly Cap (INR),Spent (INR),Remaining (INR),Utilization %,Status,Vouchers Count,Over Budget Reasons\n';
+
+      deptRows.forEach((r) => {
+        const reasons = r.vouchers.filter((v: any) => v.overBudgetReason).map((v: any) => v.overBudgetReason).join(' | ');
+        csvContent += `"${r.departmentName}",${r.monthlyCapAmount},${r.spent},${r.remaining},${r.utilPct.toFixed(1)}%,${r.status},${r.vouchers.length},"${reasons}"\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      downloadFile(csvContent, `department_budgets_${selectedYear}_${selectedMonth}.csv`, 'text/csv');
+      return;
+    }
+
+    if (activePrimaryTab === 'expenditures') {
+      if (!financialBalanceQuery.data) {
+        alert('Financial balance data loading...');
+        return;
+      }
+      let csvContent = 'data:text/csv;charset=utf-8,';
+      csvContent += `Temple Financial Balance & Expenditures Audit Report\n`;
+      csvContent += `Total Collections (INR),${financialBalanceQuery.data.totalCollections}\n`;
+      csvContent += `Total Temple Expenditure (INR - Incl. Petty Cash),${financialBalanceQuery.data.totalExpenditure}\n`;
+      csvContent += `Net Fund Surplus (INR),${financialBalanceQuery.data.netRemainingBalance}\n\n`;
+      csvContent += 'Voucher Number,Date,Category,Title,Payee,Payment Mode,Amount (INR),Logged By\n';
+
+      (financialBalanceQuery.data.expenses || []).forEach((e: any) => {
+        csvContent += `"${e.voucherNo || e.id}",${new Date(e.createdAt).toLocaleDateString()},"${e.category}","${e.title || e.description}","${e.payee || ''}",${e.paymentMode},${e.amount},"${e.createdByUser?.fullName || e.createdByUser?.username || ''}"\n`;
+      });
+
+      downloadFile(csvContent, `temple_expenditures_audit_${new Date().toISOString().split('T')[0]}.csv`, 'text/csv');
+      return;
+    }
+
     if (!reportData) return;
     let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += `Collection Report - ${reportType.toUpperCase()}\n`;
-    csvContent += `Date/Period,${reportType === 'daily' ? selectedDate : `${selectedYear}-${selectedMonth}`}\n`;
+    csvContent += `Collection Report - ${collectionSubTab.toUpperCase()}\n`;
+    csvContent += `Date/Period,${collectionSubTab === 'daily' ? selectedDate : `${selectedYear}-${selectedMonth}`}\n`;
     csvContent += `Total Receipts,${reportData.totalReceipts}\n`;
     csvContent += `Grand Total (INR),${reportData.grandTotal}\n\n`;
 
@@ -367,20 +411,14 @@ export const ReportsPage: React.FC = () => {
       csvContent += `${mode},${d.count},${d.amount}\n`;
     });
 
-    if (reportType === 'monthly' && reportData.dailyBreakdown) {
+    if (collectionSubTab === 'monthly' && reportData.dailyBreakdown) {
       csvContent += '\nDaily Breakdown Date,Total Amount (INR)\n';
       reportData.dailyBreakdown.forEach((row: any) => {
         csvContent += `${row.date},${row.totalAmount}\n`;
       });
     }
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `temple_collection_report_${reportType}_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFile(csvContent, `temple_collection_report_${collectionSubTab}_${Date.now()}.csv`, 'text/csv');
   };
 
   // Scope Pill Text Formatting
@@ -499,11 +537,11 @@ export const ReportsPage: React.FC = () => {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setExportOpen(!exportOpen)}
-              disabled={!reportData || isLoading}
+              disabled={isLoading}
               className="bg-kumkum hover:bg-kumkum-light text-ivory font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 shadow-md disabled:opacity-40"
             >
               <Download className="w-4 h-4" />
-              <span>Export</span>
+              <span>Export Report</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -511,40 +549,44 @@ export const ReportsPage: React.FC = () => {
             {exportOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-turmeric/30 shadow-xl z-50 py-1.5 text-xs animate-fadeIn">
                 <button
-                  onClick={handleExportTallyXML}
-                  disabled={!reportData?.receipts || reportData.receipts.length === 0}
-                  className="w-full px-4 py-2.5 text-left font-semibold text-textInk hover:bg-ivory flex items-center gap-2 disabled:opacity-40"
-                >
-                  <FileCode className="w-4 h-4 text-emerald-700" />
-                  <div>
-                    <span className="font-bold block">Tally XML Export</span>
-                    <span className="text-[10px] text-textInk/50">Vouchers format (.xml)</span>
-                  </div>
-                </button>
-
-                <button
-                  onClick={handleExportTallyCSV}
-                  disabled={!reportData?.receipts || reportData.receipts.length === 0}
-                  className="w-full px-4 py-2.5 text-left font-semibold text-textInk hover:bg-ivory flex items-center gap-2 border-t border-turmeric/10 disabled:opacity-40"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-turmeric-dark" />
-                  <div>
-                    <span className="font-bold block">Tally CSV Export</span>
-                    <span className="text-[10px] text-textInk/50">Spreadsheet format (.csv)</span>
-                  </div>
-                </button>
-
-                <button
                   onClick={handleExportCSV}
-                  disabled={!reportData}
-                  className="w-full px-4 py-2.5 text-left font-semibold text-textInk hover:bg-ivory flex items-center gap-2 border-t border-turmeric/10 disabled:opacity-40"
+                  disabled={isLoading}
+                  className="w-full px-4 py-2.5 text-left font-semibold text-textInk hover:bg-ivory flex items-center gap-2 disabled:opacity-40"
                 >
                   <Download className="w-4 h-4 text-kumkum" />
                   <div>
                     <span className="font-bold block">Export Summary CSV</span>
-                    <span className="text-[10px] text-textInk/50">Audit summary (.csv)</span>
+                    <span className="text-[10px] text-textInk/50">CSV Audit Spreadsheet (.csv)</span>
                   </div>
                 </button>
+
+                {activePrimaryTab === 'collection' && (
+                  <>
+                    <button
+                      onClick={handleExportTallyXML}
+                      disabled={!reportData?.receipts || reportData.receipts.length === 0}
+                      className="w-full px-4 py-2.5 text-left font-semibold text-textInk hover:bg-ivory flex items-center gap-2 border-t border-turmeric/10 disabled:opacity-40"
+                    >
+                      <FileCode className="w-4 h-4 text-emerald-700" />
+                      <div>
+                        <span className="font-bold block">Tally XML Export</span>
+                        <span className="text-[10px] text-textInk/50">Vouchers format (.xml)</span>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={handleExportTallyCSV}
+                      disabled={!reportData?.receipts || reportData.receipts.length === 0}
+                      className="w-full px-4 py-2.5 text-left font-semibold text-textInk hover:bg-ivory flex items-center gap-2 border-t border-turmeric/10 disabled:opacity-40"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-turmeric-dark" />
+                      <div>
+                        <span className="font-bold block">Tally CSV Export</span>
+                        <span className="text-[10px] text-textInk/50">Spreadsheet format (.csv)</span>
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -1005,13 +1047,21 @@ export const ReportsPage: React.FC = () => {
                       Proportions mathematically scaled against allocated monthly caps. Label text renders outside bars to prevent clipping.
                     </p>
                   </div>
-                  <div className="flex items-center gap-4 text-xs font-semibold shrink-0">
+                  <div className="flex items-center gap-3 text-xs font-semibold shrink-0">
                     <span className="flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded bg-amber-400 border border-amber-500" /> Allocated Cap
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded bg-kumkum" /> Actual Spent
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedTileId('dept-comparison-chart')}
+                      className="p-1.5 rounded-lg border border-turmeric/30 bg-ivory text-kumkum hover:bg-turmeric/20 transition-colors shadow-2xs"
+                      title="Enlarge Fullscreen"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
@@ -1114,13 +1164,13 @@ export const ReportsPage: React.FC = () => {
 
               <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-1">
                 <div className="flex items-center justify-between text-xs font-semibold text-textInk/60">
-                  <span>Total Operational Expenditures (Excl. Petty Cash)</span>
+                  <span>Total Temple Expenditure (Incl. Petty Cash)</span>
                   <ArrowUpRight className="w-5 h-5 text-red-600" />
                 </div>
                 <p className="font-mono text-3xl font-bold text-red-700 mt-1">
                   ₹{Number(financialBalanceQuery.data.totalExpenditure || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
-                <p className="text-[11px] text-textInk/50 font-medium">Operational expenses only (Petty Cash excluded)</p>
+                <p className="text-[11px] text-textInk/50 font-medium">Operational expenses + Petty Cash outlays combined</p>
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-turmeric/30 shadow-sm space-y-1 bg-gradient-to-br from-white to-ivory">
@@ -1638,6 +1688,56 @@ export const ReportsPage: React.FC = () => {
       ) : (
         <div className="p-8 text-center text-textInk/50 bg-white rounded-2xl border border-turmeric/20">
           No report data available for the selected range.
+        </div>
+      )}
+
+      {/* Fullscreen Tile Enlargement Modal */}
+      {expandedTileId && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md p-4 sm:p-8 flex items-center justify-center no-print">
+          <div className="bg-white w-full max-w-6xl rounded-3xl border border-turmeric/30 shadow-2xl p-6 sm:p-8 space-y-6 max-h-[92vh] overflow-y-auto relative animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-turmeric/20 pb-4 sticky top-0 bg-white z-10">
+              <h3 className="font-display text-lg font-bold text-kumkum flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-kumkum" />
+                <span>Enlarged Fullscreen Report Inspection</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setExpandedTileId(null)}
+                className="px-3 py-1.5 rounded-xl bg-ivory hover:bg-kumkum/10 text-kumkum font-bold transition-colors border border-turmeric/30 flex items-center gap-1.5 text-xs shadow-xs"
+              >
+                <Minimize2 className="w-4 h-4" /> Close Fullscreen
+              </button>
+            </div>
+
+            <div className="pt-2">
+              {expandedTileId === 'dept-comparison-chart' && (
+                <div className="space-y-4">
+                  <h4 className="font-bold text-sm text-kumkum">Department Monthly Cap vs Actual Spend Chart (Enlarged)</h4>
+                  <div className="w-full h-[520px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={getDeptReportData().deptRows.map((d) => ({
+                          departmentName: d.departmentName,
+                          'Allocated Cap': d.monthlyCapAmount,
+                          'Actual Spent': d.spent
+                        }))}
+                        layout="vertical"
+                        margin={{ top: 10, right: 60, left: 20, bottom: 10 }}
+                        barGap={6}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e6dcc4" />
+                        <XAxis type="number" tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} stroke="#6b1616" fontSize={12} />
+                        <YAxis type="category" dataKey="departmentName" width={180} tick={{ fontSize: 13, fontWeight: 'bold', fill: '#4A3B32' }} />
+                        <Tooltip formatter={(value: any, name: any) => [`₹${Number(value).toLocaleString('en-IN')}`, name]} contentStyle={{ backgroundColor: '#fdfaf3', borderColor: '#e6dcc4', borderRadius: '12px' }} />
+                        <Bar dataKey="Allocated Cap" fill="#FCD34D" radius={[0, 4, 4, 0]} barSize={18} />
+                        <Bar dataKey="Actual Spent" fill="#8C2F22" radius={[0, 4, 4, 0]} barSize={18} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

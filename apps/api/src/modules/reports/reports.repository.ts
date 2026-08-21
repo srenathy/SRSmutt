@@ -278,10 +278,6 @@ export class ReportsRepository implements IReportsRepository {
 
     let totalExpenditure = 0;
     for (const e of expenses) {
-      const cat = (e.category || '').toLowerCase();
-      if (cat.includes('petty cash') || cat.includes('pettycash') || cat.includes('daily allowance')) {
-        continue; // EXCLUDE PETTY CASH ALLOWANCES FROM OPERATIONAL EXPENDITURES
-      }
       if (e.status === 'APPROVED') {
         totalExpenditure += Number(e.amount || 0);
       }
