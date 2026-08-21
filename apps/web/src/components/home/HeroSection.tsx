@@ -4,10 +4,9 @@ import { MandalaPattern, LotusIcon, DiyaIcon } from './SpiritualDecorations';
 
 interface HeroSectionProps {
   announcements?: Array<{ id: string; title: string; content: string; category?: string }>;
-  onSelectTab?: (tabId: string) => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [], onSelectTab }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -73,9 +72,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [], on
 
   const newsItem = announcements.find((a) => a.category?.toUpperCase() === 'ANNOUNCEMENT');
 
-  const handleAction = (tabId: string) => {
-    if (onSelectTab) onSelectTab(tabId);
-    const el = document.getElementById(tabId) || document.getElementById('main-content-view');
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
     if (el) {
       const offset = 90;
       const bodyRect = document.body.getBoundingClientRect().top;
@@ -177,7 +175,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [], on
             {/* Primary Action Buttons */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-1">
               <button
-                onClick={() => handleAction('schedule')}
+                onClick={() => scrollToSection('schedule')}
                 className="px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#6E2217] to-[#8C2F22] hover:from-[#541010] hover:to-[#6E2217] shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer border border-[#C99A3D]/40"
               >
                 <Clock className="w-4 h-4" />
@@ -185,7 +183,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [], on
               </button>
 
               <button
-                onClick={() => handleAction('sevas')}
+                onClick={() => scrollToSection('sevas')}
                 className="px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold text-[#8C2F22] bg-white hover:bg-[#FAF6EE] border border-[#C99A3D]/40 shadow-xs hover:shadow-md transition-all transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
               >
                 <Flower2 className="w-4 h-4 text-[#8C2F22]" />

@@ -1,11 +1,7 @@
 import React from 'react';
 import { Clock, Flower2, Calendar, MapPin, ArrowRight } from 'lucide-react';
 
-interface QuickActionsProps {
-  onSelectTab?: (tabId: string) => void;
-}
-
-export const QuickActions: React.FC<QuickActionsProps> = ({ onSelectTab }) => {
+export const QuickActions: React.FC = () => {
   const actions = [
     {
       title: 'Darshan Timings',
@@ -43,10 +39,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onSelectTab }) => {
 
   const handleClick = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
-    if (onSelectTab) {
-      onSelectTab(id);
-    }
-    const element = document.getElementById('main-content-view') || document.getElementById(id);
+    const element = document.getElementById(id);
     if (element) {
       const offset = 90;
       const bodyRect = document.body.getBoundingClientRect().top;

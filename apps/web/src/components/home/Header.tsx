@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, ArrowRight, Clock, Sparkles } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 
-interface HeaderProps {
-  activeTab?: string;
-  onTabChange?: (tabId: string) => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
+export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>('schedule');
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
+
+      const sectionIds = ['schedule', 'about', 'sevas', 'events', 'gallery', 'contact'];
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 160 && rect.bottom >= 160) {
+            setActiveSection(id);
+            break;
+          }
+        }
+      }
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -30,10 +39,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
 
   const handleNav = (id: string) => {
     setMobileMenuOpen(false);
-    if (onTabChange) {
-      onTabChange(id);
-    }
-    const el = document.getElementById(id) || document.getElementById('main-content-view');
+    const el = document.getElementById(id);
     if (el) {
       const offset = 90;
       const bodyRect = document.body.getBoundingClientRect().top;
@@ -81,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
         {/* Center: Streamlined Nav Items */}
         <nav className="hidden xl:flex items-center gap-1 bg-white/70 p-1.5 rounded-2xl border border-[#C99A3D]/25 shadow-2xs">
           {navLinks.map((link) => {
-            const isActive = activeTab === link.id;
+            const isActive = activeSection === link.id;
             return (
               <button
                 key={link.id}
@@ -134,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
               key={link.id}
               onClick={() => handleNav(link.id)}
               className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
-                activeTab === link.id
+                activeSection === link.id
                   ? 'bg-[#8C2F22] text-white'
                   : 'text-[#4A3B32] hover:text-[#8C2F22] hover:bg-[#8C2F22]/10'
               }`}
