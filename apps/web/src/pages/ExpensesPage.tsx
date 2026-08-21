@@ -767,7 +767,7 @@ export const ExpensesPage: React.FC = () => {
                 <p className="text-xl font-mono font-bold text-textInk">
                   ₹{walletLimit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
-                <p className="text-[10px] text-textInk/60">Configured branch petty allowance (Kept separate from dashboard)</p>
+                <p className="text-[10px] text-textInk/60">Configured branch petty allowance (Integrated into temple expenditure totals)</p>
               </div>
               <div className="p-3.5 rounded-xl bg-amber-100 text-amber-800">
                 <Wallet className="w-6 h-6" />
@@ -814,8 +814,8 @@ export const ExpensesPage: React.FC = () => {
           <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 text-xs flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
             <div>
-              <span className="font-bold">Petty Cash Separation Notice: </span>
-              Petty Cash expenses are kept separate from operational temple expenditures and do not deduct from Main Dashboard Net Profit. Single petty cash vouchers exceeding ₹{thresholdLimit.toLocaleString('en-IN')} require Admin Approval.
+              <span className="font-bold">Petty Cash Accounting Notice: </span>
+              Petty Cash outlays are fully included in overall temple expenditures and net profit/surplus calculations. Single petty cash vouchers exceeding ₹{thresholdLimit.toLocaleString('en-IN')} require Admin Approval before being finalized.
             </div>
           </div>
 
