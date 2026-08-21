@@ -912,50 +912,92 @@ export const ReportsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 3. Cap vs Actual Visual Comparison Chart */}
-              <div id="dept-comparison-chart" className="bg-white rounded-2xl border border-turmeric/30 shadow-sm p-6 space-y-4">
-                <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
-                  <h3 className="font-display font-bold text-base text-kumkum flex items-center gap-2">
-                    <PieChartIcon className="w-4 h-4 text-kumkum" />
-                    <span>Cap vs Actual Department Budget Comparison</span>
-                  </h3>
-                  <div className="flex items-center gap-4 text-xs font-semibold">
+              {/* 3. Cap vs Actual Visual Comparison & Variance Chart */}
+              <div id="dept-comparison-chart" className="bg-white rounded-2xl border border-turmeric/30 shadow-sm p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-turmeric/20 pb-3">
+                  <div>
+                    <h3 className="font-display font-bold text-base text-kumkum flex items-center gap-2">
+                      <PieChartIcon className="w-5 h-5 text-kumkum" />
+                      <span>Department Monthly Cap vs Actual Spend & Increase Chart</span>
+                    </h3>
+                    <p className="text-xs text-textInk/60 mt-0.5">
+                      Visual comparison of monthly cap allocations, actual expenditure spend, and over-budget increases.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs font-semibold shrink-0">
                     <span className="flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded bg-kumkum" /> Actual Spent
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded bg-turmeric/40 border border-turmeric-dark" /> Monthly Cap
+                      <span className="w-3 h-3 rounded bg-amber-200 border border-amber-400" /> Monthly Cap
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded bg-red-600" /> Over-Budget Increase
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-2">
+                <div className="space-y-6 pt-2">
                   {deptRows.map((d) => (
-                    <div key={d.departmentName} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs font-semibold">
-                        <span className="text-textInk font-bold">{d.departmentName}</span>
-                        <span className="font-mono text-textInk/80">
-                          ₹{d.spent.toLocaleString('en-IN')} / ₹{d.monthlyCapAmount.toLocaleString('en-IN')}{' '}
-                          <span className={d.isOver ? 'text-red-600 font-bold ml-1' : 'text-emerald-700 font-bold ml-1'}>
-                            ({d.utilPct.toFixed(0)}%)
+                    <div key={d.departmentName} className="bg-ivory/40 p-4 rounded-xl border border-turmeric/20 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between text-xs font-semibold gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-textInk font-bold text-sm">{d.departmentName}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                            d.isOver ? 'bg-red-100 text-red-800 border-red-200' : d.status === 'At Limit' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                          }`}>
+                            {d.isOver ? `OVER BUDGET (+₹${d.overAmt.toLocaleString('en-IN')})` : d.status.toUpperCase()}
                           </span>
-                        </span>
-                      </div>
+                        </div>
 
-                      <div className="relative h-6 bg-ivory rounded-xl border border-turmeric/30 overflow-hidden flex items-center">
-                        {/* Cap Threshold Background */}
-                        <div className="absolute top-0 bottom-0 left-0 bg-turmeric/20 rounded-xl" style={{ width: '100%' }} />
-
-                        {/* Actual Spent Bar */}
-                        <div
-                          className={`h-full rounded-xl transition-all flex items-center justify-end pr-2 text-[10px] font-bold text-ivory ${
-                            d.isOver ? 'bg-red-600' : 'bg-kumkum'
-                          }`}
-                          style={{ width: `${Math.min(100, d.utilPct)}%` }}
-                        >
-                          {d.utilPct > 15 && `₹${d.spent.toLocaleString('en-IN')}`}
+                        <div className="font-mono text-xs text-textInk/80 flex items-center gap-3">
+                          <span>Cap: <strong>₹{d.monthlyCapAmount.toLocaleString('en-IN')}</strong></span>
+                          <span>Spent: <strong className={d.isOver ? 'text-red-600' : 'text-kumkum'}>₹{d.spent.toLocaleString('en-IN')}</strong></span>
+                          <span>Utilization: <strong className={d.isOver ? 'text-red-600' : 'text-emerald-700'}>{d.utilPct.toFixed(1)}%</strong></span>
                         </div>
                       </div>
+
+                      {/* Visual Dual Progress Bars: Monthly Cap vs Actual Spend */}
+                      <div className="space-y-1.5">
+                        {/* Cap Target Line */}
+                        <div className="relative h-4 bg-amber-100/80 rounded-lg border border-amber-300 overflow-hidden flex items-center">
+                          <div className="w-full text-[9px] font-bold text-amber-900 px-2 flex justify-between">
+                            <span>ALLOCATED CAP THRESHOLD</span>
+                            <span>₹{d.monthlyCapAmount.toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+
+                        {/* Actual Spend Line with Over-Budget Segment */}
+                        <div className="relative h-5 bg-ivory rounded-lg border border-turmeric/30 overflow-hidden flex items-center">
+                          <div
+                            className={`h-full rounded-lg transition-all flex items-center justify-between px-2 text-[10px] font-bold text-ivory ${
+                              d.isOver ? 'bg-red-600' : 'bg-kumkum'
+                            }`}
+                            style={{ width: `${Math.min(100, d.utilPct)}%` }}
+                          >
+                            <span>ACTUAL SPEND</span>
+                            <span>₹{d.spent.toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Over-budget Reason summary if applicable */}
+                      {d.isOver && d.vouchers.some((v: any) => v.overBudgetReason) && (
+                        <div className="mt-2 text-[11px] bg-red-50 p-2.5 rounded-lg border border-red-200 text-red-900 flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold block">Over-Budget Reason Notes:</span>
+                            <ul className="list-disc list-inside space-y-0.5 text-red-800">
+                              {d.vouchers.filter((v: any) => v.overBudgetReason).map((v: any) => (
+                                <li key={v.id}>
+                                  <span className="font-semibold">{v.voucherNumber} ({v.title}):</span> {v.overBudgetReason}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
