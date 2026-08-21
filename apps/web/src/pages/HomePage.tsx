@@ -44,7 +44,7 @@ export const HomePage: React.FC = () => {
         setLoading(true);
         const [annRes, sevaRes] = await Promise.all([
           apiClient.get('/announcements/public'),
-          apiClient.get('/sevas')
+          apiClient.get('/sevas/public')
         ]);
         if (isMounted) {
           setAnnouncements(annRes.data.data || []);

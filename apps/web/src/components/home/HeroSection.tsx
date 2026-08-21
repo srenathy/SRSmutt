@@ -25,12 +25,30 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) 
   let nextEventTitle = 'Evening Darshan (5:30 PM)';
   let targetTotalMinutes = 1050; // 5:30 PM
 
-  if (currentTotalMinutes >= 420 && currentTotalMinutes < 750) {
-    // 7:00 AM - 12:30 PM
-    statusText = 'Darshan & Pooja Open';
+  if (currentTotalMinutes >= 420 && currentTotalMinutes < 480) {
+    // 7:00 AM - 8:00 AM
+    statusText = 'Morning Darshan Open';
+    isDarshanOpen = true;
+    nextEventTitle = 'Panchamrutha Abhisheka (8:00 AM)';
+    targetTotalMinutes = 480;
+  } else if (currentTotalMinutes >= 480 && currentTotalMinutes < 540) {
+    // 8:00 AM - 9:00 AM
+    statusText = 'Panchamrutha Abhisheka & Archana';
+    isDarshanOpen = true;
+    nextEventTitle = 'Pushpa Alankara Darshan (9:00 AM)';
+    targetTotalMinutes = 540;
+  } else if (currentTotalMinutes >= 540 && currentTotalMinutes < 720) {
+    // 9:00 AM - 12:00 PM
+    statusText = 'Alankara Darshan Open';
     isDarshanOpen = true;
     nextEventTitle = 'Mahamangalarathi (12:00 PM)';
     targetTotalMinutes = 720;
+  } else if (currentTotalMinutes >= 720 && currentTotalMinutes < 750) {
+    // 12:00 PM - 12:30 PM
+    statusText = 'Mahamangalarathi in Progress';
+    isDarshanOpen = true;
+    nextEventTitle = 'Evening Darshan (5:30 PM)';
+    targetTotalMinutes = 1050;
   } else if (currentTotalMinutes >= 750 && currentTotalMinutes < 1050) {
     // 12:30 PM - 5:30 PM
     statusText = 'Afternoon Closure';

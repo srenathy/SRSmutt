@@ -5,6 +5,7 @@ import { roleGuard } from '../../guards/role.guard.js';
 import { Role } from '@temple/shared';
 
 export function registerSevaRoutes(fastify: FastifyInstance, controller: SevaController) {
+  fastify.get('/public', (req, reply) => controller.getPublicList(req, reply));
   fastify.get('/', { preHandler: [authGuard] }, (req, reply) => controller.getAll(req, reply));
   fastify.get('/:id', { preHandler: [authGuard] }, (req, reply) => controller.getById(req as any, reply));
   fastify.post('/', { preHandler: [authGuard, roleGuard([Role.ADMIN])] }, (req, reply) => controller.create(req, reply));

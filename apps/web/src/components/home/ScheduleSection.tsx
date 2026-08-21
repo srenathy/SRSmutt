@@ -15,8 +15,9 @@ export const ScheduleSection: React.FC = () => {
   const currentTotalMinutes = hours * 60 + minutes;
 
   const morningSlots = [
-    { title: 'Morning Darshan & Nirmalya Pooja', time: '7:00 AM – 9:00 AM', start: 420, end: 540, desc: 'Nirmalya Visarjana & daily morning pooja rituals' },
-    { title: 'Panchamrutha Abhisheka & Archana', time: '9:00 AM – 11:30 AM', start: 540, end: 690, desc: 'Sacred milk, honey, curd, ghee & fruit abhisheka' },
+    { title: 'Morning Darshan & Nirmalya Pooja', time: '7:00 AM – 8:00 AM', start: 420, end: 480, desc: 'Nirmalya Visarjana & sacred morning pooja rituals' },
+    { title: 'Panchamrutha Abhisheka & Archana (Before 9 AM)', time: '8:00 AM – 9:00 AM', start: 480, end: 540, desc: 'Conducted before 9:00 AM: Sacred milk, honey, curd, ghee & fruit abhisheka' },
+    { title: 'Pushpa Alankara & Devotee Darshan', time: '9:00 AM – 12:00 PM', start: 540, end: 720, desc: 'Sacred Alankara Darshana, Archana & devotional prayers' },
     { title: 'Daily Mahamangalarathi & Hastodaka', time: '12:00 PM – 12:30 PM', start: 720, end: 750, desc: 'Grand afternoon aarthi, Hastodaka samarpanam & Phala Mantrakshate' },
   ];
 

@@ -5,6 +5,11 @@ import { ISevaService } from './seva.service.js';
 export class SevaController {
   constructor(private readonly sevaService: ISevaService) {}
 
+  async getPublicList(request: FastifyRequest, reply: FastifyReply) {
+    const sevas = await this.sevaService.getActiveSevas();
+    return reply.send({ data: sevas });
+  }
+
   async getAll(request: FastifyRequest, reply: FastifyReply) {
     const sevas = await this.sevaService.getAllSevas();
     return reply.send({ data: sevas });
