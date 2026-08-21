@@ -1473,31 +1473,28 @@ export const ReportsPage: React.FC = () => {
             </div>
           )}
 
-          {/* Payment Mode Breakdown: Donut Chart + Table (Feature 4 & 5) */}
-          <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-6">
+          {/* ── Collection Tiles Grid ── Payment Mode (full-width) + Offering Head & Seva Drilldown (2-col boxes) */}
+
+          {/* Tile 1: Payment Mode Breakdown — full width with donut + table */}
+          <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
-              <h3 className="font-display text-base font-bold text-kumkum flex items-center gap-2">
-                <PieChartIcon className="w-5 h-5 text-kumkum" />
-                <span>Collection Breakdown by Payment Mode</span>
+              <h3 className="font-display text-sm font-bold text-kumkum flex items-center gap-2">
+                <PieChartIcon className="w-4 h-4 text-kumkum" />
+                <span>Collection by Payment Mode</span>
               </h3>
+              <button type="button" onClick={() => setExpandedTileId('payment-mode')} className="p-1.5 rounded-lg hover:bg-ivory border border-turmeric/20 text-kumkum/70 hover:text-kumkum transition-colors" title="Expand">
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
               {/* Donut Chart */}
-              <div className="lg:col-span-5 flex flex-col items-center">
+              <div className="lg:col-span-4 flex flex-col items-center">
                 {paymentModeChartData.length > 0 ? (
-                  <div className="w-full h-56 relative">
+                  <div className="w-full h-44 relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie
-                          data={paymentModeChartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={75}
-                          paddingAngle={3}
-                          dataKey="value"
-                        >
+                        <Pie data={paymentModeChartData} cx="50%" cy="50%" innerRadius={40} outerRadius={62} paddingAngle={3} dataKey="value">
                           {paymentModeChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
@@ -1506,25 +1503,22 @@ export const ReportsPage: React.FC = () => {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-[10px] font-bold text-textInk/50 uppercase">TOTAL</span>
-                      <span className="font-mono text-sm font-bold text-kumkum">
+                      <span className="text-[9px] font-bold text-textInk/50 uppercase">TOTAL</span>
+                      <span className="font-mono text-xs font-bold text-kumkum">
                         ₹{Number(reportData.grandTotal).toLocaleString('en-IN')}
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-textInk/50">No data available for chart</p>
+                  <p className="text-xs text-textInk/50">No data</p>
                 )}
-
-                {/* Custom HTML Legend */}
-                <div className="flex flex-wrap justify-center gap-3 mt-2 text-xs">
+                {/* Legend */}
+                <div className="flex flex-wrap justify-center gap-2 mt-1 text-[10px]">
                   {paymentModeChartData.map((d) => {
-                    const sharePct = Number(reportData.grandTotal) > 0
-                      ? ((d.value / Number(reportData.grandTotal)) * 100).toFixed(1)
-                      : '0.0';
+                    const sharePct = Number(reportData.grandTotal) > 0 ? ((d.value / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
                     return (
-                      <div key={d.name} className="flex items-center gap-1.5 font-medium text-textInk">
-                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                      <div key={d.name} className="flex items-center gap-1 font-medium text-textInk">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
                         <span className="font-bold">{d.name}:</span>
                         <span className="text-textInk/70">{sharePct}%</span>
                       </div>
@@ -1533,37 +1527,33 @@ export const ReportsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Breakdown Table */}
-              <div className="lg:col-span-7 overflow-x-auto">
+              {/* Table */}
+              <div className="lg:col-span-8 overflow-x-auto max-h-52 overflow-y-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
+                  <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark sticky top-0">
                     <tr>
-                      <th className="p-3">Payment Mode</th>
-                      <th className="p-3 text-center">Receipt Count</th>
-                      <th className="p-3 text-right">Total Amount (₹)</th>
-                      <th className="p-3 text-right">% Share</th>
+                      <th className="p-2.5">Payment Mode</th>
+                      <th className="p-2.5 text-center">Count</th>
+                      <th className="p-2.5 text-right">Amount (₹)</th>
+                      <th className="p-2.5 text-right">Share</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ivory-dark/60">
                     {Object.entries(reportData.byPaymentMode || {}).map(([mode, data]: [string, any]) => {
-                      const sharePct = Number(reportData.grandTotal) > 0
-                        ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1)
-                        : '0.0';
+                      const sharePct = Number(reportData.grandTotal) > 0 ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
                       const rowColor = PAYMENT_MODE_COLORS[mode] || '#9E7422';
                       return (
                         <tr key={mode} className="hover:bg-ivory/30">
-                          <td className="p-3 font-bold text-textInk flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
+                          <td className="p-2.5 font-bold text-textInk flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
                             {mode}
                           </td>
-                          <td className="p-3 text-center font-semibold">{data.count}</td>
-                          <td className="p-3 text-right font-mono font-bold text-kumkum">
-                            ₹{Number(data.amount).toFixed(2)}
-                          </td>
-                          <td className="p-3 text-right font-mono text-textInk/80 font-bold">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="p-2.5 text-center font-semibold">{data.count}</td>
+                          <td className="p-2.5 text-right font-mono font-bold text-kumkum">₹{Number(data.amount).toFixed(2)}</td>
+                          <td className="p-2.5 text-right font-mono text-textInk/80 font-bold">
+                            <div className="flex items-center justify-end gap-1.5">
                               <span>{sharePct}%</span>
-                              <div className="w-16 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20">
+                              <div className="w-12 bg-ivory rounded-full h-1.5 overflow-hidden border border-turmeric/20">
                                 <div className="h-full rounded-full" style={{ width: `${sharePct}%`, backgroundColor: rowColor }} />
                               </div>
                             </div>
@@ -1577,115 +1567,115 @@ export const ReportsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Offering Head Breakdown Table (Feature 5) */}
-          <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
-              <h3 className="font-display text-base font-bold text-kumkum">Collection Breakdown by Offering Head</h3>
-            </div>
+          {/* ── 2-Column Box Grid: Offering Head + Seva Drilldown ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-            <table className="w-full text-left text-xs">
-              <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
-                <tr>
-                  <th className="p-3">Offering Kind / Head</th>
-                  <th className="p-3 text-center">Receipt Count</th>
-                  <th className="p-3 text-right">Total Amount (₹)</th>
-                  <th className="p-3 text-right">% Share</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ivory-dark/60">
-                {Object.entries(reportData.byKind || {}).map(([k, data]: [string, any]) => {
-                  const label = k === 'NEW_SEVA' ? 'Regular Seva Income'
-                    : k === 'SHASHWATA_SEVA' ? 'Shashwata Seva Corpus Fund'
-                    : k === 'HUNDI_COLLECTION' ? '💰 Hundi & Direct Temple Income'
-                    : 'In-Kind / Dravya Offering';
-                  const sharePct = Number(reportData.grandTotal) > 0
-                    ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1)
-                    : '0.0';
-                  const rowColor = OFFERING_KIND_COLORS[k] || '#8C2F22';
-                  return (
-                    <tr key={k} className="hover:bg-ivory/30">
-                      <td className="p-3 font-bold text-textInk flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
-                        {label}
-                      </td>
-                      <td className="p-3 text-center font-semibold">{data.count}</td>
-                      <td className="p-3 text-right font-mono font-bold text-kumkum">
-                        ₹{Number(data.amount).toFixed(2)}
-                      </td>
-                      <td className="p-3 text-right font-mono text-textInk/80 font-bold">
-                        <div className="flex items-center justify-end gap-2">
-                          <span>{sharePct}%</span>
-                          <div className="w-16 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20">
-                            <div className="h-full rounded-full" style={{ width: `${sharePct}%`, backgroundColor: rowColor }} />
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Seva-Level Drilldown Table (Feature 6) */}
-          <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-turmeric/20 pb-3">
-              <h3 className="font-display text-base font-bold text-kumkum flex items-center gap-2">
-                <Layers className="w-4 h-4 text-kumkum" />
-                <span>Seva-Level & Offering Line Item Drilldown</span>
-              </h3>
-              <span className="text-xs text-textInk/50 font-mono font-semibold">{sevaBreakdown.length} unique offerings</span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
-                  <tr>
-                    <th className="p-3">Seva Name / Item Description</th>
-                    <th className="p-3">Offering Kind</th>
-                    <th className="p-3 text-center">Bookings / Qty</th>
-                    <th className="p-3 text-right">Total Amount (₹)</th>
-                    <th className="p-3 text-right">% Share</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-ivory-dark/60">
-                  {sevaBreakdown.length === 0 ? (
+            {/* Tile 2: Offering Head Breakdown (compact box) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-5 flex flex-col">
+              <div className="flex items-center justify-between border-b border-turmeric/20 pb-3 mb-3">
+                <h3 className="font-display text-sm font-bold text-kumkum">By Offering Head</h3>
+                <button type="button" onClick={() => setExpandedTileId('offering-head')} className="p-1.5 rounded-lg hover:bg-ivory border border-turmeric/20 text-kumkum/70 hover:text-kumkum transition-colors" title="Expand">
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-56 flex-1">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark sticky top-0">
                     <tr>
-                      <td colSpan={5} className="p-6 text-center text-textInk/50 italic">No line items found for this period.</td>
+                      <th className="p-2.5">Offering Head</th>
+                      <th className="p-2.5 text-center">Count</th>
+                      <th className="p-2.5 text-right">Amount (₹)</th>
+                      <th className="p-2.5 text-right">Share</th>
                     </tr>
-                  ) : (
-                    sevaBreakdown.map((seva, idx) => {
-                      const sharePct = Number(reportData.grandTotal) > 0
-                        ? ((seva.amount / Number(reportData.grandTotal)) * 100).toFixed(1)
-                        : '0.0';
-                      const rowColor = PALETTE_ARRAY[idx % PALETTE_ARRAY.length];
+                  </thead>
+                  <tbody className="divide-y divide-ivory-dark/60">
+                    {Object.entries(reportData.byKind || {}).map(([k, data]: [string, any]) => {
+                      const label = k === 'NEW_SEVA' ? 'Regular Seva Income'
+                        : k === 'SHASHWATA_SEVA' ? 'Shashwata Seva Corpus'
+                        : k === 'HUNDI_COLLECTION' ? '💰 Hundi & Direct Income'
+                        : 'In-Kind / Dravya';
+                      const sharePct = Number(reportData.grandTotal) > 0 ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
+                      const rowColor = OFFERING_KIND_COLORS[k] || '#8C2F22';
                       return (
-                        <tr key={seva.name} className="hover:bg-ivory/30">
-                          <td className="p-3 font-bold text-textInk flex items-center gap-2">
+                        <tr key={k} className="hover:bg-ivory/30">
+                          <td className="p-2.5 font-bold text-textInk flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
-                            {seva.name}
+                            {label}
                           </td>
-                          <td className="p-3 text-textInk/70 font-semibold uppercase text-[10px]">
-                            {seva.kind.replace(/_/g, ' ')}
-                          </td>
-                          <td className="p-3 text-center font-mono font-bold text-textInk">{seva.count}</td>
-                          <td className="p-3 text-right font-mono font-bold text-kumkum">
-                            ₹{seva.amount.toFixed(2)}
-                          </td>
-                          <td className="p-3 text-right font-mono text-textInk/80 font-bold">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="p-2.5 text-center font-semibold">{data.count}</td>
+                          <td className="p-2.5 text-right font-mono font-bold text-kumkum">₹{Number(data.amount).toFixed(2)}</td>
+                          <td className="p-2.5 text-right font-mono text-textInk/80 font-bold">
+                            <div className="flex items-center justify-end gap-1.5">
                               <span>{sharePct}%</span>
-                              <div className="w-16 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20">
+                              <div className="w-12 bg-ivory rounded-full h-1.5 overflow-hidden border border-turmeric/20">
                                 <div className="h-full rounded-full" style={{ width: `${sharePct}%`, backgroundColor: rowColor }} />
                               </div>
                             </div>
                           </td>
                         </tr>
                       );
-                    })
-                  )}
-                </tbody>
-              </table>
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Tile 3: Seva-Level Drilldown (compact box) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-turmeric/20 p-5 flex flex-col">
+              <div className="flex items-center justify-between border-b border-turmeric/20 pb-3 mb-3">
+                <h3 className="font-display text-sm font-bold text-kumkum flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-kumkum" />
+                  <span>Seva-Level Drilldown</span>
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-textInk/50 font-mono font-semibold">{sevaBreakdown.length} items</span>
+                  <button type="button" onClick={() => setExpandedTileId('seva-drilldown')} className="p-1.5 rounded-lg hover:bg-ivory border border-turmeric/20 text-kumkum/70 hover:text-kumkum transition-colors" title="Expand">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-y-auto max-h-56 flex-1">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark sticky top-0">
+                    <tr>
+                      <th className="p-2.5">Seva Name</th>
+                      <th className="p-2.5 text-center">Qty</th>
+                      <th className="p-2.5 text-right">Amount (₹)</th>
+                      <th className="p-2.5 text-right">Share</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ivory-dark/60">
+                    {sevaBreakdown.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-4 text-center text-textInk/50 italic text-[11px]">No line items found.</td>
+                      </tr>
+                    ) : (
+                      sevaBreakdown.map((seva, idx) => {
+                        const sharePct = Number(reportData.grandTotal) > 0 ? ((seva.amount / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
+                        const rowColor = PALETTE_ARRAY[idx % PALETTE_ARRAY.length];
+                        return (
+                          <tr key={seva.name} className="hover:bg-ivory/30">
+                            <td className="p-2.5 font-bold text-textInk flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
+                              {seva.name}
+                            </td>
+                            <td className="p-2.5 text-center font-mono font-bold text-textInk">{seva.count}</td>
+                            <td className="p-2.5 text-right font-mono font-bold text-kumkum">₹{seva.amount.toFixed(2)}</td>
+                            <td className="p-2.5 text-right font-mono text-textInk/80 font-bold">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <span>{sharePct}%</span>
+                                <div className="w-12 bg-ivory rounded-full h-1.5 overflow-hidden border border-turmeric/20">
+                                  <div className="h-full rounded-full" style={{ width: `${sharePct}%`, backgroundColor: rowColor }} />
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -1770,6 +1760,187 @@ export const ReportsPage: React.FC = () => {
                         <Bar dataKey="Actual Spent" fill="#8C2F22" radius={[0, 4, 4, 0]} barSize={18} />
                       </BarChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {expandedTileId === 'payment-mode' && reportData && (
+                <div className="space-y-6">
+                  <h4 className="font-bold text-base text-kumkum flex items-center gap-2">
+                    <PieChartIcon className="w-5 h-5" /> Collection Breakdown by Payment Mode (Enlarged)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    <div className="md:col-span-5 flex flex-col items-center">
+                      <div className="w-full h-64 relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={paymentModeChartData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value">
+                              {paymentModeChartData.map((entry, index) => (
+                                <Cell key={`cell-modal-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(val: any) => `₹${Number(val).toLocaleString('en-IN')}`} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-xs font-bold text-textInk/50 uppercase">TOTAL</span>
+                          <span className="font-mono text-base font-bold text-kumkum">
+                            ₹{Number(reportData.grandTotal).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap justify-center gap-3 mt-3 text-xs">
+                        {paymentModeChartData.map((d) => {
+                          const sharePct = Number(reportData.grandTotal) > 0 ? ((d.value / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
+                          return (
+                            <div key={d.name} className="flex items-center gap-1.5 font-medium text-textInk">
+                              <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                              <span className="font-bold">{d.name}:</span>
+                              <span className="text-textInk/70">{sharePct}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="md:col-span-7 overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
+                          <tr>
+                            <th className="p-3">Payment Mode</th>
+                            <th className="p-3 text-center">Receipt Count</th>
+                            <th className="p-3 text-right">Total Amount (₹)</th>
+                            <th className="p-3 text-right">% Share</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-ivory-dark/60">
+                          {Object.entries(reportData.byPaymentMode || {}).map(([mode, data]: [string, any]) => {
+                            const sharePct = Number(reportData.grandTotal) > 0 ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
+                            const rowColor = PAYMENT_MODE_COLORS[mode] || '#9E7422';
+                            return (
+                              <tr key={mode} className="hover:bg-ivory/30">
+                                <td className="p-3 font-bold text-textInk flex items-center gap-2">
+                                  <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
+                                  {mode}
+                                </td>
+                                <td className="p-3 text-center font-semibold">{data.count}</td>
+                                <td className="p-3 text-right font-mono font-bold text-kumkum">₹{Number(data.amount).toFixed(2)}</td>
+                                <td className="p-3 text-right font-mono text-textInk/80 font-bold">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <span>{sharePct}%</span>
+                                    <div className="w-20 bg-ivory rounded-full h-2 overflow-hidden border border-turmeric/20">
+                                      <div className="h-full rounded-full" style={{ width: `${sharePct}%`, backgroundColor: rowColor }} />
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {expandedTileId === 'offering-head' && reportData && (
+                <div className="space-y-4">
+                  <h4 className="font-bold text-base text-kumkum">Collection Breakdown by Offering Head (Enlarged)</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark">
+                        <tr>
+                          <th className="p-3">Offering Kind / Head</th>
+                          <th className="p-3 text-center">Receipt Count</th>
+                          <th className="p-3 text-right">Total Amount (₹)</th>
+                          <th className="p-3 text-right">% Share</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ivory-dark/60">
+                        {Object.entries(reportData.byKind || {}).map(([k, data]: [string, any]) => {
+                          const label = k === 'NEW_SEVA' ? 'Regular Seva Income'
+                            : k === 'SHASHWATA_SEVA' ? 'Shashwata Seva Corpus Fund'
+                            : k === 'HUNDI_COLLECTION' ? '💰 Hundi & Direct Temple Income'
+                            : 'In-Kind / Dravya Offering';
+                          const sharePct = Number(reportData.grandTotal) > 0 ? ((Number(data.amount) / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
+                          const rowColor = OFFERING_KIND_COLORS[k] || '#8C2F22';
+                          return (
+                            <tr key={k} className="hover:bg-ivory/30">
+                              <td className="p-3 font-bold text-textInk flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
+                                {label}
+                              </td>
+                              <td className="p-3 text-center font-semibold">{data.count}</td>
+                              <td className="p-3 text-right font-mono font-bold text-kumkum">₹{Number(data.amount).toFixed(2)}</td>
+                              <td className="p-3 text-right font-mono text-textInk/80 font-bold">
+                                <div className="flex items-center justify-end gap-2">
+                                  <span>{sharePct}%</span>
+                                  <div className="w-24 bg-ivory rounded-full h-2.5 overflow-hidden border border-turmeric/20">
+                                    <div className="h-full rounded-full" style={{ width: `${sharePct}%`, backgroundColor: rowColor }} />
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {expandedTileId === 'seva-drilldown' && reportData && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-base text-kumkum flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-kumkum" /> Seva-Level & Offering Line Item Drilldown (Enlarged)
+                    </h4>
+                    <span className="text-xs text-textInk/60 font-mono font-semibold">{sevaBreakdown.length} unique offerings</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-ivory text-textInk/70 font-semibold border-b border-ivory-dark sticky top-0">
+                        <tr>
+                          <th className="p-3">Seva Name / Item Description</th>
+                          <th className="p-3">Offering Kind</th>
+                          <th className="p-3 text-center">Bookings / Qty</th>
+                          <th className="p-3 text-right">Total Amount (₹)</th>
+                          <th className="p-3 text-right">% Share</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ivory-dark/60">
+                        {sevaBreakdown.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="p-6 text-center text-textInk/50 italic">No line items found for this period.</td>
+                          </tr>
+                        ) : (
+                          sevaBreakdown.map((seva, idx) => {
+                            const sharePct = Number(reportData.grandTotal) > 0 ? ((seva.amount / Number(reportData.grandTotal)) * 100).toFixed(1) : '0.0';
+                            const rowColor = PALETTE_ARRAY[idx % PALETTE_ARRAY.length];
+                            return (
+                              <tr key={seva.name} className="hover:bg-ivory/30">
+                                <td className="p-3 font-bold text-textInk flex items-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: rowColor }} />
+                                  {seva.name}
+                                </td>
+                                <td className="p-3 text-textInk/70 font-semibold uppercase text-xs">
+                                  {seva.kind.replace(/_/g, ' ')}
+                                </td>
+                                <td className="p-3 text-center font-mono font-bold text-textInk">{seva.count}</td>
+                                <td className="p-3 text-right font-mono font-bold text-kumkum">₹{seva.amount.toFixed(2)}</td>
+                                <td className="p-3 text-right font-mono text-textInk/80 font-bold">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <span>{sharePct}%</span>
+                                    <div className="w-24 bg-ivory rounded-full h-2.5 overflow-hidden border border-turmeric/20">
+                                      <div className="h-full rounded-full" style={{ width: `${sharePct}%`, backgroundColor: rowColor }} />
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
