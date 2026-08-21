@@ -9,3 +9,4 @@ export * from './schemas/announcement.schema.js';
 export * from './schemas/vedic.schema.js';
 export * from './schemas/expense.schema.js';
 export * from './schemas/user.schema.js';
+export * from './schemas/gallery.schema.js';

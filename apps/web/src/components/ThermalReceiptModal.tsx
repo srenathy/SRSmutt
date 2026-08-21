@@ -65,17 +65,20 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
     }
   };
 
-  const templeInfo = temple || fetchedTemple || {
-    name: 'ಶ್ರೀ ಶ್ರೀ ಶ್ರೀ ಗುರು ರಾಘವೇಂದ್ರ ಸ್ವಾಮಿ ಮಠ',
+  const templeData = temple || fetchedTemple;
+  const templeInfo = {
+    name: templeData?.name || 'ಶ್ರೀ ಶ್ರೀ ಶ್ರೀ ಗುರು ರಾಘವೇಂದ್ರ ಸ್ವಾಮಿ ಮಠ',
     secondaryName: 'ಶ್ರೀ ಶ್ರೀಪಾದರಾಜ ಮಠ (ಮುಳಬಾಗಿಲು)',
-    address: 'ನಂ.542, 63ನೇ ಕ್ರಾಸ್, 5ನೇ ಬ್ಲಾಕ್, ರಾಜಾಜಿನಗರ, ಭಾಷ್ಯಂ ಸರ್ಕಲ್ ಹತ್ತಿರ, ಬೆಂಗಳೂರು-560010',
-    phone1: '98446 87615',
+    address: templeData?.address ? `${templeData.address}${templeData.city ? `, ${templeData.city}` : ''}${templeData.pincode ? ` - ${templeData.pincode}` : ''}` : 'ನಂ.542, 63ನೇ ಕ್ರಾಸ್, 5ನೇ ಬ್ಲಾಕ್, ರಾಜಾಜಿನಗರ, ಭಾಷ್ಯಂ ಸರ್ಕಲ್ ಹತ್ತಿರ, ಬೆಂಗಳೂರು-560010',
+    phone1: templeData?.phone || '98446 87615',
     phone2: '94900 67092',
-    bankName: 'Sri Badaraja Mutt',
-    bankAccountNo: '41749373012',
-    bankBranch: 'State Bank of India',
-    bankIfsc: 'SBIN0020348',
-    bankLocation: 'Rajajinagar, Bengaluru.'
+    accountName: templeData?.accountName || 'Sri Badaraja Mutt',
+    accountNumber: templeData?.accountNumber || '41749373012',
+    bankName: templeData?.bankName || 'State Bank of India',
+    ifscCode: templeData?.ifscCode || 'SBIN0020348',
+    branchName: templeData?.branchName || 'Rajajinagar, Bengaluru.',
+    upiId: templeData?.upiId || 'raghavendra@upi',
+    upiQrCode: templeData?.upiQrCode || null
   };
 
   const safeNum = (val: any) => {
@@ -322,11 +325,11 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({
                 {/* Left: Bank Details Box */}
                 <div className="border border-red-950 p-2 rounded-xs space-y-0.5 bg-red-50/20">
                   <p className="font-bold border-b border-red-950/30 pb-0.5 underline">Bank Details</p>
-                  <p><span className="font-bold">Name :</span> {templeInfo.bankName || 'Sri Badaraja Mutt'}</p>
-                  <p><span className="font-bold">A/c. No. :</span> {templeInfo.bankAccountNo || '41749373012'}</p>
-                  <p><span className="font-bold">Bank :</span> {templeInfo.bankBranch || 'State Bank of India'}</p>
-                  <p><span className="font-bold">IFSC :</span> {templeInfo.bankIfsc || 'SBIN0020348'}</p>
-                  <p><span className="font-bold">Branch :</span> {templeInfo.bankLocation || 'Rajajinagar, Bengaluru.'}</p>
+                  <p><span className="font-bold">Name :</span> {templeInfo.accountName}</p>
+                  <p><span className="font-bold">A/c. No. :</span> {templeInfo.accountNumber}</p>
+                  <p><span className="font-bold">Bank :</span> {templeInfo.bankName}</p>
+                  <p><span className="font-bold">IFSC :</span> {templeInfo.ifscCode}</p>
+                  <p><span className="font-bold">Branch :</span> {templeInfo.branchName}</p>
                   <div className="flex gap-4 pt-1 font-bold">
                     <span>PhonePe : [{isUpi ? '✓' : ' '}]</span>
                     <span>Cash : [{isCash ? '✓' : ' '}]</span>

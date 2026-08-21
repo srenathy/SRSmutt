@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 export interface FieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'email' | 'textarea' | 'checkbox' | 'image' | 'select';
+  type: 'text' | 'number' | 'email' | 'date' | 'textarea' | 'checkbox' | 'image' | 'select';
   placeholder?: string;
   required?: boolean;
   options?: { label: string; value: string }[];
@@ -98,6 +98,13 @@ export const MasterFormDrawer: React.FC<MasterFormDrawerProps> = ({
                   onChange={(e) => onChange(field.name, e.target.value)}
                   placeholder={field.placeholder}
                   className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50"
+                />
+              ) : field.type === 'date' ? (
+                <input
+                  type="date"
+                  value={formData[field.name] ? String(formData[field.name]).split('T')[0] : ''}
+                  onChange={(e) => onChange(field.name, e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-turmeric/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-turmeric/50 font-medium text-textInk"
                 />
               ) : field.type === 'checkbox' ? (
                 <label className="flex items-center gap-2 cursor-pointer mt-1">

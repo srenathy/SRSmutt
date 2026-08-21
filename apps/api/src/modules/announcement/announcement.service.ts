@@ -28,15 +28,25 @@ export class AnnouncementService extends BaseService<Announcement> implements IA
     return this.repo.findAll();
   }
 
+  private formatData(input: AnnouncementInput): any {
+    return {
+      ...input,
+      startDate: input.startDate ? new Date(input.startDate) : null,
+      endDate: input.endDate ? new Date(input.endDate) : null
+    };
+  }
+
   async createAnnouncement(input: AnnouncementInput, userId?: string): Promise<Announcement> {
-    const created = await this.repo.create(input);
+    const formatted = this.formatData(input);
+    const created = await this.repo.create(formatted);
     await this.auditLogger.log(userId, AuditAction.CREATE, 'Announcement', created.id, undefined, created);
     return created;
   }
 
   async updateAnnouncement(id: string, input: AnnouncementInput, userId?: string): Promise<Announcement> {
     const existing = await this.getById(id);
-    const updated = await this.repo.update(id, input);
+    const formatted = this.formatData(input);
+    const updated = await this.repo.update(id, formatted);
     await this.auditLogger.log(userId, AuditAction.UPDATE, 'Announcement', updated.id, existing, updated);
     return updated;
   }

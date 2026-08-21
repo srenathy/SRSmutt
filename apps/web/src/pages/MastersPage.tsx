@@ -3,7 +3,7 @@ import { MasterTable, ColumnConfig } from '../components/MasterTable.js';
 import { MasterFormDrawer, FieldConfig } from '../components/MasterFormDrawer.js';
 import { apiClient } from '../api/client.js';
 
-type Tab = 'sevas' | 'shashwata' | 'departments' | 'gotras' | 'nakshatras' | 'rashis' | 'announcements';
+type Tab = 'sevas' | 'shashwata' | 'departments' | 'gotras' | 'nakshatras' | 'rashis' | 'announcements' | 'gallery';
 
 export const MastersPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('sevas');
@@ -39,6 +39,9 @@ export const MastersPage: React.FC = () => {
       } else if (tab === 'announcements') {
         const res = await apiClient.get('/announcements');
         setData(res.data.data || []);
+      } else if (tab === 'gallery') {
+        const res = await apiClient.get('/gallery');
+        setData(res.data.data || []);
       }
     } catch (err) {
       console.error(`Failed to fetch ${tab} data:`, err);
@@ -55,7 +58,11 @@ export const MastersPage: React.FC = () => {
   const handleOpenDrawer = (item?: any) => {
     if (item) {
       setEditingItem(item);
-      setFormData({ ...item });
+      setFormData({
+        ...item,
+        startDate: item.startDate ? String(item.startDate).split('T')[0] : '',
+        endDate: item.endDate ? String(item.endDate).split('T')[0] : ''
+      });
     } else {
       setEditingItem(null);
       setFormData(
@@ -64,7 +71,9 @@ export const MastersPage: React.FC = () => {
           : activeTab === 'departments'
           ? { effectiveMonth: new Date().toISOString().slice(0, 7), monthlyCapAmount: 25000, isActive: true }
           : activeTab === 'announcements'
-          ? { category: 'EVENT', active: true }
+          ? { category: 'EVENT', active: true, startDate: new Date().toISOString().slice(0, 10), endDate: '' }
+          : activeTab === 'gallery'
+          ? { category: 'TEMPLE', order: 0, active: true }
           : { active: true }
       );
     }
@@ -88,6 +97,9 @@ export const MastersPage: React.FC = () => {
       }
       if (payload.durationYears !== undefined && payload.durationYears !== null && payload.durationYears !== '') {
         payload.durationYears = Number(payload.durationYears);
+      }
+      if (payload.order !== undefined && payload.order !== null && payload.order !== '') {
+        payload.order = Number(payload.order);
       }
       delete payload.id;
       delete payload.createdAt;
@@ -131,6 +143,12 @@ export const MastersPage: React.FC = () => {
         } else {
           await apiClient.post('/announcements', payload);
         }
+      } else if (activeTab === 'gallery') {
+        if (editingItem) {
+          await apiClient.put(`/gallery/${editingItem.id}`, payload);
+        } else {
+          await apiClient.post('/gallery', payload);
+        }
       }
       setDrawerOpen(false);
       setEditingItem(null);
@@ -165,6 +183,8 @@ export const MastersPage: React.FC = () => {
         await apiClient.delete(`/vedic/rashis/${item.id}`);
       } else if (activeTab === 'announcements') {
         await apiClient.delete(`/announcements/${item.id}`);
+      } else if (activeTab === 'gallery') {
+        await apiClient.delete(`/gallery/${item.id}`);
       }
       fetchTabContent(activeTab);
     } catch (err: any) {
@@ -218,16 +238,16 @@ export const MastersPage: React.FC = () => {
         { key: 'departmentName', header: 'Department Name' },
         {
           key: 'monthlyCapAmount',
-          header: 'Monthly Spending Cap',
-          render: (r: any) => `₹${Number(r.monthlyCapAmount || 0).toLocaleString('en-IN')}`
+          header: 'Monthly Cap',
+          render: (r: any) => `₹${Number(r.monthlyCapAmount).toLocaleString('en-IN')}`
         },
-        { key: 'effectiveMonth', header: 'Effective Month' },
+        { key: 'effectiveMonth', header: 'Effective Month (YYYY-MM)' },
         {
           key: 'isActive',
           header: 'Status',
           render: (r: any) => (
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-              {r.isActive !== false ? 'ACTIVE' : 'INACTIVE'}
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+              {r.isActive ? 'ACTIVE' : 'INACTIVE'}
             </span>
           )
         }
@@ -235,7 +255,7 @@ export const MastersPage: React.FC = () => {
     } else if (activeTab === 'gotras') {
       return [
         { key: 'name', header: 'Gotra Name' },
-        { key: 'description', header: 'Description' },
+        { key: 'description', header: 'Lineage / Notes' },
         {
           key: 'active',
           header: 'Status',
@@ -274,6 +294,37 @@ export const MastersPage: React.FC = () => {
           )
         }
       ];
+    } else if (activeTab === 'gallery') {
+      return [
+        {
+          key: 'imageUrl',
+          header: 'Image Preview',
+          render: (r: any) => (
+            <img src={r.imageUrl} alt={r.title} className="w-14 h-11 object-cover rounded-lg border border-turmeric/30 shadow-xs" />
+          )
+        },
+        { key: 'title', header: 'Photo Title' },
+        { key: 'caption', header: 'Subtitle / Description' },
+        {
+          key: 'category',
+          header: 'Category',
+          render: (r: any) => (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+              {r.category || 'TEMPLE'}
+            </span>
+          )
+        },
+        { key: 'order', header: 'Sequence Order' },
+        {
+          key: 'active',
+          header: 'Status',
+          render: (r: any) => (
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+              {r.active ? 'ACTIVE' : 'HIDDEN'}
+            </span>
+          )
+        }
+      ];
     } else {
       return [
         { key: 'title', header: 'Event / Announcement Title' },
@@ -296,15 +347,53 @@ export const MastersPage: React.FC = () => {
               <span className="text-textInk/40 italic text-[10px]">No Photo</span>
             )
         },
+        {
+          key: 'duration',
+          header: 'Event Schedule (Auto-Expire)',
+          render: (r: any) => {
+            const start = r.startDate ? new Date(r.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Immediate';
+            const end = r.endDate ? new Date(r.endDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Ongoing / No Expiry';
+            return (
+              <div className="text-[11px] font-mono">
+                <span className="font-semibold text-textInk">{start}</span> → <span className="font-bold text-kumkum">{end}</span>
+              </div>
+            );
+          }
+        },
         { key: 'content', header: 'Content Details' },
         {
-          key: 'active',
-          header: 'Status',
-          render: (r: any) => (
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.active ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-              {r.active ? 'ACTIVE' : 'INACTIVE'}
-            </span>
-          )
+          key: 'status',
+          header: 'Live Status',
+          render: (r: any) => {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            const isPast = r.endDate && new Date(r.endDate) < startOfToday;
+            const isFuture = r.startDate && new Date(r.startDate) > endOfToday;
+
+            if (!r.active) {
+              return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">DISABLED</span>;
+            }
+            if (isPast) {
+              return (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-300">
+                  ⌛ EXPIRED (Hidden)
+                </span>
+              );
+            }
+            if (isFuture) {
+              return (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                  📅 UPCOMING
+                </span>
+              );
+            }
+            return (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                🟢 ACTIVE (LIVE)
+              </span>
+            );
+          }
         }
       ];
     }
@@ -352,6 +441,27 @@ export const MastersPage: React.FC = () => {
         { name: 'englishName', label: 'English Name (e.g. Aries)', type: 'text' },
         { name: 'active', label: 'Active', type: 'checkbox' }
       ];
+    } else if (activeTab === 'gallery') {
+      return [
+        { name: 'title', label: 'Photo Title', type: 'text', required: true, placeholder: 'e.g. Sri Raghavendra Swamy — Alankara Darshana' },
+        { name: 'caption', label: 'Subtitle / Description', type: 'textarea', placeholder: 'e.g. Consecrated daily morning alankara at Rajajinagar Sannidhana' },
+        { name: 'imageUrl', label: 'Upload Photo or Paste Image URL', type: 'image', required: true },
+        {
+          name: 'category',
+          label: 'Category',
+          type: 'select',
+          required: true,
+          allowCustomText: true,
+          options: [
+            { label: '🛕 TEMPLE (Brindavana & Sanctum)', value: 'TEMPLE' },
+            { label: '🌸 ALANKARA (Daily & Special Alankara)', value: 'ALANKARA' },
+            { label: '🚩 UTSAVA (Rathotsava & Festivals)', value: 'UTSAVA' },
+            { label: '🕉️ POOJA (Rituals & Sevas)', value: 'POOJA' }
+          ]
+        },
+        { name: 'order', label: 'Display Sequence Order (0, 1, 2...)', type: 'number' },
+        { name: 'active', label: 'Visible on Homepage Gallery', type: 'checkbox' }
+      ];
     } else {
       return [
         { name: 'title', label: 'Event / Announcement Title', type: 'text', required: true },
@@ -370,9 +480,11 @@ export const MastersPage: React.FC = () => {
             { label: '📜 GURU_PARAMPARA (Lineage & Heritage)', value: 'GURU_PARAMPARA' }
           ]
         },
+        { name: 'startDate', label: 'Event Start Date (When event starts)', type: 'date' },
+        { name: 'endDate', label: 'Event End Date (Auto-expires and disappears after this date)', type: 'date' },
         { name: 'imageUrl', label: 'Photo / Image Attachment (Upload File or Paste URL)', type: 'image' },
         { name: 'content', label: 'Content & Event Details', type: 'textarea', required: true },
-        { name: 'active', label: 'Active on Homepage', type: 'checkbox' }
+        { name: 'active', label: 'Active Toggle', type: 'checkbox' }
       ];
     }
   };
@@ -457,6 +569,17 @@ export const MastersPage: React.FC = () => {
         >
           📢 News & Announcements
         </button>
+
+        <button
+          onClick={() => setActiveTab('gallery')}
+          className={`px-4 py-2 rounded-xl font-semibold text-xs transition-all ${
+            activeTab === 'gallery'
+              ? 'bg-kumkum text-ivory shadow-sm font-bold'
+              : 'text-textInk/70 hover:text-kumkum hover:bg-ivory'
+          }`}
+        >
+          🖼️ Photo Gallery
+        </button>
       </div>
 
       {/* Master Data Table */}
@@ -474,6 +597,8 @@ export const MastersPage: React.FC = () => {
             ? 'Nakshatras Master (27 Birth Stars)'
             : activeTab === 'rashis'
             ? 'Rashis Master (12 Zodiac Signs)'
+            : activeTab === 'gallery'
+            ? 'Photo Gallery Management'
             : 'News & Announcements'
         }`}
         description="View, add, and configure master data records."

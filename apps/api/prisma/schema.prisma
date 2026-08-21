@@ -44,6 +44,7 @@ model Temple {
   email                    String?
   registrationNumber       String?
   upiId                    String?  @default("raghavendra@upi")
+  upiQrCode                String?
   bankName                 String?  @default("Canara Bank")
   accountName              String?  @default("Mulabagala Sri Sripadaraja Matha")
   accountNumber            String?  @default("0423101000000")
@@ -226,16 +227,32 @@ model AuditLog {
 }
 
 model Announcement {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
-  category  String   @default("ANNOUNCEMENT")
+  category  String    @default("ANNOUNCEMENT")
   content   String
   imageUrl  String?
+  startDate DateTime?
+  endDate   DateTime?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("announcements")
+}
+
+model GalleryImage {
+  id        String   @id @default(uuid())
+  title     String
+  caption   String?
+  imageUrl  String
+  category  String   @default("TEMPLE")
+  order     Int      @default(0)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("announcements")
+  @@map("gallery_images")
 }
 
 model DepartmentBudget {

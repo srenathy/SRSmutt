@@ -27,6 +27,7 @@ import { registerVedicRoutes } from './modules/vedic/vedic.routes.js';
 import { registerExpenseRoutes } from './modules/expense/expense.routes.js';
 import { registerUserRoutes } from './modules/user/user.routes.js';
 import { registerDepartmentBudgetRoutes } from './modules/departmentBudget/department-budget.routes.js';
+import { registerGalleryRoutes } from './modules/gallery/gallery.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,6 +95,7 @@ export async function buildApp() {
     api.register(async (expenses) => registerExpenseRoutes(expenses, container.expenseController), { prefix: '/expenses' });
     api.register(async (users) => registerUserRoutes(users, container.userController), { prefix: '/users' });
     api.register(async (budgets) => registerDepartmentBudgetRoutes(budgets, container.departmentBudgetController), { prefix: '/department-budgets' });
+    api.register(async (gallery) => registerGalleryRoutes(gallery, container.galleryController), { prefix: '/gallery' });
   }, { prefix: '/api' });
 
   // Global Error Handler

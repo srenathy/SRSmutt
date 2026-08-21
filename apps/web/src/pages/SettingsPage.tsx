@@ -19,6 +19,7 @@ export const SettingsPage: React.FC = () => {
     email: '',
     registrationNumber: '',
     upiId: '',
+    upiQrCode: '',
     bankName: '',
     accountName: '',
     accountNumber: '',
@@ -37,6 +38,40 @@ export const SettingsPage: React.FC = () => {
     showSankalpa: true
   });
 
+  const handleQrImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 600;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/png', 0.85);
+        setFormData((prev) => ({ ...prev, upiQrCode: compressedBase64 }));
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => {
     const fetchTempleInfo = async () => {
       try {
@@ -53,6 +88,7 @@ export const SettingsPage: React.FC = () => {
             email: res.data.data.email || '',
             registrationNumber: res.data.data.registrationNumber || '',
             upiId: res.data.data.upiId || 'raghavendra@upi',
+            upiQrCode: res.data.data.upiQrCode || '',
             bankName: res.data.data.bankName || '',
             accountName: res.data.data.accountName || '',
             accountNumber: res.data.data.accountNumber || '',
@@ -311,19 +347,65 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             {/* UPI Payment Configuration Card */}
-            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 space-y-3 shadow-xs">
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 space-y-4 shadow-xs">
               <h4 className="font-display font-bold text-xs text-kumkum uppercase">💳 COUNTER & DEVOTEE UPI PAYMENT SETUP</h4>
-              <div>
-                <label className="block text-[11px] font-bold text-textInk mb-1">UPI VPA ID (for Counter Billing QR Code & Online Devotee Transfers)</label>
-                <input
-                  type="text"
-                  name="upiId"
-                  value={formData.upiId}
-                  onChange={handleChange}
-                  placeholder="e.g. raghavendra@upi"
-                  className="w-full max-w-md px-3 py-2 rounded-xl border border-turmeric/40 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
-                />
-                <p className="text-[10px] text-textInk/50 mt-1">Encoded into dynamic payment QR codes on counter receipt printouts and shown to devotees for instant UPI transfers.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">UPI VPA ID (for Counter Billing & Devotee Online Transfers)</label>
+                  <input
+                    type="text"
+                    name="upiId"
+                    value={formData.upiId}
+                    onChange={handleChange}
+                    placeholder="e.g. raghavendra@upi"
+                    className="w-full px-3 py-2 rounded-xl border border-turmeric/40 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
+                  />
+                  <p className="text-[10px] text-textInk/50 mt-1">Encoded into dynamic payment QR codes on counter receipts and shown to devotees for instant UPI transfers.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Official UPI QR Code (PhonePe / GPay / Paytm)</label>
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer bg-kumkum/10 text-kumkum hover:bg-kumkum/20 border border-kumkum/30 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                      📁 Upload QR Code Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleQrImageFile(file);
+                        }}
+                      />
+                    </label>
+                    {formData.upiQrCode && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, upiQrCode: '' }))}
+                        className="text-xs text-red-600 hover:text-red-800 font-bold px-2 py-1 bg-red-50 rounded-lg border border-red-200 transition"
+                      >
+                        Remove QR
+                      </button>
+                    )}
+                  </div>
+
+                  {formData.upiQrCode ? (
+                    <div className="flex items-center gap-3 p-2 bg-ivory/60 rounded-xl border border-turmeric/30 w-fit mt-2">
+                      <img
+                        src={formData.upiQrCode}
+                        alt="UPI QR Code"
+                        className="w-24 h-24 object-contain rounded-lg border border-turmeric/40 bg-white p-1 shadow-xs"
+                      />
+                      <div className="text-[11px] text-textInk/70 space-y-1">
+                        <span className="font-bold text-emerald-800 flex items-center gap-1">✓ Active QR Code Loaded</span>
+                        <p className="text-[10px] text-textInk/50 max-w-[200px]">Will be displayed prominently at Billing counter for direct scanning.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-textInk/50 italic">No custom QR code uploaded. Upload your official PhonePe/GPay QR image here.</p>
+                  )}
+                </div>
               </div>
             </div>
 

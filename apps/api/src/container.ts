@@ -44,6 +44,9 @@ import { UserController } from './modules/user/user.controller.js';
 import { DepartmentBudgetRepository } from './modules/departmentBudget/department-budget.repository.js';
 import { DepartmentBudgetService } from './modules/departmentBudget/department-budget.service.js';
 import { DepartmentBudgetController } from './modules/departmentBudget/department-budget.controller.js';
+import { GalleryRepository } from './modules/gallery/gallery.repository.js';
+import { GalleryService } from './modules/gallery/gallery.service.js';
+import { GalleryController } from './modules/gallery/gallery.controller.js';
 
 export function buildContainer(prisma: PrismaClient) {
   const auditRepo = new AuditRepository(prisma);
@@ -106,6 +109,10 @@ export function buildContainer(prisma: PrismaClient) {
   const departmentBudgetService = new DepartmentBudgetService(departmentBudgetRepo);
   const departmentBudgetController = new DepartmentBudgetController(departmentBudgetService);
 
+  const galleryRepo = new GalleryRepository(prisma);
+  const galleryService = new GalleryService(galleryRepo, auditLogger);
+  const galleryController = new GalleryController(galleryService);
+
   return {
     authController,
     templeController,
@@ -121,6 +128,7 @@ export function buildContainer(prisma: PrismaClient) {
     vedicController,
     expenseController,
     userController,
-    departmentBudgetController
+    departmentBudgetController,
+    galleryController
   };
 }

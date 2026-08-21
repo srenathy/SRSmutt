@@ -128,19 +128,31 @@ export const DevoteeDashboardPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {templeInfo.upiId && (
-                <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-4 space-y-1.5 flex flex-col justify-between">
-                  <div>
+              {(templeInfo.upiId || templeInfo.upiQrCode) && (
+                <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-4 space-y-2 flex flex-col sm:flex-row items-center gap-4">
+                  {templeInfo.upiQrCode && (
+                    <div className="bg-white p-2 rounded-xl border border-amber-300 shadow-xs shrink-0 text-center">
+                      <img
+                        src={templeInfo.upiQrCode}
+                        alt="Temple UPI QR"
+                        className="w-28 h-28 object-contain rounded-lg mx-auto"
+                      />
+                      <span className="text-[9px] font-bold text-amber-900 block mt-1">Scan & Pay (PhonePe / GPay)</span>
+                    </div>
+                  )}
+                  <div className="space-y-1 text-center sm:text-left flex-1">
                     <span className="text-[10px] font-bold text-amber-900 uppercase block tracking-wide">
                       📲 Direct Instant UPI VPA
                     </span>
-                    <p className="font-mono text-base font-bold text-kumkum mt-1 select-all">
-                      {templeInfo.upiId}
+                    {templeInfo.upiId && (
+                      <p className="font-mono text-sm sm:text-base font-bold text-kumkum select-all">
+                        {templeInfo.upiId}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-amber-950/70">
+                      Use Google Pay, PhonePe, Paytm, or any BHIM UPI app to transfer seva amount directly.
                     </p>
                   </div>
-                  <p className="text-[11px] text-amber-950/70">
-                    Use Google Pay, PhonePe, Paytm, or any BHIM UPI app to transfer seva amount directly.
-                  </p>
                 </div>
               )}
 

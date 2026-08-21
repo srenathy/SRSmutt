@@ -11,6 +11,7 @@ export const templeSchema = z.object({
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   registrationNumber: z.string().optional().or(z.literal('')),
   upiId: z.string().optional().or(z.literal('')),
+  upiQrCode: z.string().optional().nullable().or(z.literal('')),
   bankName: z.string().optional().or(z.literal('')),
   accountName: z.string().optional().or(z.literal('')),
   accountNumber: z.string().optional().or(z.literal('')),

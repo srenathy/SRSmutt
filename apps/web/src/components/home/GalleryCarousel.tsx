@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, Eye } from 'lucide-react';
 import { TempleArchMotif, DiyaIcon } from './SpiritualDecorations';
+import { apiClient } from '../../api/client';
 
-const GALLERY_PHOTOS = [
+const DEFAULT_GALLERY_PHOTOS = [
   {
     src: '/gallery/brindavana-1.jpg',
     title: 'Sri Raghavendra Swamy — Alankara Darshana',
@@ -26,26 +27,48 @@ const GALLERY_PHOTOS = [
 ];
 
 export const GalleryCarousel: React.FC = () => {
+  const [photos, setPhotos] = useState<{ src: string; title: string; subtitle: string }[]>(DEFAULT_GALLERY_PHOTOS);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const res = await apiClient.get('/gallery/public');
+        const list = res.data.data;
+        if (Array.isArray(list) && list.length > 0) {
+          setPhotos(
+            list.map((item: any) => ({
+              src: item.imageUrl,
+              title: item.title,
+              subtitle: item.caption || item.category || 'Rajajinagar Sannidhana'
+            }))
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load gallery images from server, using default:', err);
+      }
+    };
+    fetchGallery();
+  }, []);
+
   // Auto-play with pause on hover
   useEffect(() => {
-    if (isHovered) return;
+    if (isHovered || photos.length === 0) return;
     const interval = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % GALLERY_PHOTOS.length);
+      setActiveIdx((prev) => (prev + 1) % photos.length);
     }, 4500);
     return () => clearInterval(interval);
-  }, [isHovered]);
+  }, [isHovered, photos.length]);
 
   const handleNext = () => {
-    setActiveIdx((prev) => (prev + 1) % GALLERY_PHOTOS.length);
+    setActiveIdx((prev) => (prev + 1) % photos.length);
   };
 
   const handlePrev = () => {
-    setActiveIdx((prev) => (prev - 1 + GALLERY_PHOTOS.length) % GALLERY_PHOTOS.length);
+    setActiveIdx((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
   // Touch Swipe Handlers for mobile
@@ -109,9 +132,9 @@ export const GalleryCarousel: React.FC = () => {
         >
           {/* Main Visual Image Viewport */}
           <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden">
-            {GALLERY_PHOTOS.map((photo, idx) => (
+            {photos.map((photo, idx) => (
               <div
-                key={photo.src}
+                key={photo.src + idx}
                 className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
                   idx === activeIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
                 }`}
@@ -161,12 +184,12 @@ export const GalleryCarousel: React.FC = () => {
 
         {/* Thumbnail Selector Bar & Indicators */}
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
-          <div className="grid grid-cols-4 gap-3 w-full max-w-xl">
-            {GALLERY_PHOTOS.map((photo, idx) => (
+          <div className="flex flex-wrap justify-center gap-3 w-full max-w-2xl">
+            {photos.map((photo, idx) => (
               <button
-                key={photo.src}
+                key={photo.src + idx}
                 onClick={() => setActiveIdx(idx)}
-                className={`relative rounded-xl overflow-hidden aspect-[4/3] border-2 transition-all ${
+                className={`relative rounded-xl overflow-hidden aspect-[4/3] w-20 sm:w-28 border-2 transition-all ${
                   idx === activeIdx
                     ? 'border-[#8C2F22] shadow-md scale-105 ring-2 ring-[#C99A3D]/40'
                     : 'border-turmeric/30 opacity-60 hover:opacity-100'
@@ -184,7 +207,7 @@ export const GalleryCarousel: React.FC = () => {
 
           {/* Dots Indicator */}
           <div className="flex items-center gap-2">
-            {GALLERY_PHOTOS.map((_, idx) => (
+            {photos.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveIdx(idx)}

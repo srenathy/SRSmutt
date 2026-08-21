@@ -6,6 +6,7 @@ import { GopuramProgressRail } from '../components/GopuramMotif';
 import { ThermalReceiptModal } from '../components/ThermalReceiptModal';
 import { SankalpaModal } from '../components/SankalpaModal';
 import { VedicAutocomplete } from '../components/VedicAutocomplete';
+import { DescriptionAutocomplete, saveLineItemDescriptionToCache } from '../components/DescriptionAutocomplete';
 import { useVedicMasters } from '../hooks/useVedicMasters';
 import { Plus, Trash2, UserPlus, CheckCircle, Banknote, Smartphone, CreditCard, Building2, Search, Printer, MessageCircle, Share2 } from 'lucide-react';
 
@@ -123,6 +124,12 @@ export const BillingPage: React.FC = () => {
       return res.data.data;
     },
     onSuccess: (data) => {
+      // Save all custom descriptions to cache for instant future suggestions
+      items.forEach((item) => {
+        if (item.description) {
+          saveLineItemDescriptionToCache(item.description);
+        }
+      });
       setCreatedReceipt(data);
       setCurrentStep(4);
     },
@@ -589,16 +596,15 @@ export const BillingPage: React.FC = () => {
                 ) : (
                   items.map((item, idx) => (
                     <tr key={idx}>
-                      <td className="p-3">
-                        <input
-                          type="text"
+                      <td className="p-3 min-w-[240px]">
+                        <DescriptionAutocomplete
                           value={item.description}
-                          onChange={(e) =>
+                          onChange={(val) =>
                             setItems((prev) =>
-                              prev.map((it, i) => (i === idx ? { ...it, description: e.target.value } : it))
+                              prev.map((it, i) => (i === idx ? { ...it, description: val } : it))
                             )
                           }
-                          className="w-full px-2 py-1 border border-turmeric/20 rounded-lg text-xs"
+                          placeholder="Type description or select Dravya..."
                         />
                       </td>
                       <td className="p-3 text-center">
@@ -781,15 +787,35 @@ export const BillingPage: React.FC = () => {
           </div>
 
           {/* Live Settings Preview for UPI / Bank Transfer */}
-          {paymentMode === PaymentMode.UPI && templeInfo?.upiId && (
-            <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs animate-fadeIn">
-              <div>
-                <span className="font-bold text-amber-950 block">📲 Official Temple Counter UPI ID:</span>
-                <span className="font-mono font-bold text-kumkum">{templeInfo.upiId}</span>
+          {paymentMode === PaymentMode.UPI && (templeInfo?.upiId || templeInfo?.upiQrCode) && (
+            <div className="bg-amber-50 border border-amber-300/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 text-xs animate-fadeIn shadow-xs">
+              {templeInfo.upiQrCode ? (
+                <div className="bg-white p-2.5 rounded-xl border border-amber-300 shadow-xs shrink-0 text-center">
+                  <img
+                    src={templeInfo.upiQrCode}
+                    alt="UPI QR Code"
+                    className="w-36 h-36 object-contain rounded-lg mx-auto"
+                  />
+                  <span className="text-[10px] font-bold text-amber-900 block mt-1">📱 Scan & Pay ₹{totalAmount.toLocaleString('en-IN')}</span>
+                </div>
+              ) : (
+                <div className="w-24 h-24 rounded-xl bg-white border border-amber-300 flex flex-col items-center justify-center text-amber-800 text-xs font-bold p-2 text-center shrink-0">
+                  <Smartphone className="w-8 h-8 text-kumkum mb-1" />
+                  <span>UPI Pay</span>
+                </div>
+              )}
+              <div className="space-y-1.5 text-center sm:text-left flex-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-950 font-mono">
+                  ✨ Instant Counter UPI / QR
+                </div>
+                <div>
+                  <span className="font-bold text-amber-950 block text-xs">Official Temple UPI ID:</span>
+                  <span className="font-mono font-bold text-kumkum text-sm select-all">{templeInfo.upiId || 'raghavendra@upi'}</span>
+                </div>
+                <p className="text-[11px] text-textInk/70">
+                  Devotee can scan using any UPI app (GPay, PhonePe, Paytm, BHIM, etc.) or pay directly to the UPI ID.
+                </p>
               </div>
-              <span className="text-[11px] text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 font-semibold shrink-0">
-                Direct Counter UPI
-              </span>
             </div>
           )}
 
@@ -979,6 +1005,7 @@ export const BillingPage: React.FC = () => {
       {/* Thermal POS Print Modal */}
       <ThermalReceiptModal
         receipt={createdReceipt}
+        temple={templeInfo}
         isOpen={showThermalModal}
         onClose={() => {
           setShowThermalModal(false);
