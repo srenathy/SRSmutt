@@ -73,6 +73,15 @@ export const BillingPage: React.FC = () => {
     }
   });
 
+  const templeQuery = useQuery({
+    queryKey: ['temple-settings'],
+    queryFn: async () => {
+      const res = await apiClient.get('/temple');
+      return res.data.data;
+    }
+  });
+  const templeInfo = templeQuery.data;
+
   const devoteesQuery = useQuery({
     queryKey: ['devotee-search', devoteeSearch],
     queryFn: async () => {
@@ -770,6 +779,34 @@ export const BillingPage: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Live Settings Preview for UPI / Bank Transfer */}
+          {paymentMode === PaymentMode.UPI && templeInfo?.upiId && (
+            <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs animate-fadeIn">
+              <div>
+                <span className="font-bold text-amber-950 block">📲 Official Temple Counter UPI ID:</span>
+                <span className="font-mono font-bold text-kumkum">{templeInfo.upiId}</span>
+              </div>
+              <span className="text-[11px] text-amber-900 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 font-semibold shrink-0">
+                Direct Counter UPI
+              </span>
+            </div>
+          )}
+
+          {paymentMode === PaymentMode.BANK && (templeInfo?.bankName || templeInfo?.accountNumber) && (
+            <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-3.5 space-y-2 text-xs text-amber-950 animate-fadeIn">
+              <span className="font-bold text-amber-900 block flex items-center gap-1.5">
+                🏛️ Official Matha Bank Account (NEFT / RTGS / IMPS):
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11px] font-medium pt-0.5">
+                {templeInfo.bankName && <p><strong>Bank:</strong> {templeInfo.bankName}</p>}
+                {templeInfo.accountName && <p><strong>A/C Name:</strong> {templeInfo.accountName}</p>}
+                {templeInfo.accountNumber && <p><strong>A/C No:</strong> <span className="font-mono font-bold text-kumkum">{templeInfo.accountNumber}</span></p>}
+                {templeInfo.ifscCode && <p><strong>IFSC:</strong> <span className="font-mono font-bold">{templeInfo.ifscCode}</span></p>}
+                {templeInfo.branchName && <p className="sm:col-span-2"><strong>Branch:</strong> {templeInfo.branchName}</p>}
+              </div>
+            </div>
+          )}
 
           {/* Transaction / Reference Number (Rendered conditionally for non-cash modes) */}
           {paymentMode !== PaymentMode.CASH && (

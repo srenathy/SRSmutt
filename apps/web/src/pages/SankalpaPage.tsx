@@ -230,13 +230,14 @@ export const SankalpaPage: React.FC = () => {
                 <th className="p-4 print:p-2">Nakshatra</th>
                 <th className="p-4 print:p-2">Rashi</th>
                 <th className="p-4 print:p-2">Seva Name</th>
+                <th className="p-4 print:p-2">Pooja Date</th>
                 <th className="p-4 print:p-2">Sankalpa Note / Special Request</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ivory-dark print:divide-y print:divide-black">
               {isLoading ? (
                 <tr className="no-print">
-                  <td colSpan={7} className="p-8 text-center text-textInk/50">
+                  <td colSpan={8} className="p-8 text-center text-textInk/50">
                     <div className="flex items-center justify-center gap-2">
                       <RefreshCw className="w-4 h-4 animate-spin text-kumkum" />
                       Loading daily sankalpa list...
@@ -245,13 +246,15 @@ export const SankalpaPage: React.FC = () => {
                 </tr>
               ) : filteredList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-textInk/50 font-medium">
+                  <td colSpan={8} className="p-8 text-center text-textInk/50 font-medium">
                     No active seva bookings found for {new Date(dateFilter).toLocaleDateString('en-IN', { dateStyle: 'medium' })}.
                   </td>
                 </tr>
               ) : (
                 paginatedList.map((item: any, idx: number) => {
                   const devotee = item.receipt?.devotee || {};
+                  const performanceDate = item.sevaDate || item.receipt?.sevaDate || item.receipt?.createdAt;
+                  const formattedDate = performanceDate ? new Date(performanceDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
                   return (
                     <tr
                       key={item.id}
@@ -280,6 +283,9 @@ export const SankalpaPage: React.FC = () => {
                             </span>
                           </div>
                         </div>
+                      </td>
+                      <td className="p-4 print:p-2 font-mono text-xs font-bold text-kumkum whitespace-nowrap print:text-black">
+                        {formattedDate}
                       </td>
                       <td className="p-4 print:p-2 text-textInk/70 italic print:text-black">
                         {item.receipt?.sankalpaNote || '-'}

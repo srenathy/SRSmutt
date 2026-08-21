@@ -44,6 +44,11 @@ model Temple {
   email                    String?
   registrationNumber       String?
   upiId                    String?  @default("raghavendra@upi")
+  bankName                 String?  @default("Canara Bank")
+  accountName              String?  @default("Mulabagala Sri Sripadaraja Matha")
+  accountNumber            String?  @default("0423101000000")
+  ifscCode                 String?  @default("CNRB0000423")
+  branchName               String?  @default("Rajajinagar, Bengaluru")
   defaultPriest            String?  @default("Sri Raghavacharya")
   receiptHeader            String?  @default("Om Sri Raghavendraya Namaha")
   receiptFooter            String?  @default("Sri Sripadaraja Arpanamastu. Computer generated receipt.")

@@ -157,7 +157,7 @@ export const PublicReceiptPage: React.FC = () => {
               <p>Mob. : {templeDetails.phone1 || '98446 87615'}</p>
               <p className="text-[9px]">|| ಶ್ರೀ ಗೋಪಿನಾಥೋ ವಿಜಯತೇ ||</p>
               <p className="text-[9px]">ಶ್ರೀ ಮೂಲಗೋಪಾಲಕೃಷ್ಣೋ ವಿಜಯತೇ</p>
-              <p className="text-[9px]">ಶ್ರೀ ಪಾದರಾಜೋ ವಿಜಯತೇ</p>
+              <p className="text-[9px]">ಶ್ರೀ ಶ್ರೀಪಾದರಾಜೋ ವಿಜಯತೇ</p>
             </div>
             <div className="space-y-0.5 text-right">
               <p>Mob. : {templeDetails.phone2 || '94900 67092'}</p>

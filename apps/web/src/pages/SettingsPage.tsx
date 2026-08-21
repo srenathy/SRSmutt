@@ -19,6 +19,11 @@ export const SettingsPage: React.FC = () => {
     email: '',
     registrationNumber: '',
     upiId: '',
+    bankName: '',
+    accountName: '',
+    accountNumber: '',
+    ifscCode: '',
+    branchName: '',
     defaultPriest: '',
     receiptHeader: '',
     receiptFooter: '',
@@ -48,6 +53,11 @@ export const SettingsPage: React.FC = () => {
             email: res.data.data.email || '',
             registrationNumber: res.data.data.registrationNumber || '',
             upiId: res.data.data.upiId || 'raghavendra@upi',
+            bankName: res.data.data.bankName || '',
+            accountName: res.data.data.accountName || '',
+            accountNumber: res.data.data.accountNumber || '',
+            ifscCode: res.data.data.ifscCode || '',
+            branchName: res.data.data.branchName || '',
             defaultPriest: res.data.data.defaultPriest || 'Sri Raghavacharya',
             receiptHeader: res.data.data.receiptHeader || 'Om Sri Raghavendraya Namaha',
             receiptFooter: res.data.data.receiptFooter || 'Sri Sripadaraja Arpanamastu. Computer generated receipt.',
@@ -301,10 +311,10 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             {/* UPI Payment Configuration Card */}
-            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 space-y-2 shadow-xs">
-              <h4 className="font-display font-bold text-xs text-kumkum uppercase">💳 COUNTER PAYMENT SETUP</h4>
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 space-y-3 shadow-xs">
+              <h4 className="font-display font-bold text-xs text-kumkum uppercase">💳 COUNTER & DEVOTEE UPI PAYMENT SETUP</h4>
               <div>
-                <label className="block text-[11px] font-bold text-textInk mb-1">UPI VPA ID (for Counter Billing QR Code)</label>
+                <label className="block text-[11px] font-bold text-textInk mb-1">UPI VPA ID (for Counter Billing QR Code & Online Devotee Transfers)</label>
                 <input
                   type="text"
                   name="upiId"
@@ -313,7 +323,81 @@ export const SettingsPage: React.FC = () => {
                   placeholder="e.g. raghavendra@upi"
                   className="w-full max-w-md px-3 py-2 rounded-xl border border-turmeric/40 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
                 />
-                <p className="text-[10px] text-textInk/50 mt-1">Encoded into dynamic payment QR codes on counter receipt printouts for instant UPI payments.</p>
+                <p className="text-[10px] text-textInk/50 mt-1">Encoded into dynamic payment QR codes on counter receipt printouts and shown to devotees for instant UPI transfers.</p>
+              </div>
+            </div>
+
+            {/* Official Matha Bank Account Details */}
+            <div className="bg-white p-5 rounded-2xl border border-turmeric/30 space-y-4 shadow-xs">
+              <div>
+                <h4 className="font-display font-bold text-xs text-kumkum uppercase flex items-center gap-1.5">
+                  🏛️ OFFICIAL MATHA BANK ACCOUNT DETAILS (NEFT / RTGS / IMPS)
+                </h4>
+                <p className="text-[10px] text-textInk/60 mt-0.5">
+                  Displayed on devotee portal, billing counter, and public website for direct bank transfers and seva kanike deposits.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Bank Name</label>
+                  <input
+                    type="text"
+                    name="bankName"
+                    value={formData.bankName}
+                    onChange={handleChange}
+                    placeholder="e.g. Canara Bank / State Bank of India"
+                    className="w-full px-3 py-2 rounded-xl border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Account Holder / Beneficiary Name</label>
+                  <input
+                    type="text"
+                    name="accountName"
+                    value={formData.accountName}
+                    onChange={handleChange}
+                    placeholder="e.g. Mulabagala Sri Sripadaraja Matha"
+                    className="w-full px-3 py-2 rounded-xl border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Account Number</label>
+                  <input
+                    type="text"
+                    name="accountNumber"
+                    value={formData.accountNumber}
+                    onChange={handleChange}
+                    placeholder="e.g. 0423101000000"
+                    className="w-full px-3 py-2 rounded-xl border border-turmeric/40 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-textInk mb-1">IFSC Code</label>
+                  <input
+                    type="text"
+                    name="ifscCode"
+                    value={formData.ifscCode}
+                    onChange={handleChange}
+                    placeholder="e.g. CNRB0000423"
+                    className="w-full px-3 py-2 rounded-xl border border-turmeric/40 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-textInk mb-1">Branch Name / Address</label>
+                  <input
+                    type="text"
+                    name="branchName"
+                    value={formData.branchName}
+                    onChange={handleChange}
+                    placeholder="e.g. Rajajinagar 5th Block, Bengaluru"
+                    className="w-full px-3 py-2 rounded-xl border border-turmeric/40 text-xs focus:outline-none focus:ring-1 focus:ring-kumkum bg-ivory/20"
+                  />
+                </div>
               </div>
             </div>
 

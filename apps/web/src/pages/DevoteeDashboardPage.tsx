@@ -13,18 +13,23 @@ export const DevoteeDashboardPage: React.FC = () => {
   const [receipts, setReceipts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [templeInfo, setTempleInfo] = useState<any>(null);
   const [selectedThermalReceipt, setSelectedThermalReceipt] = useState<any | null>(null);
   const [selectedSankalpaReceipt, setSelectedSankalpaReceipt] = useState<any | null>(null);
 
   useEffect(() => {
     const fetchDevoteeData = async () => {
       try {
-        const [profRes, recRes] = await Promise.all([
+        const [profRes, recRes, templeRes] = await Promise.all([
           apiClient.get('/devotee-portal/my-profile'),
-          apiClient.get('/devotee-portal/my-receipts')
+          apiClient.get('/devotee-portal/my-receipts'),
+          apiClient.get('/temple/public').catch(() => ({ data: { data: null } }))
         ]);
         setProfile(profRes.data);
         setReceipts(recRes.data.data || []);
+        if (templeRes?.data?.data) {
+          setTempleInfo(templeRes.data.data);
+        }
       } catch (err) {
         console.error('Failed to fetch devotee data:', err);
       } finally {
@@ -101,6 +106,58 @@ export const DevoteeDashboardPage: React.FC = () => {
                 <span className="text-textInk/50 block text-[10px]">RASHI</span>
                 <span className="font-bold text-kumkum">{profile.devotee.rashi || 'Not Specified'}</span>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Official Matha Bank & UPI Transfer Info Card */}
+        {templeInfo && (templeInfo.upiId || templeInfo.bankName || templeInfo.accountNumber) && (
+          <div className="bg-white border border-turmeric/30 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-turmeric/20 pb-3">
+              <div>
+                <span className="text-[10px] font-bold tracking-widest text-[#8C2F22] uppercase bg-[#8C2F22]/10 px-2.5 py-1 rounded border border-[#8C2F22]/20">
+                  SACRED OFFERINGS &amp; SEVA KANIKE TRANSFERS
+                </span>
+                <h3 className="font-display text-lg font-bold text-[#2C221E] mt-2">
+                  Official Matha Bank &amp; UPI Account Details
+                </h3>
+              </div>
+              <p className="text-xs text-textInk/60 font-medium">
+                For online Seva Kanike, E-Hundi, &amp; Shashwata Seva deposits
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {templeInfo.upiId && (
+                <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-4 space-y-1.5 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-amber-900 uppercase block tracking-wide">
+                      📲 Direct Instant UPI VPA
+                    </span>
+                    <p className="font-mono text-base font-bold text-kumkum mt-1 select-all">
+                      {templeInfo.upiId}
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-amber-950/70">
+                    Use Google Pay, PhonePe, Paytm, or any BHIM UPI app to transfer seva amount directly.
+                  </p>
+                </div>
+              )}
+
+              {(templeInfo.bankName || templeInfo.accountNumber) && (
+                <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-4 space-y-1.5 text-xs text-amber-950">
+                  <span className="text-[10px] font-bold text-amber-900 uppercase block tracking-wide">
+                    🏛️ Official Bank Details (NEFT / RTGS / IMPS)
+                  </span>
+                  <div className="space-y-1 text-[11px] font-medium pt-1">
+                    {templeInfo.accountName && <p><strong>Beneficiary:</strong> {templeInfo.accountName}</p>}
+                    {templeInfo.bankName && <p><strong>Bank:</strong> {templeInfo.bankName}</p>}
+                    {templeInfo.accountNumber && <p><strong>Account No:</strong> <span className="font-mono font-bold text-kumkum select-all">{templeInfo.accountNumber}</span></p>}
+                    {templeInfo.ifscCode && <p><strong>IFSC Code:</strong> <span className="font-mono font-bold select-all">{templeInfo.ifscCode}</span></p>}
+                    {templeInfo.branchName && <p><strong>Branch:</strong> {templeInfo.branchName}</p>}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
