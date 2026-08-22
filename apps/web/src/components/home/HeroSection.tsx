@@ -43,11 +43,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ announcements = [] }) 
         const res = await apiClient.get('/gallery/public');
         const list = res.data?.data;
         if (Array.isArray(list) && list.length > 0) {
+          const heroBanners = list.filter((item: any) => item.category === 'HERO_BANNER');
+          const finalItems = heroBanners.length > 0 ? heroBanners : list;
+
           setPhotos(
-            list.map((item: any) => ({
+            finalItems.map((item: any) => ({
               src: item.imageUrl,
               title: item.title,
-              caption: item.caption || 'Consecrated Mantralaya Mrittika Brindavana - Main Shrine'
+              caption: item.caption || item.title || 'Consecrated Mantralaya Mrittika Brindavana - Main Shrine, Rajajinagar'
             }))
           );
         }

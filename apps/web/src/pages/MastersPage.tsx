@@ -454,24 +454,25 @@ export const MastersPage: React.FC = () => {
       ];
     } else if (activeTab === 'gallery') {
       return [
-        { name: 'title', label: 'Photo Title', type: 'text', required: true, placeholder: 'e.g. Sri Raghavendra Swamy — Alankara Darshana' },
-        { name: 'caption', label: 'Subtitle / Description', type: 'textarea', placeholder: 'e.g. Consecrated daily morning alankara at Rajajinagar Sannidhana' },
-        { name: 'imageUrl', label: 'Upload Photo or Paste Image URL', type: 'image', required: true },
+        { name: 'title', label: 'Photo Title', type: 'text', required: true, placeholder: 'e.g. Sri Raghavendra Swamy — Sacred Alankara Darshana' },
+        { name: 'caption', label: 'Subtitle / Description (Shown on Homepage Hero & Gallery)', type: 'textarea', placeholder: 'e.g. Consecrated Mantralaya Mrittika Brindavana - Main Shrine, Rajajinagar' },
+        { name: 'imageUrl', label: 'Upload Photo File or Paste Image URL', type: 'image', required: true },
         {
           name: 'category',
-          label: 'Category',
+          label: 'Display Placement / Category',
           type: 'select',
           required: true,
           allowCustomText: true,
           options: [
+            { label: '🌟 HERO_BANNER (Main Homepage Hero Shrine Carousel)', value: 'HERO_BANNER' },
             { label: '🛕 TEMPLE (Brindavana & Sanctum)', value: 'TEMPLE' },
             { label: '🌸 ALANKARA (Daily & Special Alankara)', value: 'ALANKARA' },
             { label: '🚩 UTSAVA (Rathotsava & Festivals)', value: 'UTSAVA' },
             { label: '🕉️ POOJA (Rituals & Sevas)', value: 'POOJA' }
           ]
         },
-        { name: 'order', label: 'Display Sequence Order (0, 1, 2...)', type: 'number' },
-        { name: 'active', label: 'Visible on Homepage Gallery', type: 'checkbox' }
+        { name: 'order', label: 'Display Sequence Order (0, 1, 2, 3...)', type: 'number' },
+        { name: 'active', label: 'Visible on Homepage (Hero & Gallery Carousel)', type: 'checkbox' }
       ];
     } else {
       return [
@@ -589,7 +590,7 @@ export const MastersPage: React.FC = () => {
               : 'text-textInk/70 hover:text-kumkum hover:bg-ivory'
           }`}
         >
-          🖼️ Photo Gallery
+          🖼️ Hero &amp; Photo Gallery
         </button>
       </div>
 
@@ -609,10 +610,14 @@ export const MastersPage: React.FC = () => {
             : activeTab === 'rashis'
             ? 'Rashis Master (12 Zodiac Signs)'
             : activeTab === 'gallery'
-            ? 'Photo Gallery Management'
+            ? 'Homepage Hero & Photo Gallery Management'
             : 'News & Announcements'
         }`}
-        description="View, add, and configure master data records."
+        description={
+          activeTab === 'gallery'
+            ? 'Upload, edit, or remove photos displayed in the Homepage Hero Section carousel and Temple Gallery.'
+            : 'View, add, and configure master data records.'
+        }
         columns={getColumns()}
         data={data}
         isLoading={loading}
